@@ -89,17 +89,18 @@ internal static class SmokeTests
         foreach (var type in new[] { typeof(BaseFramePage), typeof(MainPage), typeof(Views.RecomendPage), typeof(Views.CategoryPage), typeof(Views.CategoryDetailPage), typeof(Views.SearchPage), typeof(Views.FavoritePage), typeof(Views.HistoryPage), typeof(Views.SettingsPage), typeof(Views.ParsePage), typeof(Views.LiveRoomPage), typeof(Controls.BiliLoginDialog) })
             Check(type.Name, () => Activator.CreateInstance(type));
         Check("FFmpeg desktop component", () => _ = new FFmpegInteropX.MediaSourceConfig());
-        Check("PlayWin name, icon and 18-point title", () =>
+        Check("PlayWin metadata and clean title bar", () =>
         {
             var page = new BaseFramePage();
             var title = (TextBlock)page.FindName("Title");
-            var icon = (Microsoft.UI.Xaml.Media.Imaging.SvgImageSource)((Image)page.FindName("AppIcon")).Source;
+            var icon = (Image)page.FindName("AppIcon");
             var about = (TextBlock)new Views.SettingsPage().FindName("AboutAppName");
             var product = System.Diagnostics.FileVersionInfo.GetVersionInfo(Path.Combine(AppContext.BaseDirectory, "PlayWin.exe")).ProductName;
-            if (App.ActiveWindow.Title != "游窗" || title.Text != "游窗" || title.FontSize != 18 || title.FontWeight.Weight != 400 ||
-                about.Text != "游窗" || product != "游窗" || !icon.UriSource.ToString().EndsWith("/Assets/PlayWin.svg") ||
-                !File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/PlayWin.ico")))
-                throw new Exception("Application title, About name or icon does not match PlayWin branding.");
+            if (App.ActiveWindow.Title != "游窗" || !string.IsNullOrEmpty(title.Text) || title.Visibility != Visibility.Collapsed ||
+                icon.Visibility != Visibility.Collapsed || icon.Source != null || about.Text != "游窗" || product != "游窗" ||
+                !File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/PlayWin.ico")) ||
+                !File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/PlayWin.svg")))
+                throw new Exception("Application metadata changed or home title bar still displays branding.");
             var titleGrid = (Grid)page.FindName("TitleBar");
             var appIcon = (Image)page.FindName("AppIcon");
             var navigation = (NavigationView)new MainPage().FindName("navigationView");
@@ -111,7 +112,7 @@ internal static class SmokeTests
                 !File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/Fonts/ChillRound-LICENSE.txt")))
                 throw new Exception("Rounded wordmark, vector icon or navigation alignment was not preserved.");
         });
-        await CheckAsync("Compact room title and home title restoration", async () =>
+        await CheckAsync("Room title stays visible and home branding stays hidden", async () =>
         {
             var page = new BaseFramePage();
             var owner = App.OpenWindow(typeof(Page));
@@ -127,9 +128,10 @@ internal static class SmokeTests
                 await Task.Delay(200);
                 if (!room.IsLoaded) throw new Exception("Title fixture room did not load.");
                 navigated.Invoke(page, new object[] { frame, null });
-                MessageCenter.ChangeTitle("Test room - Test streamer");
+                MessageCenter.ChangeTitle("Test room - Test streamer", ViewModels.MainVM.Sites[0].LiveSite);
                 var separateTitle = (TextBlock)room.FindName("Title");
                 if (title.FontSize != 14 || title.FontWeight.Weight != 400 || icon.Width != 18 ||
+                    title.Visibility != Visibility.Visible || icon.Visibility != Visibility.Visible || icon.Source == null ||
                     title.Text != "Test room - Test streamer" || title.TextTrimming != TextTrimming.CharacterEllipsis ||
                     (string)ToolTipService.GetToolTip(title) != title.Text || separateTitle.FontSize != 14 ||
                     separateTitle.FontWeight.Weight != 400 || ((Image)room.FindName("AppIcon")).Width != 18)
@@ -139,8 +141,9 @@ internal static class SmokeTests
                 if (room.IsLoaded) throw new Exception("Title fixture room did not unload.");
                 navigated.Invoke(page, new object[] { frame, null });
                 MessageCenter.ChangeTitle("Stale room title");
-                if (title.Text != "游窗" || title.FontSize != 18 || title.FontWeight.Weight != 400 || icon.Width != 24)
-                    throw new Exception("Home branding was not restored.");
+                if (!string.IsNullOrEmpty(title.Text) || title.Visibility != Visibility.Collapsed || icon.Visibility != Visibility.Collapsed ||
+                    icon.Source != null || ((Grid)page.FindName("TitleBarGrid")).Visibility != Visibility.Visible || ((Grid)page.FindName("TitleBar")).Height != 32)
+                    throw new Exception("Home branding reappeared or the title-bar drag area was removed.");
             }
             finally
             {

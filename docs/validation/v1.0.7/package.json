@@ -1,0 +1,32 @@
+{
+  "version": "1.0.7",
+  "fileCount": 582,
+  "uncompressedBytes": 323856284.0,
+  "requiredFilesPresent": true,
+  "privateDataExcluded": true,
+  "allArchiveFilesMatchPublishSHA256": true,
+  "zipRootExecutable": "PlayWin.exe",
+  "exeVersion": "1.0.7.0",
+  "installerVersion": "1.0.7",
+  "signatures": [
+    "NotSigned",
+    "NotSigned"
+  ],
+  "assets": [
+    {
+      "name": "PlayWin-1.0.7-x64-Setup.exe",
+      "size": 92483798,
+      "sha256": "13d0dc063569ae465ca0e54aa0b0979ce0c001f7e0ed873485404d941018f083"
+    },
+    {
+      "name": "PlayWin-x64.zip",
+      "size": 133029432,
+      "sha256": "cb2b9591300fbd001d3b0a99bd875faaf56f49edac2b9c4d53af4e0c42499f6d"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 178,
+      "sha256": "77666572c8bdb47b0257029598f379111c3f7aa6b54f5232fa19ad9610eb91fb"
+    }
+  ]
+}

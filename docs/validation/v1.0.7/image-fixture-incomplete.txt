@@ -1,0 +1,8 @@
+FAIL Smoke test interrupted
+System.Exception: Scrolling did not exercise actual container recycling
+   at PlayWin.WinUI.CategoryImageChecks.UntilAsync(Func`1 predicate, String message) in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\CategoryImageChecks.cs:line 219
+   at PlayWin.WinUI.CategoryImageChecks.CheckCachedNavigationAsync(MainWindow window, String picture, List`1 report) in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\CategoryImageChecks.cs:line 138
+   at PlayWin.WinUI.CategoryImageChecks.CheckCachedNavigationAsync(MainWindow window, String picture, List`1 report) in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\CategoryImageChecks.cs:line 154
+   at PlayWin.WinUI.CategoryImageChecks.RunAsync(MainWindow window) in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\CategoryImageChecks.cs:line 77
+   at PlayWin.WinUI.CategoryImageChecks.RunAsync(MainWindow window) in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\CategoryImageChecks.cs:line 93
+   at PlayWin.WinUI.App.OnLaunched(LaunchActivatedEventArgs args) in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\App.xaml.cs:line 37

@@ -37,12 +37,8 @@ public sealed partial class CategoryPage : Page
     private void GamesGrid_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
     {
         args.ItemContainer.ContextFlyout = null;
-        var image = (args.ItemContainer.ContentTemplateRoot as FrameworkElement)?.FindName("GameImage") as Image;
-        if (args.InRecycleQueue)
-        {
-            if (image != null) DecodedImage.SetUrl(image, null);
-            return;
-        }
+        // Preserve the URL binding when recycling. DecodedImage releases pixels on Unloaded.
+        if (args.InRecycleQueue) return;
         if (args.Item is not LiveGameCategory game || game.Sources == null || game.Sources.Count == 0) return;
         var site = MainVM.Sites.Single(s => s.LiveSite == game.Sources[0].Site);
         var action = new MenuFlyoutItem();

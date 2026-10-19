@@ -5,7 +5,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Grid x:Name="BrowseHeader" Margin="0,0,0,8" MinHeight="48">
+        <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" Margin="0" MinHeight="48">
             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <TextBlock x:Name="PageTitle" Margin="0,0,8,0" Style="{StaticResource PageTitleStyle}" Text="我的关注"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -24,7 +24,7 @@
                     </MenuFlyout></Button.Flyout>
                 </Button>
             </StackPanel>
-        </Grid>
+        </Grid></TitleBar>
         <Grid Grid.Row="1">
             <controls:MyAdaptiveGridView Padding="0" Margin="-8,0,-8,-8" CanLoadMore="False" DesiredWidth="400" IsItemClickEnabled="True" ItemClick="ls_ItemClick" ItemHeight="96" ItemsSource="{x:Bind Path=favoriteVM.Items, Mode=OneWay}" SelectionMode="None">
                 <controls:MyAdaptiveGridView.ItemContainerStyle>

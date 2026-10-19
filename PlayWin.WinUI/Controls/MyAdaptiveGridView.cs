@@ -46,7 +46,10 @@ public partial class MyAdaptiveGridView : GridView
         if (ItemsPanelRoot is not ItemsWrapGrid panel || ActualWidth <= 0) return;
         var available = Math.Max(1, ActualWidth - Padding.Left - Padding.Right);
         var columns = Math.Max(1, Math.Floor(available / Math.Max(1, DesiredWidth)));
-        panel.ItemWidth = available / columns;
+        // Round down to physical pixels so accumulated cell rounding cannot wrap
+        // the final card onto the next row and leave an entire column empty.
+        var scale = XamlRoot?.RasterizationScale ?? 1;
+        panel.ItemWidth = Math.Max(1, Math.Floor(available / columns * scale) / scale);
         // Each cell includes 8 DIP on each side. Text stays at its native size.
         panel.ItemHeight = ItemTemplate == (DataTemplate)App.Current.Resources["RoomItemTemplate"]
             ? Math.Max(1, panel.ItemWidth - 16) * 9 / 16 + 80

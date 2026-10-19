@@ -5,10 +5,13 @@
         </Style>
     </Page.Resources>
     <Grid x:Name="PageLayoutRoot" design:PageDesign.Insets="True">
-        <ScrollViewer>
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+        <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}" Margin="0,0,0,12">
+            <Grid x:Name="BrowseHeader" MinHeight="48"><TextBlock x:Name="PageTitle" Style="{StaticResource PageTitleStyle}" Text="设置"/></Grid>
+        </TitleBar>
+        <ScrollViewer Grid.Row="1">
             <Grid Margin="0" HorizontalAlignment="Stretch">
                 <StackPanel x:Name="SettingsCards" MaxWidth="1040" HorizontalAlignment="Stretch">
-                    <TextBlock x:Name="PageTitle" Margin="0,0,0,16" Style="{StaticResource PageTitleStyle}" Text="设置"/>
                     <TextBlock Margin="0,0,0,12" Style="{StaticResource SectionTitleStyle}">常规</TextBlock>
                     <Border x:Name="SettingsGeneralGroup" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardOutlineBrush}" BorderThickness="1" CornerRadius="10">
                     <StackPanel>

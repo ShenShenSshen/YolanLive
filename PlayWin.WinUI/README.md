@@ -1,4 +1,4 @@
-# PlayWin（游窗）v1.0.6
+# PlayWin（游窗）v1.0.7
 
 Windows x64 游戏直播客户端，基于 WinUI 3。项目主页：https://github.com/ShenShenSshen/PlayWin
 原项目：https://github.com/xiaoyaocz/AllLive ，保留 MIT 许可证。
@@ -49,8 +49,8 @@ Windows x64 游戏直播客户端，基于 WinUI 3。项目主页：https://gith
 
 ## 本次验证
 
-v1.0.6 纳入视觉统一与内容优先调整，并修正独立窗口关闭后可能继续引用其原生窗口对象的问题。发布构建检查覆盖视觉 17 项、完整冒烟 113 项、图片 5 项及离线数据；预览阶段的播放器控件与窗口模式、资源策略以及本地 H.264 快速播放与回收预算记录继续保留。
+v1.0.7 合并浏览顶栏、调整顶部留白及页面对齐，修复卡片右侧空列和分类图片返回问题。发布检查覆盖完整冒烟、浅深色和窄布局、分类图片真实解码及容器回收、离线数据和隔离安装；明细见仓库 docs/validation/release-1.0.7.md。
 
-图片像素检查改为有时限地等待实际绘制，并增加空白图拒绝验证，连续三次通过；未改图片加载逻辑，原失败记录保留。播放器尺寸的时序不一致记录也保留。150%/200% 实机缩放、高对比度实际切换、真实平台所有房间和线路、多显示器未完整验收；没有重复长期性能对照。v1.0.5 记录的 B站访客首页和虎牙所选线路未通过项继续保留；不宣称四平台全面通过。安装／卸载未重新实测，程序与安装包仍未签名。
+顶栏离页后关闭布局监听，不增加轮询计时器；保留既有平台接口、播放参数、全屏及小窗规则。150%/200% 实机缩放、高对比度实际切换、四平台全部真实线路未完整验收；没有重复长期性能对照。程序及安装器仍未签名。
 
-详细更新、截图与验证报告见 GitHub 仓库 README、RELEASE_NOTES.md、VISUAL_DESIGN_NOTES.txt、PERFORMANCE_REPORT.md、PLAYER_PERFORMANCE_REPORT.md 和 TDD_IMAGE_REPORT.md。
+详细功能、截图、更新与历史验证记录见 GitHub 仓库 README、RELEASE_NOTES.md、PERFORMANCE_REPORT.md、PLAYER_PERFORMANCE_REPORT.md 和 TDD_IMAGE_REPORT.md。

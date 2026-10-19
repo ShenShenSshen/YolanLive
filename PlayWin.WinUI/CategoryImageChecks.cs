@@ -74,6 +74,7 @@ internal static class CategoryImageChecks
             report.Add("PASS page return: released image reloads and renders; successful donor directory reused");
             window.Root.Content = null;
             await Task.Delay(50);
+            await CheckCachedNavigationAsync(window, server.Url, report);
             await CheckCancelledCompletionAsync(server.Url, report);
             await CheckDonorFailureAsync(server.Url, report);
             var blank = new Image { Width = 100, Height = 100 };
@@ -90,6 +91,69 @@ internal static class CategoryImageChecks
             window.Root.Content = null; await Task.Delay(50);
             MainVM.Sites = originalSites; MainVM.BrowseSite = originalSite;
             File.WriteAllLines(Path.Combine(AppPaths.EnsureDirectory(), "category-image-checks.log"), report);
+        }
+    }
+    private static async Task CheckCachedNavigationAsync(MainWindow window, string picture, List<string> report)
+    {
+        // Exceed the virtualized panel cache even when all seven columns fit.
+        const int categoryCount = 240;
+        var donor = new ControlledBili(_ => Task.FromResult(new List<LiveCategory>
+        {
+            new() { ID = "2", Name = "网游", Children = Enumerable.Range(0, categoryCount).Select(i =>
+                new LiveSubCategory { ID = "return-" + i, ParentID = "2", Name = "返回游戏 " + i.ToString("D2"), Pic = picture }).ToList() }
+        }));
+        SetSites(new ControlledDouyin(), donor);
+        MainVM.BrowseSite = MainVM.Sites[0];
+        var frame = new Frame();
+        window.Root.Content = frame;
+        Check(frame.Navigate(typeof(Views.CategoryPage)), "Category navigation failed");
+        await UntilAsync(() => frame.Content is Views.CategoryPage current && current.IsLoaded, "Navigated category did not load");
+        var page = (Views.CategoryPage)frame.Content;
+        var grid = (GridView)page.FindName("GamesGrid");
+        await UntilAsync(() => grid.Items.Count == categoryCount, "Navigation fixture did not load its game names");
+        var first = grid.Items.OfType<LiveGameCategory>().First();
+        async Task CheckFirstPictureAsync()
+        {
+            grid.ScrollIntoView(first);
+            page.UpdateLayout();
+            Image image = null;
+            await UntilAsync(() =>
+            {
+                image = FindImage(grid.ContainerFromItem(first) as GridViewItem);
+                return image?.Source is BitmapImage bitmap && bitmap.PixelWidth > 0;
+            }, "Cached category kept its game names but did not restore the game artwork");
+            await AssertPictureRenderedAsync((FrameworkElement)((GridViewItem)grid.ContainerFromItem(first)).ContentTemplateRoot, image);
+            Check(DecodedImage.GetHasPicture(image), "Returned game still shows its missing-picture placeholder");
+        }
+        var recycled = 0;
+        void Recycled(ListViewBase sender, ContainerContentChangingEventArgs args) { if (args.InRecycleQueue) recycled++; }
+        grid.ContainerContentChanging += Recycled;
+        try
+        {
+            await CheckFirstPictureAsync();
+            foreach (var scrollAway in new[] { false, true })
+            {
+                if (scrollAway)
+                {
+                    var last = grid.Items.OfType<LiveGameCategory>().Last();
+                    grid.ScrollIntoView(last);
+                    await UntilAsync(() => grid.ContainerFromItem(last) != null && recycled > 0, "Scrolling did not exercise actual container recycling");
+                }
+                Check(frame.Navigate(typeof(Page)), "Navigation away failed");
+                await UntilAsync(() => !page.IsLoaded, "Category did not unload during navigation");
+                Check(frame.Navigate(typeof(Views.CategoryPage)), "Navigation back failed");
+                await UntilAsync(() => page.IsLoaded, "Cached category did not load on return");
+                Check(ReferenceEquals(frame.Content, page) && grid.Items.Count == categoryCount, "Cached category or game names changed on return");
+                await CheckFirstPictureAsync();
+                report.Add(scrollAway ? "PASS recycled category navigation: game artwork restores after scrolling, leaving and returning" :
+                    "PASS cached Frame navigation: game names and rendered artwork survive leaving and returning");
+            }
+        }
+        finally
+        {
+            grid.ContainerContentChanging -= Recycled;
+            window.Root.Content = null;
+            await Task.Delay(50);
         }
     }
     private static async Task CheckCancelledCompletionAsync(string picture, List<string> report)

@@ -49,7 +49,7 @@
                     Margin="0"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Source="Assets/PlayWin.svg" />
+                    Visibility="Collapsed" />
                 <Grid Grid.Column="1" Margin="0,0,138,0" Background="#00FFFFFF">
                     <TextBlock
                         x:Name="Title"
@@ -62,7 +62,8 @@
                         FontWeight="Normal"
                         ToolTipService.ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
                         TextTrimming="CharacterEllipsis"
-                        Text="{StaticResource AppDisplayName}" />
+                        Text=""
+                        Visibility="Collapsed" />
                 </Grid>
 
             </Grid>

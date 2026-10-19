@@ -1,0 +1,2 @@
+PASS embedded PlayWin B icon: PlayWin.exe
+PASS embedded PlayWin B icon: PlayWin-1.0.7-x64-Setup.exe

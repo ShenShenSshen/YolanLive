@@ -1,0 +1,30 @@
+PASS shared typography roles and native font sizes
+FAIL merged browser header, sidebar and native caption clearance Light
+System.Exception: Native drag region intercepts refresh clicks: caption=80,0,728,48; center=786,24
+   at PlayWin.WinUI.VisualDesignChecks.Check(Boolean value, String message) in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\VisualDesignChecks.cs:line 23
+   at PlayWin.WinUI.VisualDesignChecks.<>c__DisplayClass3_1.<<RunAsync>b__4>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\VisualDesignChecks.cs:line 136
+--- End of stack trace from previous location ---
+   at PlayWin.WinUI.VisualDesignChecks.<>c__DisplayClass3_0.<<RunAsync>g__Case|0>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\VisualDesignChecks.cs:line 48
+FAIL merged browser header, sidebar and native caption clearance Dark
+System.Exception: Native drag region intercepts refresh clicks: caption=80,0,728,48; center=786,24
+   at PlayWin.WinUI.VisualDesignChecks.Check(Boolean value, String message) in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\VisualDesignChecks.cs:line 23
+   at PlayWin.WinUI.VisualDesignChecks.<>c__DisplayClass3_1.<<RunAsync>b__4>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\VisualDesignChecks.cs:line 136
+--- End of stack trace from previous location ---
+   at PlayWin.WinUI.VisualDesignChecks.<>c__DisplayClass3_0.<<RunAsync>g__Case|0>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\PlayWin.WinUI\VisualDesignChecks.cs:line 48
+PASS category alignment, wrapped platform labels and 4:3 art Light width=280
+PASS category alignment, wrapped platform labels and 4:3 art Light width=480
+PASS category alignment, wrapped platform labels and 4:3 art Light width=640
+PASS category alignment, wrapped platform labels and 4:3 art Light width=960
+PASS category alignment, wrapped platform labels and 4:3 art Light width=1280
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=280
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=480
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=640
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=960
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=1280
+PASS quiet room cards keep rounded video and title details Light
+PASS quiet room cards keep rounded video and title details Dark
+PASS settings centered panel and responsive actions width=480
+PASS settings centered panel and responsive actions width=640
+PASS settings centered panel and responsive actions width=960
+PASS settings centered panel and responsive actions width=1280
+INFO actual rasterization scale=1; 150/200 percent physical font rendering and OS high contrast remain manual checks.

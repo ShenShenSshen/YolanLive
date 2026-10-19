@@ -4,22 +4,23 @@
 
 简洁的 Windows 游戏直播客户端。支持哔哩哔哩、抖音、虎牙和斗鱼，仅展示游戏分类，不显示弹幕。使用 WinUI 3，栏位采用磨砂材质，内容保持清晰。
 
-**已发布版本：v1.0.6 · Windows x64 · MIT**
+**已发布版本：v1.0.7 · Windows x64 · MIT**
 
-v1.0.6 统一圆润标题、清晰正文与页面留白，减弱卡片边框，让直播封面和游戏图片更突出；修正独立窗口关闭后的当前窗口引用。详见 [更新说明](RELEASE_NOTES.md) 与 [视觉调整说明](VISUAL_DESIGN_NOTES.txt)。
+v1.0.7 合并浏览顶栏、统一平台与内容对齐，改善顶部留白；修复返回分类后图片不显示，以及卡片右侧空出整列的问题。详见 [更新说明](RELEASE_NOTES.md) 与 [发布检查](docs/validation/release-1.0.7.md)。
 
-## v1.0.6 更新
+## v1.0.7 更新
 
-- 统一圆润标题、导航和清晰正文的字号、行高、页面边距及轻量过渡。
-- 减弱直播卡片与游戏分类边线，移除分类图片底板，让直播封面和游戏图片更突出；保留雾蓝磨砂、键盘焦点和选中反馈。
-- 修正独立窗口关闭后可能继续被记为当前窗口的问题，补充对应回归检查。
-- 安装版和便携版同步更新，软件、关于页与安装器版本统一为 1.0.6。验证结果、首次失败记录与限制见 [视觉调整说明](VISUAL_DESIGN_NOTES.txt)。
+- 平台切换、刷新与窗口按钮共用顶栏，侧栏贯通顶部，首页不再显示软件图标与名称；直播间保留房间标题。
+- 平台切换条收薄至 36，选中块为 28，保留 14 号文字并垂直居中；窄窗口自动换行。
+- 大类、卡片与页面操作统一对齐，设置标题与居中面板对齐；修复卡片宽度取整导致右侧空出整列。
+- 修复滚动、离开分类并返回后图片不再显示：回收容器时保留 URL 绑定，像素资源仍在离页时释放。
+- 提供安装版、便携版与 SHA-256；保留当前用户安装、覆盖升级保留数据及卸载清空数据。
 
 ## 下载
 
-- [安装版 PlayWin-1.0.6-x64-Setup.exe](https://github.com/ShenShenSshen/PlayWin/releases/download/v1.0.6/PlayWin-1.0.6-x64-Setup.exe)
-- [便携版 PlayWin-x64.zip](https://github.com/ShenShenSshen/PlayWin/releases/download/v1.0.6/PlayWin-x64.zip)
-- [SHA-256 校验文件](https://github.com/ShenShenSshen/PlayWin/releases/download/v1.0.6/SHA256SUMS.txt)
+- [安装版 PlayWin-1.0.7-x64-Setup.exe](https://github.com/ShenShenSshen/PlayWin/releases/download/v1.0.7/PlayWin-1.0.7-x64-Setup.exe)
+- [便携版 PlayWin-x64.zip](https://github.com/ShenShenSshen/PlayWin/releases/download/v1.0.7/PlayWin-x64.zip)
+- [SHA-256 校验文件](https://github.com/ShenShenSshen/PlayWin/releases/download/v1.0.7/SHA256SUMS.txt)
 - [所有发布版本](https://github.com/ShenShenSshen/PlayWin/releases)
 
 安装版默认安装到当前用户目录，创建开始菜单入口，默认创建桌面快捷方式，可取消。便携版解压后运行 `PlayWin.exe`，请保留整个目录。
@@ -40,7 +41,7 @@ v1.0.6 统一圆润标题、清晰正文与页面留白，减弱卡片边框，�
 
 ![游窗播放器：分组操作栏、亮度与窗口操作](docs/screenshots/player.png)
 
-截图沿用 v1.0.4 的隔离访客环境，展示主要功能；v1.0.6 的字体、边距与卡片样式已有调整。截图不含日常账号信息；直播内容与平台目录会随时间变化。
+截图沿用 v1.0.4 的隔离访客环境，展示主要功能；v1.0.7 的字体、卡片及顶栏布局已有调整。截图不含日常账号信息；直播内容与平台目录会随时间变化。
 
 ## 功能
 
@@ -87,7 +88,7 @@ dotnet run --project tests/WinUIDataCheck/WinUIDataCheck.csproj -c Release
 
 构建缓存、个人数据和发布产物不纳入源码。
 
-本次发布构建检查覆盖视觉 17 项、完整冒烟 113 项、图片 5 项与离线数据；预览阶段的播放器控件、资源策略及本地 H.264 快速播放与回收预算记录继续保留。图片检查现在等待实际像素并验证空白图不会被接受，连续三次通过；首次失败和播放器尺寸时序不一致记录保留，不能据此推断长期稳定性全面验证。见 [v1.0.6 发布检查](docs/validation/release-1.0.6.md)。150%/200% 实机缩放、系统高对比度切换和四平台全部真实线路未完整验收。v1.0.5 的 B站访客首页与虎牙所选线路未通过记录继续保留，详见 [播放器性能报告](PLAYER_PERFORMANCE_REPORT.md)、[图片验证报告](TDD_IMAGE_REPORT.md) 与 [客户端说明](PlayWin.WinUI/README.md)。
+本次发布检查覆盖视觉布局、分类图片返回与真实容器回收、完整冒烟、离线数据及隔离安装验证，结果见 [v1.0.7 发布检查](docs/validation/release-1.0.7.md)。测试使用 D 盘隔离访客目录，不读取日常账号。150%/200% 实机缩放、系统高对比度切换和四平台全部真实线路未完整验收；没有重复长期性能对照。v1.0.5 的 B站访客首页及虎牙所选线路未通过记录继续保留，详见 [播放器性能报告](PLAYER_PERFORMANCE_REPORT.md) 与 [客户端说明](PlayWin.WinUI/README.md)。
 
 ## 来源与许可证
 

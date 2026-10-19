@@ -1,0 +1,7 @@
+PASS actual category card: same-name fallback, original Douyin navigation, HTTP image decode and rendered pixels
+PASS page return: released image reloads and renders; successful donor directory reused
+PASS cached Frame navigation: game names and rendered artwork survive leaving and returning
+PASS recycled category navigation: game artwork restores after scrolling, leaving and returning
+PASS cancellation/return: underlying donor request cancelled, no stale artwork, return retries successfully
+PASS donor failure: next platform supplies matching artwork, Douyin partition unchanged
+PASS negative control: permanently blank artwork is rejected by the rendered-pixel deadline

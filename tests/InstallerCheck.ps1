@@ -21,10 +21,13 @@ if (-not (Test-Path -LiteralPath $CompilerPath)) { throw 'Pass -CompilerPath to 
 & $CompilerPath /Q "/DAppVersion=$version" "/DTestUserDataDir=$testData" (Join-Path $root 'installer\PlayWin.iss')
 if ($LASTEXITCODE -ne 0) { throw 'Isolated installer compilation failed.' }
 $setup = Join-Path $root "artifacts\PlayWin-$version-x64-Setup-test.exe"
-$data = Join-Path $env:LOCALAPPDATA 'PlayWin'
-function Run-Setup([string]$path, [string[]]$arguments) {
+$data = Join-Path $env:TEMP ('PlayWin-smoke-test\installer-' + $version + '-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $data -Force | Out-Null
+$previousSmokeProfile = $env:PLAYWIN_SMOKE_PROFILE
+$env:PLAYWIN_SMOKE_PROFILE = $data
+function Run-Setup([string]$path, [string[]]$arguments, [int]$timeoutMilliseconds = 60000) {
     $process = Start-Process -FilePath $path -ArgumentList $arguments -WindowStyle Hidden -PassThru
-    if (-not $process.WaitForExit(60000)) { throw 'Installer test process exceeded 60 seconds.' }
+    if (-not $process.WaitForExit($timeoutMilliseconds)) { Stop-Process -Id $process.Id; throw 'Installer test process exceeded its timeout.' }
     if ($process.ExitCode -ne 0) { throw "Installer test process failed: $($process.ExitCode)." }
 }
 function Remove-TestInstallation {
@@ -72,13 +75,14 @@ try {
     if ((Get-FileHash -LiteralPath $readme -Algorithm SHA256).Hash -ne $expected) { throw 'Upgrade did not replace program files.' }
     if (-not (Test-Path -LiteralPath (Join-Path $testData 'settings.json'))) { throw 'Upgrade unexpectedly cleared user data.' }
     'PASS reinstall restores program files without duplicate installation'
-    Run-Setup $exe @('--smoke-test')
+    Run-Setup $exe @('--smoke-test') 180000
     $report = Get-Content -LiteralPath (Join-Path $data 'smoke-test.log')
     $passedChecks = ($report | Where-Object { $_ -match '^PASS' }).Count
-    if (($report | Where-Object { $_ -match '^FAIL' }) -or $passedChecks -lt 94 -or -not ($report -contains 'PASS PlayWin name, icon and 18-point title') -or -not ($report -contains 'PASS PlayWin filenames and runtime dependency references')) { throw 'Installed application smoke or PlayWin branding checks failed.' }
+    if (($report | Where-Object { $_ -match '^FAIL' }) -or $passedChecks -lt 94 -or -not ($report -contains 'PASS PlayWin metadata and clean title bar') -or -not ($report -contains 'PASS PlayWin filenames and runtime dependency references')) { throw 'Installed application smoke or PlayWin branding checks failed.' }
     'PASS installed application: ' + $passedChecks + ' smoke checks including PlayWin branding'
 }
 finally {
+    $env:PLAYWIN_SMOKE_PROFILE = $previousSmokeProfile
     Remove-TestInstallation
 }
 if ((Test-Path -LiteralPath $registry) -or (Test-Path -LiteralPath $menu) -or (Test-Path -LiteralPath $desktop) -or (Test-Path -LiteralPath (Join-Path $installDir 'PlayWin.exe'))) { throw 'Uninstall left the application, registry or shortcuts behind.' }

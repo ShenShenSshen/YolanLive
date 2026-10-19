@@ -34,6 +34,9 @@ namespace PlayWin.WinUI
     public sealed partial class MainPage : Page
     {
 
+        internal Page ActivePage => frame.Content as Page;
+        internal bool IsTopNavigation => navigationView.PaneDisplayMode == NavigationViewPaneDisplayMode.Top;
+
         private bool startupUpdateChecked;
         private System.Threading.CancellationTokenSource randomLiveOperation;
 
@@ -108,6 +111,15 @@ namespace PlayWin.WinUI
             {
                 navigationView.PaneDisplayMode = Microsoft.UI.Xaml.Controls.NavigationViewPaneDisplayMode.Top;
             }
+            RefreshWindowChrome();
+        }
+
+        private void NavigationView_PaneStateChanged(NavigationView sender, object args) => RefreshWindowChrome();
+
+        private void RefreshWindowChrome()
+        {
+            for (DependencyObject current = this; current != null; current = VisualTreeHelper.GetParent(current))
+                if (current is BaseFramePage chrome) { chrome.RefreshChrome(); break; }
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -126,6 +138,7 @@ namespace PlayWin.WinUI
                 item.Tag = "SettingsPage";
             }
             frame.Navigate(Type.GetType("PlayWin.WinUI.Views." + item.Tag));
+            RefreshWindowChrome();
 
         }
 

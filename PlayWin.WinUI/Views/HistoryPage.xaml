@@ -2,14 +2,14 @@
 
     <Grid x:Name="PageLayoutRoot" design:PageDesign.Insets="True">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
-        <Grid x:Name="BrowseHeader" Margin="0,0,0,8" MinHeight="48">
+        <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" Margin="0" MinHeight="48">
             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <TextBlock x:Name="PageTitle" Margin="0,0,8,0" Style="{StaticResource PageTitleStyle}" Text="观看历史"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Button Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind historyVM.CleanCommand}" ToolTipService.ToolTip="清空历史" AutomationProperties.Name="清空历史" Visibility="{x:Bind historyVM.Loading, Mode=OneWay, Converter={StaticResource displayConvert}}"><SymbolIcon Symbol="Delete"/></Button>
                 <Button x:Name="HeaderRefresh" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind historyVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新" Visibility="{x:Bind historyVM.Loading, Mode=OneWay, Converter={StaticResource displayConvert}}"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/></Button>
             </StackPanel>
-        </Grid>
+        </Grid></TitleBar>
         <controls:MyAdaptiveGridView Grid.Row="1" Padding="0" Margin="-8,0,-8,-8" CanLoadMore="False" DesiredWidth="400" IsItemClickEnabled="True" ItemClick="ls_ItemClick" ItemHeight="96" ItemsSource="{x:Bind Path=historyVM.Items}" SelectionMode="None">
             <controls:MyAdaptiveGridView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource GridViewItemCornerRadiusStyle}" TargetType="GridViewItem">

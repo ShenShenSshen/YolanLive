@@ -75,6 +75,82 @@ internal static class VisualDesignChecks
             await Task.CompletedTask;
         });
         foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
+        await Case("merged browser header, sidebar and native caption clearance " + theme, async () =>
+        {
+            var chrome = new BaseFramePage();
+            var outer = (Frame)chrome.FindName("MainFrame");
+            var shell = new MainPage();
+            var navigation = (NavigationView)shell.FindName("navigationView");
+            var inner = (Frame)shell.FindName("frame");
+            var category = new Views.CategoryPage();
+            var vm = (CategoryVM)typeof(Views.CategoryPage).GetField("categoryVM", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(category);
+            for (var i = 0; i < 24; i++)
+            {
+                var game = BrowseChecks.Game(MainVM.BrowseSite, "header-" + i, i == 0 ? "三角洲行动" : "游戏 " + i);
+                game.Pic = "ms-appx:///Assets/PlayWin.png";
+                vm.Items.Add(game);
+            }
+            var groups = (ListView)category.FindName("GroupPicker");
+            var sampleGroups = new[] { new LiveCategory { Name = "网游" }, new LiveCategory { Name = "手游" }, new LiveCategory { Name = "单机游戏" }, new LiveCategory { Name = "游戏赛事" } };
+            inner.Content = category; outer.Content = shell;
+            chrome.RequestedTheme = theme;
+            await Show(chrome);
+            inner.Content = category;
+            await Task.Delay(250); chrome.RefreshChrome();
+            groups.ItemsSource = sampleGroups;
+            await Task.Delay(100);
+            foreach (var preset in new[] { "960×540", "1280×720" })
+            foreach (var expanded in new[] { false, true })
+            {
+                window.ApplyWindowSize(preset);
+                navigation.IsPaneOpen = expanded;
+                await Task.Delay(350); chrome.UpdateLayout();
+                var bar = (TitleBar)category.FindName("BrowserTitleBar");
+                var header = (Grid)category.FindName("BrowseHeader");
+                var refresh = (Button)category.FindName("HeaderRefresh");
+                var platform = (ListView)category.FindName("PlatformPicker");
+                var root = (Grid)category.Content;
+                Check(((Grid)chrome.FindName("TitleBarGrid")).Visibility == Visibility.Collapsed && Grid.GetRow(outer) == 0, "Old blank title row remains");
+                Check(root.Padding.Top == 0 && bar.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).Y <= 1,
+                    "Browser header does not reach the top: padding=" + root.Padding + "; y=" + bar.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).Y);
+                var rightInset = window.AppWindow.TitleBar.RightInset / chrome.XamlRoot.RasterizationScale;
+                var refreshRight = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(refresh.ActualWidth, 0)).X;
+                Check(refreshRight <= chrome.ActualWidth - rightInset + 1, "Refresh overlaps system caption buttons");
+                var gameGrid = (GridView)category.FindName("GamesGrid");
+                var first = gameGrid.ContainerFromIndex(0) as GridViewItem;
+                Check(first != null, "No game card in integrated layout");
+                var card = (FrameworkElement)first.ContentTemplateRoot;
+                Check(Math.Abs(card.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).X - header.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).X) <= 1, "Header and game cards no longer align");
+                var firstY = first.TransformToVisual(gameGrid).TransformPoint(new Windows.Foundation.Point()).Y;
+                var row = Enumerable.Range(0, gameGrid.Items.Count).Select(i => gameGrid.ContainerFromIndex(i) as GridViewItem)
+                    .Where(item => item != null && Math.Abs(item.TransformToVisual(gameGrid).TransformPoint(new Windows.Foundation.Point()).Y - firstY) < 1).ToArray();
+                var rowRight = row.Max(item => item.TransformToVisual(gameGrid).TransformPoint(new Windows.Foundation.Point(item.ActualWidth, 0)).X);
+                Check(gameGrid.ActualWidth - rowRight <= 24, "Category grid leaves an unused column: width=" + gameGrid.ActualWidth + "; right=" + rowRight + "; panel=" + gameGrid.ItemsPanelRoot.ActualWidth);
+                for (var i = 0; i < 4; i++) Check(platform.ContainerFromIndex(i) != null, "A platform label is hidden");
+                Check(refresh.Focus(FocusState.Keyboard), "Header actions lost keyboard access");
+                var pointer = Microsoft.UI.Input.InputNonClientPointerSource.GetForWindowId(window.AppWindow.Id);
+                var pass = pointer.GetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Passthrough);
+                var caption = pointer.GetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Caption);
+                var scale = chrome.XamlRoot.RasterizationScale;
+                bool IsInteractive(Windows.Foundation.Point point)
+                {
+                    bool Contains(Windows.Graphics.RectInt32 r) => point.X * scale >= r.X && point.X * scale < r.X + r.Width && point.Y * scale >= r.Y && point.Y * scale < r.Y + r.Height;
+                    return !caption.Any(Contains) || pass.Any(Contains);
+                }
+                var center = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(refresh.ActualWidth / 2, refresh.ActualHeight / 2));
+                Check(IsInteractive(center), "Native drag region intercepts refresh clicks: caption=" + string.Join(";", caption.Select(r => $"{r.X},{r.Y},{r.Width},{r.Height}")) + "; center=" + center);
+                if (((Border)category.FindName("PlatformSurface")).Parent == header)
+                {
+                    var firstTab = (ListViewItem)platform.ContainerFromIndex(0);
+                    var tabCenter = firstTab.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(firstTab.ActualWidth / 2, firstTab.ActualHeight / 2));
+                    Check(IsInteractive(tabCenter), "Native drag region intercepts platform selection");
+                }
+                if (preset == "1280×720" && !expanded) await Capture(chrome, "merged-browser-" + theme + ".png");
+            }
+            window.Root.Content = null; await Task.Delay(150);
+            Check(!((TitleBar)category.FindName("BrowserTitleBar")).AutoRefreshDragRegions, "Inactive cached header still listens for layout changes");
+        });
+        foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
         foreach (var width in new[] { 280d,480d,640d,960d,1280d })
             await Case("category alignment, wrapped platform labels and 4:3 art " + theme + " width=" + width, async () =>
             {
@@ -92,7 +168,7 @@ internal static class VisualDesignChecks
                     Check(container != null, "Missing platform label");
                     var label = Children(container).OfType<TextBlock>().First(t => t.Text == MainVM.Sites[i].Label);
                     var bounds = label.TransformToVisual(platform).TransformBounds(new Windows.Foundation.Rect(0,0,label.ActualWidth,label.ActualHeight));
-                    Check(bounds.Right <= platform.ActualWidth + 1 && bounds.Bottom <= platform.ActualHeight + 1, "Platform label clipped");
+                    Check(bounds.Right <= platform.ActualWidth + 1 && bounds.Bottom <= platform.ActualHeight + 1, "Platform label clipped: " + label.Text + "; bounds=" + bounds + "; picker=" + platform.ActualWidth + "x" + platform.ActualHeight);
                     Check(label.LineHeight == 20 && label.Margin.Top >= 0, "Platform baseline uses ad hoc offset");
                     if (container.IsSelected)
                     {
@@ -140,6 +216,8 @@ internal static class VisualDesignChecks
                 await Show(page);
                 var content = (StackPanel)page.FindName("SettingsCards");
                 Check(Math.Abs(content.ActualWidth - Math.Min(1040, width - 2 * (width < 640 ? 16 : 24))) <= 2, "Settings width drift");
+                var title = (TextBlock)page.FindName("PageTitle");
+                Check(Math.Abs(title.TransformToVisual(page).TransformPoint(new Windows.Foundation.Point()).X - content.TransformToVisual(page).TransformPoint(new Windows.Foundation.Point()).X) <= 1, "Settings heading does not align with its centered panels");
                 foreach (var row in page.SettingRows.Where(r => r.Visibility == Visibility.Visible))
                 {
                     var action = (FrameworkElement)row.Children[1];

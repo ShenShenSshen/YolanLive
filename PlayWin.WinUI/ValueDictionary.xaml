@@ -58,8 +58,8 @@
         <Setter Property="MinHeight" Value="36"/>
     </Style>
     <Style x:Key="PlatformTabStyle" TargetType="ListViewItem">
-        <Setter Property="CornerRadius" Value="8"/><Setter Property="Padding" Value="12,6"/><Setter Property="Margin" Value="4"/>
-        <Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="36"/>
+        <Setter Property="CornerRadius" Value="8"/><Setter Property="Padding" Value="12,3"/><Setter Property="Margin" Value="4"/>
+        <Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="28"/>
         <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListViewItem">
             <primitives:ListViewItemPresenter x:Name="Root" Control.IsTemplateFocusTarget="True" CornerRadius="{TemplateBinding CornerRadius}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" ContentMargin="{TemplateBinding Padding}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" Background="Transparent" SelectedBackground="{ThemeResource PlatformSelectedBrush}" SelectedPointerOverBackground="{ThemeResource PlatformSelectedHoverBrush}" SelectedPressedBackground="{ThemeResource PlatformSelectedPressedBrush}" SelectedForeground="{ThemeResource PlatformSelectedForegroundBrush}" PointerOverBackground="{ThemeResource AppHoverBrush}" PressedBackground="{ThemeResource AppPressedBrush}" FocusBorderBrush="{ThemeResource ListViewItemFocusBorderBrush}" FocusSecondaryBorderBrush="{ThemeResource ListViewItemFocusSecondaryBorderBrush}"/>
