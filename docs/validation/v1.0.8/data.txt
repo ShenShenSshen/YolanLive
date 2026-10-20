@@ -1,0 +1,1 @@
+PASS: YolanLive retains legacy storage, persisted settings, four-platform preservation, import filtering and repeated startup.

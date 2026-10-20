@@ -1,30 +1,30 @@
-param([string]$CompilerPath)
+param([string]$CompilerPath, [string]$PreviousInstaller)
 $installerCheckScriptRoot = $PSScriptRoot
 & (Join-Path $installerCheckScriptRoot '..\with-build-cache.ps1') {
 $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $installerCheckScriptRoot '..'))
-[xml]$project = Get-Content -LiteralPath (Join-Path $root 'PlayWin.WinUI\PlayWin.csproj') -Raw
+[xml]$project = Get-Content -LiteralPath (Join-Path $root 'YolanLive.WinUI\YolanLive.csproj') -Raw
 $version = [string]$project.Project.PropertyGroup.Version
-$setup = Join-Path $root "artifacts\PlayWin-$version-x64-Setup.exe"
+$setup = Join-Path $root "artifacts\YolanLive-$version-x64-Setup.exe"
 if ((Get-Item -LiteralPath $setup).VersionInfo.ProductVersion.Trim() -ne $version) { throw 'Setup executable version does not match project.' }
 $testRoot = Join-Path $root 'artifacts\installer-test'
 $installDir = Join-Path $testRoot 'app'
 if (-not $installDir.StartsWith($root + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Test install directory outside workspace.' }
 $registry = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{37BB6116-23DA-47D6-A658-3118D9587CA2}_is1'
-$menu = Join-Path ([Environment]::GetFolderPath('Programs')) '游窗-test.lnk'
-$desktop = Join-Path ([Environment]::GetFolderPath('Desktop')) '游窗-test.lnk'
+$menu = Join-Path ([Environment]::GetFolderPath('Programs')) '游岚-test.lnk'
+$desktop = Join-Path ([Environment]::GetFolderPath('Desktop')) '游岚-test.lnk'
 if ((Test-Path -LiteralPath $registry) -or (Test-Path -LiteralPath $menu) -or (Test-Path -LiteralPath $desktop)) { throw 'An existing test installation is present.' }
 New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
 $testData = Join-Path $testRoot 'userdata'
 if (-not $CompilerPath) { $CompilerPath = Join-Path $root 'artifacts\tools\InnoSetup\ISCC.exe' }
 if (-not (Test-Path -LiteralPath $CompilerPath)) { throw 'Pass -CompilerPath to compile the isolated uninstall test package.' }
-& $CompilerPath /Q "/DAppVersion=$version" "/DTestUserDataDir=$testData" (Join-Path $root 'installer\PlayWin.iss')
+& $CompilerPath /Q "/DAppVersion=$version" "/DTestUserDataDir=$testData" (Join-Path $root 'installer\YolanLive.iss')
 if ($LASTEXITCODE -ne 0) { throw 'Isolated installer compilation failed.' }
-$setup = Join-Path $root "artifacts\PlayWin-$version-x64-Setup-test.exe"
-$data = Join-Path $env:TEMP ('PlayWin-smoke-test\installer-' + $version + '-' + [guid]::NewGuid().ToString('N'))
+$setup = Join-Path $root "artifacts\YolanLive-$version-x64-Setup-test.exe"
+$data = Join-Path $env:TEMP ('YolanLive-smoke-test\installer-' + $version + '-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $data -Force | Out-Null
-$previousSmokeProfile = $env:PLAYWIN_SMOKE_PROFILE
-$env:PLAYWIN_SMOKE_PROFILE = $data
+$previousSmokeProfile = $env:YOLANLIVE_SMOKE_PROFILE
+$env:YOLANLIVE_SMOKE_PROFILE = $data
 function Run-Setup([string]$path, [string[]]$arguments, [int]$timeoutMilliseconds = 60000) {
     $process = Start-Process -FilePath $path -ArgumentList $arguments -WindowStyle Hidden -PassThru
     if (-not $process.WaitForExit($timeoutMilliseconds)) { Stop-Process -Id $process.Id; throw 'Installer test process exceeded its timeout.' }
@@ -45,25 +45,50 @@ function Remove-TestInstallation {
 }
 $flags = @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $installDir + '"'))
 try {
-    if ($PreviousInstaller) { throw 'PreviousInstaller must not be used with an isolated installation identity.' }
+    if ($PreviousInstaller) {
+        $previous = [IO.Path]::GetFullPath($PreviousInstaller)
+        $allowedPrevious = Join-Path $root 'artifacts\PlayWin-1.0.7-x64-Setup-test.exe'
+        if ($previous -ne $allowedPrevious -or (Get-Item -LiteralPath $previous).VersionInfo.ProductVersion.Trim() -ne '1.0.7') { throw 'Only the existing isolated v1.0.7 test installer is permitted.' }
+        $legacyMenu = Join-Path ([Environment]::GetFolderPath('Programs')) '游窗-test.lnk'
+        $legacyDesktop = Join-Path ([Environment]::GetFolderPath('Desktop')) '游窗-test.lnk'
+        if ((Test-Path -LiteralPath $legacyMenu) -or (Test-Path -LiteralPath $legacyDesktop)) { throw 'Legacy test shortcuts already exist.' }
+        Run-Setup $previous $flags
+        $legacyEntry = Get-ItemProperty -LiteralPath $registry
+        if ($legacyEntry.DisplayName -ne '游窗-test' -or $legacyEntry.DisplayVersion -ne '1.0.7') { throw 'Previous installer identity mismatch.' }
+        New-Item -ItemType Directory -Path (Join-Path $testData 'DouyinWebView\Default') -Force | Out-Null
+        foreach ($name in @('settings.json','PlayWin.db','DouyinWebView\Default\Cookies')) {
+            Set-Content -LiteralPath (Join-Path $testData $name) -Value 'isolated legacy upgrade marker'
+        }
+        $before = @(Get-ChildItem -LiteralPath $testData -File -Recurse | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName).Hash })
+        # No /DIR: the unchanged AppId must recover the old installation path.
+        Run-Setup $setup @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART')
+        $renamedEntry = Get-ItemProperty -LiteralPath $registry
+        if ($renamedEntry.DisplayName -ne '游岚-test' -or $renamedEntry.DisplayVersion -ne $version) { throw 'Upgrade did not reuse the existing installation identity.' }
+        $after = @(Get-ChildItem -LiteralPath $testData -File -Recurse | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName).Hash })
+        if (@(Compare-Object $before $after).Count -ne 0) { throw 'Rename upgrade changed legacy data.' }
+        if ((Test-Path -LiteralPath (Join-Path $installDir 'PlayWin.exe')) -or (Test-Path -LiteralPath (Join-Path $installDir 'PlayWin.dll')) -or (Test-Path -LiteralPath $legacyMenu) -or (Test-Path -LiteralPath $legacyDesktop)) { throw 'Rename upgrade left obsolete executable or shortcuts.' }
+        if (-not (Test-Path -LiteralPath (Join-Path $installDir 'YolanLive.exe')) -or -not (Test-Path -LiteralPath $menu) -or -not (Test-Path -LiteralPath $desktop)) { throw 'Rename upgrade did not replace entry points.' }
+        'PASS v1.0.7 rename upgrade preserves legacy data and replaces executable and shortcuts'
+        Remove-TestInstallation
+    }
     Run-Setup $setup ($flags + '/MERGETASKS=!desktopicon')
     if (Test-Path -LiteralPath $desktop) { throw 'Explicitly declining the desktop shortcut was ignored.' }
     Remove-TestInstallation
     'PASS user may decline the desktop shortcut'
     Run-Setup $setup $flags
-    $exe = Join-Path $installDir 'PlayWin.exe'
+    $exe = Join-Path $installDir 'YolanLive.exe'
     if (-not (Test-Path -LiteralPath $exe) -or -not (Test-Path -LiteralPath $menu) -or -not (Test-Path -LiteralPath $desktop)) { throw 'Installed executable or shortcuts missing.' }
     $installed = Get-ItemProperty -LiteralPath $registry
-    if ($installed.DisplayVersion -ne $version -or $installed.DisplayName -ne '游窗-test') { throw 'Installed name or version does not match project.' }
+    if ($installed.DisplayVersion -ne $version -or $installed.DisplayName -ne '游岚-test') { throw 'Installed name or version does not match project.' }
     if (-not (Get-Item -LiteralPath $exe).VersionInfo.FileVersion.StartsWith($version + '.')) { throw 'Executable version does not match installer.' }
     $shell = New-Object -ComObject WScript.Shell
     $shortcut = $shell.CreateShortcut($menu)
     if ($shortcut.TargetPath -ne $exe) { throw 'Start menu shortcut target is incorrect.' }
-    $icon = Join-Path $installDir 'Assets\PlayWin.ico'
+    $icon = Join-Path $installDir 'Assets\YolanLive.ico'
     $desktopShortcut = $shell.CreateShortcut($desktop)
-    if ($desktopShortcut.TargetPath -ne $exe -or $desktopShortcut.IconLocation -ne ($icon + ',0')) { throw 'Desktop shortcut does not use the PlayWin B icon.' }
-    if (-not (Test-Path -LiteralPath $icon)) { throw 'PlayWin B icon was not installed.' }
-    'PASS current-user install, version and default desktop shortcut with PlayWin B icon'
+    if ($desktopShortcut.TargetPath -ne $exe -or $desktopShortcut.IconLocation -ne ($icon + ',0')) { throw 'Desktop shortcut does not use the YolanLive B icon.' }
+    if (-not (Test-Path -LiteralPath $icon)) { throw 'YolanLive B icon was not installed.' }
+    'PASS current-user install, version and default desktop shortcut with YolanLive B icon'
     New-Item -ItemType Directory -Path (Join-Path $testData 'DouyinWebView\Default') -Force | Out-Null
     foreach ($name in @('settings.json','PlayWin.db','history.db','application.log','DouyinWebView\Default\Cookies')) {
         Set-Content -LiteralPath (Join-Path $testData $name) -Value 'fake uninstall test data, not a real session'
@@ -78,14 +103,14 @@ try {
     Run-Setup $exe @('--smoke-test') 180000
     $report = Get-Content -LiteralPath (Join-Path $data 'smoke-test.log')
     $passedChecks = ($report | Where-Object { $_ -match '^PASS' }).Count
-    if (($report | Where-Object { $_ -match '^FAIL' }) -or $passedChecks -lt 94 -or -not ($report -contains 'PASS PlayWin metadata and clean title bar') -or -not ($report -contains 'PASS PlayWin filenames and runtime dependency references')) { throw 'Installed application smoke or PlayWin branding checks failed.' }
-    'PASS installed application: ' + $passedChecks + ' smoke checks including PlayWin branding'
+    if (($report | Where-Object { $_ -match '^FAIL' }) -or $passedChecks -lt 94 -or -not ($report -contains 'PASS YolanLive metadata and clean title bar') -or -not ($report -contains 'PASS YolanLive filenames and runtime dependency references')) { throw 'Installed application smoke or YolanLive branding checks failed.' }
+    'PASS installed application: ' + $passedChecks + ' smoke checks including YolanLive branding'
 }
 finally {
-    $env:PLAYWIN_SMOKE_PROFILE = $previousSmokeProfile
+    $env:YOLANLIVE_SMOKE_PROFILE = $previousSmokeProfile
     Remove-TestInstallation
 }
-if ((Test-Path -LiteralPath $registry) -or (Test-Path -LiteralPath $menu) -or (Test-Path -LiteralPath $desktop) -or (Test-Path -LiteralPath (Join-Path $installDir 'PlayWin.exe'))) { throw 'Uninstall left the application, registry or shortcuts behind.' }
+if ((Test-Path -LiteralPath $registry) -or (Test-Path -LiteralPath $menu) -or (Test-Path -LiteralPath $desktop) -or (Test-Path -LiteralPath (Join-Path $installDir 'YolanLive.exe'))) { throw 'Uninstall left the application, registry or shortcuts behind.' }
 if (Test-Path -LiteralPath $testData) { throw 'Uninstall retained test user data or browser cache.' }
 
 'PASS uninstall removes program, shortcuts, all user data and browser cache; real user data untouched by isolated testing'

@@ -1,0 +1,197 @@
+<?xml version="1.0" ?><Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:convert="using:YolanLive.WinUI.Converters" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="using:YolanLive.WinUI.Views" xmlns:controls="using:YolanLive.WinUI.Controls" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:models="using:YolanLive.Core.Models" xmlns:mvvm="using:YolanLive.WinUI.ViewModels" xmlns:my="using:Microsoft.UI.Xaml.Controls" xmlns:winui="using:Microsoft.UI.Xaml.Controls" x:Class="YolanLive.WinUI.Views.LiveRoomPage" mc:Ignorable="d" FontFamily="{StaticResource ContentControlThemeFontFamily}" FontSize="{StaticResource BodyTextSize}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid x:Name="TitleBarGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <Grid x:Name="TitleBar" Grid.Column="1" Height="32" Background="{ThemeResource ChromeSurfaceBrush}" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <Image x:Name="AppIcon" Grid.Column="1" Width="18" Height="18" Margin="12,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" Source="{x:Bind Path=liveRoomVM.SiteLogo, Mode=OneWay}"/>
+                <Grid Grid.Column="2" Margin="0,0,138,0" Background="#00FFFFFF">
+                    <TextBlock x:Name="Title" Margin="12,0" VerticalAlignment="Center" FontFamily="{StaticResource ContentControlThemeFontFamily}" FontSize="{StaticResource BodyTextSize}" LineHeight="{StaticResource SecondaryLineHeight}" FontWeight="Normal" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}">
+                        <Run Text="{x:Bind Path=liveRoomVM.Title, Mode=OneWay}"/>
+                        <Run Text=" - "/>
+                        <Run Text="{x:Bind Path=liveRoomVM.Name, Mode=OneWay}"/>
+                    </TextBlock>
+                </Grid>
+
+            </Grid>
+        </Grid>
+        <Grid x:Name="GridContent" Grid.Row="1">
+            <Grid.RowDefinitions><RowDefinition x:Name="TopMiniToolbar" Height="0"/>
+                <RowDefinition/>
+                <RowDefinition x:Name="BottomInfo" Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="BtnFoucs" Width="0" Height="0" Margin="-8,-8,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Grid.Row="1"/>
+
+                <Grid SizeChanged="PlayerGrid_SizeChanged" Background="Black" DoubleTapped="Grid_DoubleTapped" ManipulationMode="None" IsTapEnabled="False" IsRightTapEnabled="False" IsHoldingEnabled="False" PointerEntered="Grid_PointerEntered" PointerExited="Grid_PointerExited" PointerMoved="Grid_PointerMoved" RequestedTheme="Dark" x:Name="VideoSurface" Grid.Row="1" PointerPressed="VideoSurface_PointerPressed">
+                    <MediaPlayerElement x:Name="player" Stretch="Uniform"/>
+                    <!--  亮度  -->
+                    <Grid x:Name="BrightnessShield" Background="#99000000" Opacity="0"/>
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" Foreground="{ThemeResource ReadableSecondaryTextBrush}" Visibility="{x:Bind Path=liveRoomVM.Living, Mode=OneWay, Converter={StaticResource displayConvert}}">
+                        暂未开播
+                    </TextBlock>
+                    <StackPanel x:Name="PlayerLoading" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                        <ProgressRing Width="56" Height="56" IsActive="True"/>
+                        <TextBlock x:Name="PlayerLoadText" Margin="0,8" Foreground="{ThemeResource ReadableSecondaryTextBrush}" TextAlignment="Center">
+                            加载中
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel x:Name="PlaybackFailure" MaxWidth="460" Margin="16" Spacing="12" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                        <TextBlock x:Name="PlaybackFailureText" TextWrapping="Wrap" TextAlignment="Center"/>
+                        <Button Content="重新播放" HorizontalAlignment="Center" Click="BottomBtnRefresh_Click"/>
+                    </StackPanel>
+                    <Border x:Name="ToolTip" Padding="16" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#CCFFFFFF" CornerRadius="8" Visibility="Collapsed">
+                        <TextBlock x:Name="TxtToolTip" FontSize="20" Foreground="Black" Text=""/>
+                    </Border>
+                    
+
+                </Grid>
+
+
+            
+
+            <ProgressRing Grid.ColumnSpan="2" Width="48" Height="48" HorizontalAlignment="Center" VerticalAlignment="Center" IsActive="True" Visibility="{x:Bind Path=liveRoomVM.Loading, Mode=OneWay}" Grid.Row="1"/>
+        <Grid x:Name="control" Grid.Row="2" MinHeight="60" VerticalAlignment="Stretch" PointerMoved="Grid_PointerMoved"><Grid.Resources>
+    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{ThemeResource PlayerToolbarHoverColor}"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{ThemeResource PlayerToolbarPressedColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{ThemeResource PlayerToolbarTextColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{ThemeResource PlayerToolbarTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="{ThemeResource PlayerToolbarHoverColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="{ThemeResource PlayerToolbarPressedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="{ThemeResource PlayerToolbarTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="{ThemeResource PlayerToolbarTextColor}"/>
+</Grid.Resources><Border x:Name="DockToolbarBackground" Background="{ThemeResource PlayerToolbarSurfaceBrush}" BorderBrush="{ThemeResource PlayerToolbarStrokeBrush}" BorderThickness="0,1,0,0" IsHitTestVisible="False"/><Border x:Name="FloatingToolbarBackground" Background="{ThemeResource PlayerControlsBrush}" CornerRadius="12" BorderBrush="{ThemeResource PlayerToolbarStrokeBrush}" BorderThickness="1" Visibility="Collapsed" IsHitTestVisible="False"/>
+
+                        <Grid x:Name="StandardControl">
+    <Grid x:Name="StandardToolbarLayout" MinHeight="60" Padding="20,0" VerticalAlignment="Center">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="24"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="24"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="24"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel x:Name="PlayControls" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Button x:Name="RandomPrevious" Style="{StaticResource PlayerToolbarButtonStyle}" Visibility="Collapsed" Click="RandomBrowse_Click" ToolTipService.ToolTip="上一个直播间" AutomationProperties.Name="上一个直播间"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/></Button>
+            <Button x:Name="PlayBtnPlay" Style="{StaticResource PlayerToolbarPlayStyle}" Click="PlayBtnPlay_Click" ToolTipService.ToolTip="播放" AutomationProperties.Name="播放"><Button.Resources>
+    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{ThemeResource PlayerToolbarPlayHoverColor}"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{ThemeResource PlayerToolbarPlayPressedColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{ThemeResource PlayerToolbarPlayForegroundColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{ThemeResource PlayerToolbarPlayForegroundColor}"/>
+</Button.Resources><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="20" Glyph=""/></Button>
+            <Button x:Name="PlayBtnPause" Style="{StaticResource PlayerToolbarPlayStyle}" Click="PlayBtnPause_Click" Visibility="Collapsed" ToolTipService.ToolTip="暂停" AutomationProperties.Name="暂停"><Button.Resources>
+    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{ThemeResource PlayerToolbarPlayHoverColor}"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{ThemeResource PlayerToolbarPlayPressedColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{ThemeResource PlayerToolbarPlayForegroundColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{ThemeResource PlayerToolbarPlayForegroundColor}"/>
+</Button.Resources><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="20" Glyph=""/></Button>
+            <Button x:Name="RandomNext" Style="{StaticResource PlayerToolbarButtonStyle}" Visibility="Collapsed" Click="RandomBrowse_Click" ToolTipService.ToolTip="下一个直播间" AutomationProperties.Name="下一个直播间"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/></Button>
+        </StackPanel>
+        <StackPanel x:Name="SoundControls" Grid.Column="2" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+            <Button x:Name="PlayBtnVolume" Style="{StaticResource PlayerToolbarButtonStyle}" Width="84" Height="40" Padding="10,0" ToolTipService.ToolTip="调节音量" AutomationProperties.Name="音量">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/><TextBlock x:Name="VolumeLabel" Text="音量" FontSize="13" VerticalAlignment="Center"/></StackPanel>
+                <Button.Flyout>
+                                            <Flyout>
+                                                <StackPanel>
+                                                    <TextBlock>音量</TextBlock>
+                                                    <Slider x:Name="SliderVolume" Width="200" Maximum="1" Minimum="0" StepFrequency="0.1" Value="1"/>
+                                                </StackPanel>
+                                            </Flyout>
+                                        </Button.Flyout>
+            </Button>
+            <Button x:Name="PlayBtnBrightness" Style="{StaticResource PlayerToolbarButtonStyle}" Width="84" Height="40" Padding="10,0" ToolTipService.ToolTip="调节亮度" AutomationProperties.Name="亮度">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph="&#xE706;"/><TextBlock x:Name="BrightnessLabel" Text="亮度" FontSize="13" VerticalAlignment="Center"/></StackPanel>
+                <Button.Flyout><Flyout>
+                    <StackPanel Spacing="8"><Grid><TextBlock Text="亮度"/><TextBlock x:Name="BrightnessValue" Text="100%" HorizontalAlignment="Right"/></Grid>
+                        <Slider x:Name="SliderBrightness" Width="200" Minimum="0" Maximum="100" StepFrequency="1" Value="100" AutomationProperties.Name="视频亮度"/>
+                    </StackPanel>
+                </Flyout></Button.Flyout>
+            </Button>
+        </StackPanel>
+        <ScrollViewer Grid.Column="4" Margin="0" HorizontalContentAlignment="Center" HorizontalScrollBarVisibility="Hidden" HorizontalScrollMode="Enabled" VerticalScrollBarVisibility="Disabled" VerticalScrollMode="Disabled">
+            <StackPanel x:Name="PlaybackOptions" Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border x:Name="QualityFrame" Width="160" Height="40" Padding="12,0,4,0" CornerRadius="10" Background="{ThemeResource PlayerToolbarOptionBrush}" BorderBrush="{ThemeResource PlayerToolbarStrokeBrush}" BorderThickness="1">
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <TextBlock x:Name="QualityLabel" Text="画质" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{ThemeResource PlayerToolbarSecondaryBrush}"/>
+                        <controls:PlayerOptionComboBox x:Name="PlayQuality" Grid.Column="1" Height="36" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Center" Padding="6,0,4,0" CornerRadius="8" Background="Transparent" BorderThickness="0" FontSize="14" Foreground="{ThemeResource PlayerToolbarTextBrush}" PlaceholderText="未就绪" IsEnabled="False" DisplayMemberPath="Quality" ItemsSource="{x:Bind liveRoomVM.Qualities, Mode=OneWay}" SelectedItem="{x:Bind liveRoomVM.CurrentQuality, Mode=TwoWay}" ToolTipService.ToolTip="选择画质" AutomationProperties.Name="选择画质" FontFamily="{StaticResource ContentControlThemeFontFamily}"/>
+                    </Grid>
+                </Border>
+                <Border x:Name="LineFrame" Width="160" Height="40" Padding="12,0,4,0" CornerRadius="10" Background="{ThemeResource PlayerToolbarOptionBrush}" BorderBrush="{ThemeResource PlayerToolbarStrokeBrush}" BorderThickness="1">
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <TextBlock x:Name="LineLabel" Text="线路" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{ThemeResource PlayerToolbarSecondaryBrush}"/>
+                        <controls:PlayerOptionComboBox x:Name="PlayLine" Grid.Column="1" Height="36" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Center" Padding="6,0,4,0" CornerRadius="8" Background="Transparent" BorderThickness="0" FontSize="14" Foreground="{ThemeResource PlayerToolbarTextBrush}" PlaceholderText="未就绪" IsEnabled="False" DisplayMemberPath="Name" ItemsSource="{x:Bind liveRoomVM.Lines, Mode=OneWay}" SelectedItem="{x:Bind liveRoomVM.CurrentLine, Mode=TwoWay}" ToolTipService.ToolTip="切换播放线路" AutomationProperties.Name="选择线路" FontFamily="{StaticResource ContentControlThemeFontFamily}"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel x:Name="RoomActions" Grid.Column="6" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button x:Name="WindowSizeButton" Style="{StaticResource PlayerToolbarButtonStyle}" Width="72" Height="40" ToolTipService.ToolTip="播放区域尺寸" AutomationProperties.Name="播放区域尺寸"><TextBlock Text="尺寸 ▾" FontSize="13"/><Button.Flyout><MenuFlyout x:Name="WindowSizeMenu" Opening="WindowSizeMenu_Opening"/></Button.Flyout></Button>
+            <Button x:Name="DirectFullscreenButton" Style="{StaticResource PlayerToolbarButtonStyle}" Width="72" Height="40" ToolTipService.ToolTip="显示模式" AutomationProperties.Name="显示模式"><TextBlock Text="显示 ▾" FontSize="13"/><Button.Flyout><MenuFlyout x:Name="DisplayModeMenu" Opening="DisplayModeMenu_Opening"><ToggleMenuFlyoutItem x:Name="NormalWindowItem" Text="普通窗口" Click="NormalWindow_Click"/><ToggleMenuFlyoutItem x:Name="PlayBtnMinWindow" Text="置顶小窗" Click="PlayBtnMinWindow_Click"><ToggleMenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph=""/></ToggleMenuFlyoutItem.Icon></ToggleMenuFlyoutItem><ToggleMenuFlyoutItem x:Name="PlayBtnFullWindow" Text="窗口内全屏" Click="PlayBtnFullWindow_Click"><ToggleMenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph=""/></ToggleMenuFlyoutItem.Icon></ToggleMenuFlyoutItem><ToggleMenuFlyoutItem x:Name="PlayBtnExitFullWindow" Text="退出窗口内全屏" Click="PlayBtnExitFullWindow_Click" Visibility="Collapsed"><ToggleMenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph=""/></ToggleMenuFlyoutItem.Icon></ToggleMenuFlyoutItem><ToggleMenuFlyoutItem x:Name="PlayBtnFullScreen" Text="全屏" Click="PlayBtnFullScreen_Click"><ToggleMenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph=""/></ToggleMenuFlyoutItem.Icon></ToggleMenuFlyoutItem><ToggleMenuFlyoutItem x:Name="PlayBtnExitFullScreen" Text="退出全屏" Click="PlayBtnExitFullScreen_Click" Visibility="Collapsed"><ToggleMenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph=""/></ToggleMenuFlyoutItem.Icon></ToggleMenuFlyoutItem></MenuFlyout></Button.Flyout></Button>
+            <StackPanel x:Name="FavoriteActions" Orientation="Horizontal">
+            <Button x:Name="BottomBtnAddFavorite" Style="{StaticResource PlayerToolbarButtonStyle}" Width="40" Height="40" Padding="0" Command="{x:Bind liveRoomVM.AddFavoriteCommand}" Visibility="{x:Bind liveRoomVM.IsFavorite, Mode=OneWay, Converter={StaticResource displayConvert}}" ToolTipService.ToolTip="关注主播" AutomationProperties.Name="关注主播">
+                <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/>
+            </Button>
+            <Button x:Name="BottomBtnRemoveFavorite" Style="{StaticResource PlayerToolbarButtonStyle}" Width="40" Height="40" Padding="0" Foreground="{ThemeResource PlayerToolbarPlayBrush}" Command="{x:Bind liveRoomVM.RemoveFavoriteCommand}" Visibility="{x:Bind liveRoomVM.IsFavorite, Mode=OneWay}" ToolTipService.ToolTip="取消关注" AutomationProperties.Name="取消关注">
+                <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/>
+            </Button>
+            </StackPanel>
+            <Button x:Name="BottomBtnRefresh" Style="{StaticResource PlayerToolbarButtonStyle}" Click="BottomBtnRefresh_Click" ToolTipService.ToolTip="刷新直播" AutomationProperties.Name="刷新直播"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/></Button>
+
+            <Button x:Name="PlayerMoreButton" Style="{StaticResource PlayerToolbarButtonStyle}" ToolTipService.ToolTip="更多操作" AutomationProperties.Name="更多操作"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/>
+                <Button.Flyout><MenuFlyout x:Name="PlayerMoreMenu" Opening="PlayerMoreMenu_Opening"><MenuFlyoutItem x:Name="OverflowFavorite" Text="关注" Click="MiniFavoriteItem_Click" Visibility="Collapsed"/><MenuFlyoutItem x:Name="OverflowRefresh" Text="刷新" Click="BottomBtnRefresh_Click" Visibility="Collapsed"/>
+
+                    <MenuFlyoutSeparator x:Name="OverflowSeparator" Visibility="Collapsed"/>
+                    <MenuFlyoutItem x:Name="PlayTopBtnScreenshot" Text="截图" Click="PlayTopBtnScreenshot_Click"><MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph=""/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                    <MenuFlyoutItem x:Name="BottomBtnShare" Text="分享直播间" Click="BottomBtnShare_Click"><MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph=""/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                    <MenuFlyoutItem x:Name="BottomBtnOpenBrowser" Text="在浏览器中打开" Click="BottomBtnOpenBrowser_Click"><MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph=""/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                    <MenuFlyoutItem x:Name="BottomBtnPlayUrl" Text="复制播放直链" Click="BottomBtnPlayUrl_Click"><MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph=""/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                </MenuFlyout></Button.Flyout>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Grid>
+                        <Grid x:Name="MiniControl" VerticalAlignment="Stretch" Visibility="Collapsed" Padding="8,0">
+                            <Grid x:Name="MiniToolbarButtons" VerticalAlignment="Center" MinHeight="32">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="12"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="12"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Width="32" Height="32" Click="PlayBtnPause_Click" ToolTipService.ToolTip="暂停" Visibility="{Binding ElementName=PlayBtnPause, Path=Visibility, Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource PlayerToolbarPlayStyle}" CornerRadius="16"><Button.Resources>
+    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{ThemeResource PlayerToolbarPlayHoverColor}"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{ThemeResource PlayerToolbarPlayPressedColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{ThemeResource PlayerToolbarPlayForegroundColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{ThemeResource PlayerToolbarPlayForegroundColor}"/>
+</Button.Resources><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/>
+                                    
+                                </Button>
+                                <Button Width="32" Height="32" Click="PlayBtnPlay_Click" ToolTipService.ToolTip="播放" Visibility="{Binding ElementName=PlayBtnPlay, Path=Visibility, Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource PlayerToolbarPlayStyle}" CornerRadius="16"><Button.Resources>
+    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{ThemeResource PlayerToolbarPlayHoverColor}"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{ThemeResource PlayerToolbarPlayPressedColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{ThemeResource PlayerToolbarPlayForegroundColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{ThemeResource PlayerToolbarPlayForegroundColor}"/>
+</Button.Resources><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/>
+                                    
+                                </Button>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                    <Button x:Name="MiniVolumeButton" Width="32" Height="32" VerticalAlignment="Center" Click="MiniVolumeButton_Click" ToolTipService.ToolTip="音量" AutomationProperties.Name="音量" HorizontalAlignment="Center" Style="{StaticResource PlayerToolbarButtonStyle}"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/></Button><Button x:Name="MiniBrightnessButton" Width="32" Height="32" VerticalAlignment="Center" Click="MiniBrightnessButton_Click" ToolTipService.ToolTip="亮度" AutomationProperties.Name="亮度" HorizontalAlignment="Center" Style="{StaticResource PlayerToolbarButtonStyle}"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph="&#xE706;"/></Button>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Button x:Name="MiniMoreButton" Width="32" Height="32" VerticalAlignment="Center" ToolTipService.ToolTip="更多" AutomationProperties.Name="更多" HorizontalAlignment="Center" Style="{StaticResource PlayerToolbarButtonStyle}"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/><Button.Flyout><MenuFlyout x:Name="MiniMoreMenu" Opening="MiniMoreMenu_Opening"><MenuFlyoutItem x:Name="MiniOverflowPrevious" Text="上一个直播间" Visibility="Collapsed" Click="RandomBrowse_Click"/><MenuFlyoutItem x:Name="MiniOverflowNext" Text="下一个直播间" Visibility="Collapsed" Click="RandomBrowse_Click"/><MenuFlyoutSubItem x:Name="MiniQualityMenu" Text="画质"/><MenuFlyoutSubItem x:Name="MiniLineMenu" Text="线路"/><MenuFlyoutSubItem x:Name="MiniSizeMenu" Text="播放区域尺寸"/><MenuFlyoutSubItem x:Name="MiniModeMenu" Text="显示模式"/><MenuFlyoutSeparator/><MenuFlyoutItem x:Name="MiniFavoriteItem" Text="关注" Click="MiniFavoriteItem_Click"/><MenuFlyoutItem Text="刷新" Click="BottomBtnRefresh_Click"/><MenuFlyoutItem Text="截图" Click="PlayTopBtnScreenshot_Click"/><MenuFlyoutItem Text="分享" Click="BottomBtnShare_Click"/><MenuFlyoutItem Text="浏览器" Click="BottomBtnOpenBrowser_Click"/><MenuFlyoutItem Text="直链" Click="BottomBtnPlayUrl_Click"/><MenuFlyoutSeparator/><MenuFlyoutItem Text="关闭窗口" Click="ClosePlaybackWindow_Click"/></MenuFlyout></Button.Flyout></Button><Button x:Name="BottomBtnExitMiniWindows" Width="32" Height="32" HorizontalAlignment="Center" VerticalAlignment="Center" Click="BottomBtnExitMiniWindows_Click" ToolTipService.ToolTip="恢复窗口" AutomationProperties.Name="恢复窗口" Style="{StaticResource PlayerToolbarButtonStyle}" Background="{ThemeResource PlayerToolbarOptionBrush}">
+                                
+                            <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/></Button>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+
+                    </Grid></Grid>
+    </Grid>
+
+</Page>

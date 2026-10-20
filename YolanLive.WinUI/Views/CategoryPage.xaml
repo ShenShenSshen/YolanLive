@@ -1,0 +1,35 @@
+<?xml version="1.0" ?><Page xmlns:controls="using:YolanLive.WinUI.Controls" xmlns:design="using:YolanLive.WinUI.Helper" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:models="using:YolanLive.Core.Models" xmlns:viewModels="using:YolanLive.WinUI.ViewModels" xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives" xmlns:perf="using:YolanLive.WinUI.Helper" x:Class="YolanLive.WinUI.Views.CategoryPage" FontFamily="{StaticResource ContentControlThemeFontFamily}" FontSize="{StaticResource BodyTextSize}" Foreground="{ThemeResource AppTextBrush}">
+ <Page.Resources>
+ <CornerRadius x:Key="GridViewItemCornerRadius">10</CornerRadius>
+ <Style x:Key="GameGroupItemStyle" TargetType="ListViewItem">
+ <Setter Property="CornerRadius" Value="8"/><Setter Property="Padding" Value="14,8"/><Setter Property="Margin" Value="0,0,8,6"/><Setter Property="MinWidth" Value="80"/><Setter Property="MinHeight" Value="36"/>
+ <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="UseSystemFocusVisuals" Value="True"/>
+ <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListViewItem">
+ <primitives:ListViewItemPresenter CornerRadius="{TemplateBinding CornerRadius}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" ContentMargin="{TemplateBinding Padding}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" Foreground="{TemplateBinding Foreground}" Background="Transparent" SelectedBackground="{ThemeResource CategorySelectedBrush}" SelectedPointerOverBackground="{ThemeResource AppSelectionHoverBrush}" SelectedPressedBackground="{ThemeResource CategorySelectedBrush}" SelectedForeground="{ThemeResource CategorySelectedForegroundBrush}" PointerOverBackground="{ThemeResource AppHoverBrush}" PressedBackground="{ThemeResource AppPressedBrush}" FocusBorderBrush="{ThemeResource ListViewItemFocusBorderBrush}" FocusSecondaryBorderBrush="{ThemeResource ListViewItemFocusSecondaryBorderBrush}"/>
+ </ControlTemplate></Setter.Value></Setter>
+ <Setter Property="FontSize" Value="14"/><Setter Property="FontFamily" Value="{StaticResource NavigationFontFamily}"/></Style>
+ </Page.Resources>
+ <Grid x:Name="PageLayoutRoot" design:PageDesign.Insets="True"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+ <StackPanel Margin="0,0,0,8" Spacing="12">
+ <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" MinHeight="48"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CompactPageTitle" Text="分类" Style="{StaticResource PageTitleStyle}" Visibility="Collapsed"/><Border x:Name="PlatformSurface" Padding="0" VerticalAlignment="Center" HorizontalAlignment="Left" CornerRadius="12" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource BrowsingOutlineBrush}" BorderThickness="0">
+ <ListView x:Name="PlatformPicker" Padding="0" ItemsSource="{x:Bind viewModels:MainVM.Sites}" SelectionChanged="PlatformPicker_SelectionChanged" SelectionMode="Single" IsMultiSelectCheckBoxEnabled="False" HorizontalAlignment="Left" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.VerticalScrollMode="Disabled" ItemContainerStyle="{StaticResource PlatformTabStyle}" AutomationProperties.Name="直播平台">
+ <ListView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" ItemWidth="96" ItemHeight="36"/></ItemsPanelTemplate></ListView.ItemsPanel>
+ <ListView.ItemTemplate><DataTemplate><TextBlock Style="{StaticResource NavigationTextStyle}" Text="{Binding Label}" FontSize="{StaticResource BodyTextSize}" Margin="0" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" LineHeight="20" FontFamily="{StaticResource NavigationFontFamily}"/></DataTemplate></ListView.ItemTemplate>
+ </ListView>
+ </Border><Button x:Name="HeaderRefresh" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind categoryVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/></Button></Grid></TitleBar>
+ <Border x:Name="PlatformOverflowHost" Visibility="Collapsed" HorizontalAlignment="Left"/>
+ <ListView x:Name="GroupPicker" Padding="0" ItemsSource="{x:Bind categoryVM.Groups}" SelectedItem="{x:Bind categoryVM.SelectedGroup, Mode=TwoWay}" SelectionMode="Single" AutomationProperties.Name="游戏大类" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemContainerStyle="{StaticResource GameGroupItemStyle}">
+ <ListView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" ItemWidth="112"/></ItemsPanelTemplate></ListView.ItemsPanel>
+ <ListView.ItemTemplate><DataTemplate x:DataType="models:LiveCategory"><TextBlock Style="{StaticResource NavigationTextStyle}" Margin="0" VerticalAlignment="Center" Text="{x:Bind Name}" TextTrimming="None" TextWrapping="Wrap" TextAlignment="Center" ToolTipService.ToolTip="{x:Bind Name}" FontSize="{StaticResource BodyTextSize}" LineHeight="20"/></DataTemplate></ListView.ItemTemplate>
+ </ListView>
+ </StackPanel>
+ <controls:MyAdaptiveGridView DesiredWidth="160" ItemTemplate="{StaticResource GameItemTemplate}" x:Name="GamesGrid" Grid.Row="1" Padding="0" Margin="-8,0,-8,-8" ItemsSource="{x:Bind categoryVM.Items}" SelectionMode="None" IsItemClickEnabled="True" ItemClick="GridView_ItemClick" ContainerContentChanging="GamesGrid_ContainerContentChanging">
+ <controls:MyAdaptiveGridView.ItemContainerStyle><Style TargetType="GridViewItem" BasedOn="{StaticResource GridViewItemCornerRadiusStyle}">
+ <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="{StaticResource ContentItemMargin}"/><Setter Property="CornerRadius" Value="10"/>
+ <Setter Property="Background" Value="Transparent"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="VerticalContentAlignment" Value="Stretch"/>
+ </Style></controls:MyAdaptiveGridView.ItemContainerStyle>
+</controls:MyAdaptiveGridView>
+ <ProgressRing Grid.Row="1" IsActive="True" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind categoryVM.Loading, Mode=OneWay}"/>
+ <TextBlock Style="{StaticResource BodyTextStyle}" Grid.Row="1" Text="{x:Bind categoryVM.EmptyMessage, Mode=OneWay}" Margin="12" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind categoryVM.IsEmpty, Mode=OneWay}"/>
+
+ </Grid></Page>

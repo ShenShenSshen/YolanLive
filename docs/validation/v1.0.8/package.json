@@ -1,0 +1,26 @@
+{
+  "version": "1.0.8",
+  "files": 582,
+  "uncompressed_bytes": 323859004,
+  "zip_all_file_hashes_match": true,
+  "legacy_program_filenames": false,
+  "personal_data_included": false,
+  "self_contained_dependencies_present": true,
+  "assets": [
+    {
+      "name": "YolanLive-1.0.8-x64-Setup.exe",
+      "size": 92463507,
+      "sha256": "6436b8f0cdb5bc8c48569fae8c81f0ceb44ab002fe11e7276231b93888b21528"
+    },
+    {
+      "name": "YolanLive-x64.zip",
+      "size": 129791518,
+      "sha256": "a998aa859ce1e8d4fcfc2a02bb1a0f083579fdd5587e9fc975af44ef5c92848b"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 182,
+      "sha256": "44393f01266b9d65f25211a273f797c04c5f90906c7866dea1dcc94773340b86"
+    }
+  ]
+}

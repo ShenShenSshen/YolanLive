@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-  <title>游窗 B — 开窗</title>
-  <rect x="12" y="12" width="232" height="232" rx="52" fill="#206575"/>
-  <rect x="58" y="82" width="54" height="92" rx="8" fill="none" stroke="#FFFFFF" stroke-width="16"/>
-  <path d="M134 64L198 84V172L134 192Z" fill="#FFFFFF"/>
-  <path d="M150 104L178 128L150 152Z" fill="#206575"/>
-</svg>

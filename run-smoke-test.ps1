@@ -1,4 +1,4 @@
-param([string]$Executable = (Join-Path $PSScriptRoot 'artifacts\PlayWin-win-x64\PlayWin.exe'))
+param([string]$Executable = (Join-Path $PSScriptRoot 'artifacts\YolanLive-win-x64\YolanLive.exe'))
 & (Join-Path $PSScriptRoot 'with-build-cache.ps1') {
     $process = Start-Process -FilePath $Executable -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
     $process.WaitForExit()

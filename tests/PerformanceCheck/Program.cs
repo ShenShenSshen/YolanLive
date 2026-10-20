@@ -1,4 +1,4 @@
-using PlayWin.Core.Helper;
+using YolanLive.Core.Helper;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -33,7 +33,7 @@ try { await pending; throw new Exception("In-flight request was not canceled"); 
 await server.PeerClosed.Task.WaitAsync(TimeSpan.FromSeconds(2));
 Check(RequestMetrics.Active==0, "Cancellation retained a slot");
 Console.WriteLine($"PASS physical in-flight cancellation; peer disconnected after {watch.ElapsedMilliseconds} ms");
-foreach(var site in new PlayWin.Core.Interface.ILiveSite[]{new PlayWin.Core.BiliBili(),new PlayWin.Core.Douyin(),new PlayWin.Core.Huya(),new PlayWin.Core.Douyu()})
+foreach(var site in new YolanLive.Core.Interface.ILiveSite[]{new YolanLive.Core.BiliBili(),new YolanLive.Core.Douyin(),new YolanLive.Core.Huya(),new YolanLive.Core.Douyu()})
 {
  using var alreadyCanceled=new CancellationTokenSource(); alreadyCanceled.Cancel();
  try { await site.GetCategores(alreadyCanceled.Token); throw new Exception("Platform ignored cancellation"); } catch(OperationCanceledException) { }

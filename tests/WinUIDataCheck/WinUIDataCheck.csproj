@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../PlayWin.Core/PlayWin.Core.csproj" />
+    <ProjectReference Include="../../YolanLive.Core/YolanLive.Core.csproj" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
-    <Compile Include="../../PlayWin.WinUI/GlobalUsings.cs" Link="GlobalUsings.cs" />
-    <Compile Include="../../PlayWin.WinUI/Helper/DatabaseHelper.cs" Link="DatabaseHelper.cs" />
-    <Compile Include="../../PlayWin.WinUI/Helper/SettingHelper.cs" Link="SettingHelper.cs" />
-    <Compile Include="../../PlayWin.WinUI/ViewModels/MainVM.cs" Link="MainVM.cs" />
-    <Compile Include="../../PlayWin.WinUI/Helper/BrowsePreferences.cs" Link="BrowsePreferences.cs" />
-    <Compile Include="../../PlayWin.WinUI/Models/FavoriteItem.cs" Link="FavoriteItem.cs" />
-    <Compile Include="../../PlayWin.WinUI/Models/HistoryItem.cs" Link="HistoryItem.cs" />
+    <Compile Include="../../YolanLive.WinUI/GlobalUsings.cs" Link="GlobalUsings.cs" />
+    <Compile Include="../../YolanLive.WinUI/Helper/DatabaseHelper.cs" Link="DatabaseHelper.cs" />
+    <Compile Include="../../YolanLive.WinUI/Helper/SettingHelper.cs" Link="SettingHelper.cs" />
+    <Compile Include="../../YolanLive.WinUI/ViewModels/MainVM.cs" Link="MainVM.cs" />
+    <Compile Include="../../YolanLive.WinUI/Helper/BrowsePreferences.cs" Link="BrowsePreferences.cs" />
+    <Compile Include="../../YolanLive.WinUI/Models/FavoriteItem.cs" Link="FavoriteItem.cs" />
+    <Compile Include="../../YolanLive.WinUI/Models/HistoryItem.cs" Link="HistoryItem.cs" />
   </ItemGroup>
 </Project>

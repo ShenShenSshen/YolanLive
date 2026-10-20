@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="YolanLive.Core/YolanLive.Core.csproj" />
+  <Project Path="YolanLive.WinUI/YolanLive.csproj" />
+</Solution>

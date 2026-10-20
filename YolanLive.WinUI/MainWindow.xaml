@@ -1,0 +1,10 @@
+<Window
+    x:Class="YolanLive.WinUI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Frame x:Name="RootFrame"
+           FontFamily="{StaticResource ContentControlThemeFontFamily}"
+           FontSize="14"
+           Background="Transparent"
+           Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+</Window>

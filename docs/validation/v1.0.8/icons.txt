@@ -1,0 +1,2 @@
+PASS embedded YolanLive B icon: YolanLive.exe
+PASS embedded YolanLive B icon: YolanLive-1.0.8-x64-Setup.exe

@@ -1,48 +1,48 @@
-using PlayWin.WinUI.Helper;
-using PlayWin.WinUI.Models;
+using YolanLive.WinUI.Helper;
+using YolanLive.WinUI.Models;
 using Microsoft.Data.Sqlite;
 using System.Diagnostics;
 using System.Security.Cryptography;
 
 void Check(bool condition, string reason) { if (!condition) throw new Exception(reason); }
-var categoryParser = typeof(PlayWin.Core.Douyin).GetMethod("ParseEmbeddedCategoryData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+var categoryParser = typeof(YolanLive.Core.Douyin).GetMethod("ParseEmbeddedCategoryData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 var categoryFixture = "{\"pathname\":\"/\",\"categoryData\":[{\"title\":\"test\"}]}]";
 var parsedCategories = (Newtonsoft.Json.Linq.JObject)categoryParser.Invoke(null, new object[] { categoryFixture });
 Check(parsedCategories["categoryData"].Count() == 1, "Embedded category record delimiter was not handled.");
-var biliFixture = new List<PlayWin.Core.Models.LiveCategory> {
+var biliFixture = new List<YolanLive.Core.Models.LiveCategory> {
     new() { ID = "2", Name = "网游", Children = new() { new() { ID = "86", ParentID = "2", Name = "英雄联盟" } } },
     new() { ID = "1", Name = "娱乐游戏秀", Children = new() { new() { ID = "999", ParentID = "1", Name = "英雄联盟" } } },
     new() { ID = "13", Name = "赛事", Children = new() { new() { ID = "561", ParentID = "13", Name = "游戏赛事" }, new() { ID = "563", ParentID = "13", Name = "赛事综合" } } }
 };
-var biliSite = new PlayWin.Core.BiliBili();
-var dySite = new PlayWin.Core.Douyin();
-var selected = PlayWin.Core.Helper.GameBrowse.SelectCategories(biliSite, biliFixture);
+var biliSite = new YolanLive.Core.BiliBili();
+var dySite = new YolanLive.Core.Douyin();
+var selected = YolanLive.Core.Helper.GameBrowse.SelectCategories(biliSite, biliFixture);
 Check(selected.Count == 2 && selected.Last().Children.Count == 1 && selected.Last().Children[0].ID == "561", "Non-game categories survived or game events were lost.");
-var merged = PlayWin.Core.Helper.GameBrowse.MergeCategories(new[] {
-    new PlayWin.Core.Models.LiveGameSource { Site = biliSite, Category = biliFixture[0].Children[0] },
-    new PlayWin.Core.Models.LiveGameSource { Site = dySite, Category = new() { ID = "test", ParentID = "103,4", Name = " 英雄联盟 " } },
-    new PlayWin.Core.Models.LiveGameSource { Site = dySite, Category = new() { ID = "1,1", ParentID = "103,4", Name = "射击游戏" } }
+var merged = YolanLive.Core.Helper.GameBrowse.MergeCategories(new[] {
+    new YolanLive.Core.Models.LiveGameSource { Site = biliSite, Category = biliFixture[0].Children[0] },
+    new YolanLive.Core.Models.LiveGameSource { Site = dySite, Category = new() { ID = "test", ParentID = "103,4", Name = " 英雄联盟 " } },
+    new YolanLive.Core.Models.LiveGameSource { Site = dySite, Category = new() { ID = "1,1", ParentID = "103,4", Name = "射击游戏" } }
 });
 Check(merged.Count == 2 && merged.Single(c => c.Name == "英雄联盟").Sources.Count == 2, "Same game names did not merge with sources preserved.");
-var imageCategories = new List<PlayWin.Core.Models.LiveCategory> {
+var imageCategories = new List<YolanLive.Core.Models.LiveCategory> {
     new() { ID = "103,4", Name = "游戏", Children = new() {
         new() { ID = "1010014,1", ParentID = "103,4", Name = " 英雄联盟 " },
         new() { ID = "own", ParentID = "103,4", Name = "已有封面", Pic = "https://example.invalid/original.png" },
         new() { ID = "unmatched", ParentID = "103,4", Name = "英雄联盟手游" }
     } }
 };
-var donorCategories = new List<PlayWin.Core.Models.LiveCategory> {
+var donorCategories = new List<YolanLive.Core.Models.LiveCategory> {
     new() { ID = "2", Children = new() {
         new() { ID = "86", ParentID = "2", Name = "英雄联盟", Pic = "//example.invalid/league.png" },
         new() { ID = "different", Name = "已有封面", Pic = "https://example.invalid/replacement.png" }
     } }
 };
-Check(PlayWin.Core.Helper.GameBrowse.FillMissingCategoryPictures(imageCategories, donorCategories), "Matching game artwork was not copied.");
+Check(YolanLive.Core.Helper.GameBrowse.FillMissingCategoryPictures(imageCategories, donorCategories), "Matching game artwork was not copied.");
 Check(imageCategories[0].Children[0].Pic == "https://example.invalid/league.png" && imageCategories[0].Children[0].ID == "1010014,1" && imageCategories[0].Children[0].ParentID == "103,4", "Artwork fallback changed the Douyin partition or lost its picture.");
 Check(imageCategories[0].Children[1].Pic == "https://example.invalid/original.png" && imageCategories[0].Children[2].Pic == null, "Existing artwork was overwritten or a different game was matched.");
-Check(!PlayWin.Core.Helper.GameBrowse.FillMissingCategoryPictures(imageCategories, donorCategories), "Artwork fallback was not idempotent.");
-var dyFixture = new[] { new PlayWin.Core.Models.LiveCategory { ID = "103,4", Name = "游戏", Children = new() }, new PlayWin.Core.Models.LiveCategory { ID = "101,4", Name = "聊天", Children = new() } };
-Check(PlayWin.Core.Helper.GameBrowse.SelectCategories(dySite, dyFixture).Count == 1, "Douyin non-game category survived.");
+Check(!YolanLive.Core.Helper.GameBrowse.FillMissingCategoryPictures(imageCategories, donorCategories), "Artwork fallback was not idempotent.");
+var dyFixture = new[] { new YolanLive.Core.Models.LiveCategory { ID = "103,4", Name = "游戏", Children = new() }, new YolanLive.Core.Models.LiveCategory { ID = "101,4", Name = "聊天", Children = new() } };
+Check(YolanLive.Core.Helper.GameBrowse.SelectCategories(dySite, dyFixture).Count == 1, "Douyin non-game category survived.");
 var ownerFixture = Newtonsoft.Json.Linq.JObject.Parse("{\"nickname\":\"test\",\"avatar_thumb\":{\"url_list\":[\"https://example.invalid/avatar\"]}}");
 Newtonsoft.Json.Linq.JObject RoomFixture(int status) => new()
 {
@@ -52,7 +52,7 @@ Newtonsoft.Json.Linq.JObject RoomFixture(int status) => new()
 };
 var detailChecks = 0;
 var fixtureRoomStatus = 2;
-var statusSite = new PlayWin.Core.Douyin
+var statusSite = new YolanLive.Core.Douyin
 {
     WebRequestAsync = url =>
     {
@@ -73,19 +73,19 @@ fixtureRoomStatus = 4;
 Check(await statusSite.GetLiveStatus("102") && detailChecks == 1, "Repeated live status queries did not reuse the short cache.");
 statusSite.Cookie = "test-only-not-a-real-session";
 Check(!await statusSite.GetLiveStatus("102") && detailChecks == 2, "Changing login state did not invalidate the live status cache.");
-var cachedStatuses = (System.Collections.IDictionary)typeof(PlayWin.Core.Douyin).GetField("liveStatusCache", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(statusSite);
+var cachedStatuses = (System.Collections.IDictionary)typeof(YolanLive.Core.Douyin).GetField("liveStatusCache", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(statusSite);
 cachedStatuses["102"] = (DateTime.UtcNow.AddMinutes(-1), false);
 fixtureRoomStatus = 2;
 Check(await statusSite.GetLiveStatus("102") && detailChecks == 3, "An expired cache hid a room that had started broadcasting.");
 if (args.Contains("--live-game-api"))
 {
-    foreach (var site in new PlayWin.Core.Interface.ILiveSite[] { biliSite, dySite })
+    foreach (var site in new YolanLive.Core.Interface.ILiveSite[] { biliSite, dySite })
     {
         var categories = await site.GetCategores().WaitAsync(TimeSpan.FromSeconds(30));
-        var games = PlayWin.Core.Helper.GameBrowse.SelectCategories(site, categories);
+        var games = YolanLive.Core.Helper.GameBrowse.SelectCategories(site, categories);
         Check(games.Count > 0, site.Name + " has no recognized game partitions.");
-        var sources = games.SelectMany(c => c.Children).Select(c => new PlayWin.Core.Models.LiveGameSource { Site = site, Category = c });
-        var overview = PlayWin.Core.Helper.GameBrowse.OverviewSources(sources);
+        var sources = games.SelectMany(c => c.Children).Select(c => new YolanLive.Core.Models.LiveGameSource { Site = site, Category = c });
+        var overview = YolanLive.Core.Helper.GameBrowse.OverviewSources(sources);
         foreach (var source in overview)
         {
             var rooms = await site.GetCategoryRooms(source.Category).WaitAsync(TimeSpan.FromSeconds(30));
@@ -97,7 +97,7 @@ if (args.Contains("--live-game-api"))
 }
 if (args.Contains("--live-api"))
 {
-    var categories = await new PlayWin.Core.Douyin().GetCategores();
+    var categories = await new YolanLive.Core.Douyin().GetCategores();
     Check(categories.Count > 0, "Live Douyin category endpoint returned no categories.");
     Console.WriteLine("PASS: live Douyin category API.");
     return;
@@ -111,7 +111,7 @@ if (args.Contains("--settings-reload"))
     return;
 }
 var folder = AppPaths.EnsureDirectory();
-Environment.SetEnvironmentVariable("PLAYWIN_TEST_DIR", folder);
+Environment.SetEnvironmentVariable("YOLANLIVE_TEST_DIR", folder);
 SettingHelper.SetValue("theme", 2);
 SettingHelper.SetValue(SettingHelper.WINDOW_SIZE, "1600×900");
 SettingHelper.SetValue("flag", true);
@@ -126,7 +126,7 @@ var target = Path.Combine(folder, "desktop");
 await DatabaseHelper.InitializeDatabase(target);
 var sites = new[] { "哔哩哔哩直播", "抖音直播", "虎牙直播", "斗鱼直播" };
 var database = Path.Combine(target, "PlayWin.db");
-Check(File.Exists(database) && Directory.GetFiles(target, "*.db").Length == 1, "PlayWin database filename did not apply.");
+Check(File.Exists(database) && Directory.GetFiles(target, "*.db").Length == 1, "Legacy database filename changed during rebrand.");
 using (var seed = new SqliteConnection("Filename=" + database))
 {
     seed.Open();
@@ -154,4 +154,4 @@ Check((await DatabaseHelper.GetFavorites()).Count == 8, "Import filtering failed
 DatabaseHelper.DeleteFavorite(favorites[0].ID);
 await DatabaseHelper.InitializeDatabase(target);
 Check((await DatabaseHelper.GetFavorites()).Count == 7, "Repeated startup overwrote desktop data.");
-Console.WriteLine("PASS: PlayWin storage names, persisted settings, four-platform preservation, import filtering and repeated startup.");
+Console.WriteLine("PASS: YolanLive retains legacy storage, persisted settings, four-platform preservation, import filtering and repeated startup.");
