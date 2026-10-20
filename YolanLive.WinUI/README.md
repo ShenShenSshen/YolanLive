@@ -1,4 +1,4 @@
-# YolanLive（游岚）v1.0.9
+# YolanLive（游岚）v1.0.10
 
 Windows x64 游戏直播客户端，基于 WinUI 3。项目主页：https://github.com/ShenShenSshen/YolanLive
 原项目：https://github.com/xiaoyaocz/AllLive ，保留 MIT 许可证。
@@ -49,7 +49,7 @@ Windows x64 游戏直播客户端，基于 WinUI 3。项目主页：https://gith
 
 ## 本次验证
 
-v1.0.9 更新 D1 风帆图标，优化随机选房和下一间资料预取，修复超时后前后按钮持续禁用。保留旧版资料与升级兼容，顶栏与分类图片修复继续保留。本次发布检查明细见仓库 docs/validation/release-1.0.9.md。
+v1.0.10 修复覆盖升级后图标缓存未刷新的问题，同步旧版更新入口，使旧版可直接安装最新正式版。保持界面、播放参数及资料格式。发布检查见仓库 docs/validation/release-1.0.10.md。
 
 顶栏离页后关闭布局监听，不增加轮询计时器；保留既有平台接口、播放参数、全屏及小窗规则。150%/200% 实机缩放、高对比度实际切换、四平台全部真实线路未完整验收；没有重复长期性能对照。程序及安装器仍未签名。
 

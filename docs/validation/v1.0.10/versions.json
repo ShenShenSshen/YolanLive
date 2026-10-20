@@ -1,0 +1,14 @@
+[
+  {
+    "Name": "YolanLive.exe",
+    "FileVersion": "1.0.10.0",
+    "ProductVersion": "1.0.10",
+    "Signature": "NotSigned"
+  },
+  {
+    "Name": "YolanLive.dll",
+    "FileVersion": "1.0.10.0",
+    "ProductVersion": "1.0.10",
+    "Signature": "NotSigned"
+  }
+]

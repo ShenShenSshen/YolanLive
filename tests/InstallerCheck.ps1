@@ -84,10 +84,11 @@ try {
     $shell = New-Object -ComObject WScript.Shell
     $shortcut = $shell.CreateShortcut($menu)
     if ($shortcut.TargetPath -ne $exe) { throw 'Start menu shortcut target is incorrect.' }
-    $icon = Join-Path $installDir 'Assets\YolanLive.ico'
+    $icon = Join-Path $installDir "Assets\YolanLive-$version.ico"
     $desktopShortcut = $shell.CreateShortcut($desktop)
     if ($desktopShortcut.TargetPath -ne $exe -or $desktopShortcut.IconLocation -ne ($icon + ',0')) { throw 'Desktop shortcut does not use the YolanLive D1 sail icon.' }
     if (-not (Test-Path -LiteralPath $icon)) { throw 'YolanLive D1 sail icon was not installed.' }
+    if ((Get-FileHash -LiteralPath $icon).Hash -ne (Get-FileHash -LiteralPath (Join-Path $root 'YolanLive.WinUI\Assets\YolanLive.ico')).Hash) { throw 'Installed shortcut icon differs from the current application icon.' }
     'PASS current-user install, version and default desktop shortcut with YolanLive D1 sail icon'
     New-Item -ItemType Directory -Path (Join-Path $testData 'DouyinWebView\Default') -Force | Out-Null
     foreach ($name in @('settings.json','PlayWin.db','history.db','application.log','DouyinWebView\Default\Cookies')) {
@@ -96,7 +97,18 @@ try {
     $readme = Join-Path $installDir 'README.md'
     $expected = (Get-FileHash -LiteralPath $readme -Algorithm SHA256).Hash
     Add-Content -LiteralPath $readme -Value 'installer upgrade test marker'
+    # Simulate shortcuts left by an older installer using the unchanged icon path.
+    foreach ($link in @($menu, $desktop)) {
+        $legacyShortcut = $shell.CreateShortcut($link)
+        $legacyShortcut.IconLocation = (Join-Path $installDir 'Assets\YolanLive.ico') + ',0'
+        $legacyShortcut.Save()
+    }
     Run-Setup $setup $flags
+    foreach ($link in @($menu, $desktop)) {
+        if ($shell.CreateShortcut($link).IconLocation -ne ($icon + ',0')) { throw 'Upgrade retained the cached legacy shortcut icon path.' }
+    }
+    if ($installed.DisplayIcon -ne $icon) { throw 'Installed application entry does not use the current version icon.' }
+    'PASS upgrade replaces legacy shortcut icon paths with the current version icon'
     if ((Get-FileHash -LiteralPath $readme -Algorithm SHA256).Hash -ne $expected) { throw 'Upgrade did not replace program files.' }
     if (-not (Test-Path -LiteralPath (Join-Path $testData 'settings.json'))) { throw 'Upgrade unexpectedly cleared user data.' }
     'PASS reinstall restores program files without duplicate installation'

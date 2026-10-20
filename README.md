@@ -6,23 +6,22 @@ A focused Windows game livestream viewer for Bilibili, Douyin, Huya and Douyu, b
 
 简洁的 Windows 游戏直播客户端。支持哔哩哔哩、抖音、虎牙和斗鱼，仅展示游戏分类，不显示弹幕。使用 WinUI 3，栏位采用磨砂材质，内容保持清晰。
 
-**已发布版本：v1.0.9 · Windows x64 · MIT**
+**已发布版本：v1.0.10 · Windows x64 · MIT**
 
-v1.0.9 更新简线条风帆图标，优化“随便逛逛”的选房和下一间预取，修复切房超时后前后按钮持续置灰的问题。详见 [更新说明](RELEASE_NOTES.md) 与 [发布检查](docs/validation/release-1.0.9.md)。
+v1.0.10 修复覆盖升级后图标仍显示旧版的问题，并同步旧 PlayWin 更新入口，让旧版直接升级到最新正式版。详见 [更新说明](RELEASE_NOTES.md) 与 [发布检查](docs/validation/release-1.0.10.md)。
 
-## v1.0.9 更新
+## v1.0.10 更新
 
-- 使用 D1 简线条风帆图标，统一程序、安装器与快捷方式，多尺寸适配。
-- 随机选房不再等待同平台所有慢分区；短时复用候选和已确认的房间详情，减少重复请求。
-- 随机播放时最多预取下一间候选与详情，不下载视频、不创建第二个播放器，离开后取消。
-- 修复平台请求未及时响应取消时前后按钮持续置灰的问题，超时恢复按钮，迟到结果不触发播放。
-- 保持雾蓝界面、播放参数和数据格式，覆盖升级保留数据，安装版卸载清空全部应用数据。真实平台仍有未通过项，见下方验证范围。
+- 覆盖安装时更新图标文件与快捷方式路径，并通知 Windows 刷新图标缓存。
+- 旧版 PlayWin 可直接更新到当前最新版，无需逐版本安装；兼容包与正式安装包内容一致。
+- 发布流程加入旧更新入口同步，以及版本、下载地址和 SHA-256 校验。
+- 保持现有界面、播放参数和用户数据格式；覆盖升级保留数据，卸载安装版清空资料。
 
 ## 下载
 
-- [安装版 YolanLive-1.0.9-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.0.9/YolanLive-1.0.9-x64-Setup.exe)
-- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.0.9/YolanLive-x64.zip)
-- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.0.9/SHA256SUMS.txt)
+- [安装版 YolanLive-1.0.10-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.0.10/YolanLive-1.0.10-x64-Setup.exe)
+- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.0.10/YolanLive-x64.zip)
+- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.0.10/SHA256SUMS.txt)
 - [所有发布版本](https://github.com/ShenShenSshen/YolanLive/releases)
 
 安装版默认安装到当前用户目录，创建开始菜单入口，默认创建桌面快捷方式，可取消。便携版解压后运行 `YolanLive.exe`，请保留整个目录。
@@ -94,7 +93,16 @@ dotnet run --project tests/WinUIDataCheck/WinUIDataCheck.csproj -c Release
 
 构建缓存、个人数据和发布产物不纳入源码。
 
-本次发布检查及限制见 [v1.0.9 发布检查](docs/validation/release-1.0.9.md)，随机浏览受控前后对照见 [报告](docs/performance/random-browse/REPORT.md)。测试使用 D 盘隔离访客目录，不读取日常账号。预览访客实测中抖音、斗鱼进入播放，B站访客选房及虎牙所选首条线路失败，不代表四平台全面通过。150%/200% 实机缩放、系统高对比度切换及长期性能未重新验收；既有记录继续保留。程序和安装器仍未签名。
+每次发布 YolanLive 正式版后，必须同步旧 PlayWin 客户端的更新入口，防止旧版先安装中转版本。保留已发布安装包在 `artifacts` 下，使用已登录的 GitHub CLI 执行：
+
+```powershell
+.\sync-legacy-update.ps1
+.\sync-legacy-update.ps1 -CheckOnly
+```
+
+脚本从 YolanLive 的最新正式发布读取版本，将同一安装包以旧客户端识别的 PlayWin 文件名发布到旧仓库；发布前后核对大小与 SHA-256，不覆盖历史正式包。旧版可一次覆盖升级至最新版，之后使用 YolanLive 更新源。
+
+本次发布检查及限制见 [v1.0.10 发布检查](docs/validation/release-1.0.10.md)，随机浏览受控前后对照见 [报告](docs/performance/random-browse/REPORT.md)。测试使用 D 盘隔离访客目录，不读取日常账号。预览访客实测中抖音、斗鱼进入播放，B站访客选房及虎牙所选首条线路失败，不代表四平台全面通过。150%/200% 实机缩放、系统高对比度切换及长期性能未重新验收；既有记录继续保留。程序和安装器仍未签名。
 
 ## 来源与许可证
 

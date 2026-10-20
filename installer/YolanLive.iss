@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "1.0.9"
+  #define AppVersion "1.0.10"
 #endif
 #ifdef TestUserDataDir
   #define BrandName "游岚-test"
@@ -36,7 +36,7 @@ OutputBaseFilename=YolanLive-{#AppVersion}-x64-Setup{#TestSuffix}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-UninstallDisplayIcon={app}\Assets\YolanLive.ico
+UninstallDisplayIcon={app}\Assets\YolanLive-{#AppVersion}.ico
 UninstallDisplayName={#BrandName}
 CloseApplications=yes
 RestartApplications=no
@@ -66,13 +66,27 @@ Type: files; Name: "{userdesktop}\{#LegacyBrandName}.lnk"
 
 [Files]
 Source: "..\artifacts\YolanLive-win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; A new path prevents shortcuts from reusing the previous release's cached icon.
+Source: "..\YolanLive.WinUI\Assets\YolanLive.ico"; DestDir: "{app}\Assets"; DestName: "YolanLive-{#AppVersion}.ico"; Flags: ignoreversion
 
 [Icons]
-Name: "{userprograms}\{#BrandName}"; Filename: "{app}\YolanLive.exe"; WorkingDir: "{app}"; IconFilename: "{app}\Assets\YolanLive.ico"
-Name: "{userdesktop}\{#BrandName}"; Filename: "{app}\YolanLive.exe"; WorkingDir: "{app}"; IconFilename: "{app}\Assets\YolanLive.ico"; Tasks: desktopicon
+Name: "{userprograms}\{#BrandName}"; Filename: "{app}\YolanLive.exe"; WorkingDir: "{app}"; IconFilename: "{app}\Assets\YolanLive-{#AppVersion}.ico"
+Name: "{userdesktop}\{#BrandName}"; Filename: "{app}\YolanLive.exe"; WorkingDir: "{app}"; IconFilename: "{app}\Assets\YolanLive-{#AppVersion}.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\YolanLive.exe"; Description: "启动游岚"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{#UserDataDir}"
+
+[Code]
+procedure SHChangeNotify(EventId: Integer; Flags: Cardinal; Item1, Item2: Integer);
+  external 'SHChangeNotify@shell32.dll stdcall';
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    // Invalidate Shell icon caches after files and shortcuts have been replaced.
+    // Covers cached executable icons used by taskbar entries without restarting Explorer.
+    SHChangeNotify($08000000, 0, 0, 0);
+end;
