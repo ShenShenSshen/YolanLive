@@ -1,0 +1,4 @@
+FAIL Public GitHub update check
+System.Net.Http.HttpRequestException: GitHub 请求受限，请稍后重试
+   at YolanLive.WinUI.Helper.UpdateClient.CheckAsync(CancellationToken token) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\Helper\UpdateClient.cs:line 66
+   at YolanLive.WinUI.UpdateChecks.LiveAsync() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\UpdateChecks.cs:line 155

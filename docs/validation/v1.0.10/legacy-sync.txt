@@ -1,0 +1,3 @@
+https://github.com/ShenShenSshen/PlayWin/releases/tag/untagged-4565d5985aaa6c56ef38
+https://github.com/ShenShenSshen/PlayWin/releases/tag/v1.0.10
+PASS old PlayWin clients can update directly to v1.0.10; installer SHA-256 matches YolanLive.
