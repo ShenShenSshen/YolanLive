@@ -1,0 +1,5 @@
+PASS Public GitHub release metadata and real installer download
+Tag=v1.0.9
+Size=92521607
+SHA256 verified=True
+Installer executed=FalsePASS downloaded installer equals local v1.0.9 artifact
