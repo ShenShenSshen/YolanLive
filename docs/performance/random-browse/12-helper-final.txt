@@ -1,0 +1,10 @@
+PASS Ready room is not blocked by unrelated slow overview sources
+PASS Next random pick reuses candidates and excludes the visited room
+PASS Selection confirms live status through one reusable detail request
+PASS Random session prepares just one next room without requesting stream URLs
+PASS Ending a session cancels in-flight prefetch and cannot return a room later
+PASS History skips confirmed offline, preserves unknown failures and reuses forward records
+PASS Only fresh matching details can be handed to the player
+PASS Canceling next also cancels the pending prefetch without changing position
+PASS Candidate cache evicts older platforms beyond its four-platform bound
+PASS Candidate cache expires after thirty seconds without polling

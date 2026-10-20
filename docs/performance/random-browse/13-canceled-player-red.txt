@@ -1,0 +1,8 @@
+PASS Prepared selection reaches the real player view model without a second detail request
+PASS Ordinary opens and expired snapshots still fetch current details
+FAIL Canceled prepared navigation cannot start quality or stream requests
+System.Exception: Canceled prepared navigation still started playback requests.
+   at YolanLive.WinUI.RandomBrowseChecks.Check(Boolean condition, String message) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 172
+   at YolanLive.WinUI.RandomBrowseChecks.<>c.<<RunAsync>b__0_3>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 80
+--- End of stack trace from previous location ---
+   at YolanLive.WinUI.RandomBrowseChecks.<>c__DisplayClass0_0.<<RunAsync>g__Test|0>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 28

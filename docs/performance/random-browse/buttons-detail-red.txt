@@ -1,0 +1,16 @@
+PASS Ready room is not blocked by unrelated slow overview sources
+PASS Next random pick reuses candidates and excludes the visited room
+PASS Selection confirms live status through one reusable detail request
+PASS Random session prepares just one next room without requesting stream URLs
+PASS Ending a session cancels in-flight prefetch and cannot return a room later
+PASS History skips confirmed offline, preserves unknown failures and reuses forward records
+FAIL Canceled history lookup releases navigation even when detail ignores cancellation
+System.TimeoutException: The operation has timed out.
+   at Program.<>c.<<<Main>$>b__0_8>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\Program.cs:line 109
+--- End of stack trace from previous location ---
+   at Program.<>c.<<<Main>$>b__0_8>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\Program.cs:line 117
+--- End of stack trace from previous location ---
+   at Program.<>c__DisplayClass0_0.<<<Main>$>g__Test|0>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\Program.cs:line 11
+PASS Only fresh matching details can be handed to the player
+PASS Canceling next also cancels the pending prefetch without changing position
+PASS Candidate cache evicts older platforms beyond its four-platform bound

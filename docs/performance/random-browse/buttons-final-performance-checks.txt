@@ -1,0 +1,6 @@
+PASS directory single-flight, independent cancellation, cache hit, force refresh, failed-refresh retention and last-waiter cancellation
+PASS pixel/DPI decode, resize, recycle, minimize pause and restore refresh
+PASS real WebView2 suspend/resume, busy guard and idle close
+PASS follow/unfollow regression
+PASS random previous/next, offline skip, unknown preservation and cancellation
+PASS browse pagination, status filtering, saved preferences, pins and search isolation

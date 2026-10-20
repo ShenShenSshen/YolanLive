@@ -13,7 +13,7 @@
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.0.8</Version>
+    <Version>1.0.9</Version>
     <ApplicationIcon>Assets\YolanLive.ico</ApplicationIcon>
     <Product>游岚</Product>
     <AssemblyTitle>游岚</AssemblyTitle>

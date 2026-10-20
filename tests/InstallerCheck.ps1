@@ -86,9 +86,9 @@ try {
     if ($shortcut.TargetPath -ne $exe) { throw 'Start menu shortcut target is incorrect.' }
     $icon = Join-Path $installDir 'Assets\YolanLive.ico'
     $desktopShortcut = $shell.CreateShortcut($desktop)
-    if ($desktopShortcut.TargetPath -ne $exe -or $desktopShortcut.IconLocation -ne ($icon + ',0')) { throw 'Desktop shortcut does not use the YolanLive B icon.' }
-    if (-not (Test-Path -LiteralPath $icon)) { throw 'YolanLive B icon was not installed.' }
-    'PASS current-user install, version and default desktop shortcut with YolanLive B icon'
+    if ($desktopShortcut.TargetPath -ne $exe -or $desktopShortcut.IconLocation -ne ($icon + ',0')) { throw 'Desktop shortcut does not use the YolanLive D1 sail icon.' }
+    if (-not (Test-Path -LiteralPath $icon)) { throw 'YolanLive D1 sail icon was not installed.' }
+    'PASS current-user install, version and default desktop shortcut with YolanLive D1 sail icon'
     New-Item -ItemType Directory -Path (Join-Path $testData 'DouyinWebView\Default') -Force | Out-Null
     foreach ($name in @('settings.json','PlayWin.db','history.db','application.log','DouyinWebView\Default\Cookies')) {
         Set-Content -LiteralPath (Join-Path $testData $name) -Value 'fake uninstall test data, not a real session'

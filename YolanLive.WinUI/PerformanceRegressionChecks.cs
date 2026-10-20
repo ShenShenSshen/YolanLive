@@ -112,6 +112,7 @@ internal static class PerformanceRegressionChecks
         site.FailStatus = false; site.Hold = true;
         using var cancel = new CancellationTokenSource(30);
         try { await session.FindAsync(false, cancel.Token); throw new Exception("Random status ignored cancellation"); } catch (OperationCanceledException) { }
+        await site.StatusCanceled.Task.WaitAsync(TimeSpan.FromSeconds(1));
         Check(site.Canceled, "Random cancellation did not reach status source");
         session.End(); Check(session.Ended && !session.CanGoPrevious, "Random session did not end");
     }
@@ -166,10 +167,13 @@ internal static class PerformanceRegressionChecks
     {
         internal int Calls;internal bool Fail,Hold,Canceled;
         internal string Offline; internal bool FailStatus;
+        internal readonly TaskCompletionSource StatusCanceled = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public new async Task<LiveRoomDetail> GetRoomDetail(object id, CancellationToken cancellationToken)
+            => new() { RoomID = id.ToString(), Status = await GetLiveStatus(id, cancellationToken) };
         public new async Task<bool> GetLiveStatus(object id, CancellationToken cancellationToken)
         {
             try { await Task.Delay(Hold ? Timeout.Infinite : 1, cancellationToken); }
-            catch (OperationCanceledException) { Canceled = true; throw; }
+            catch (OperationCanceledException) { Canceled = true; StatusCanceled.TrySetResult(); throw; }
             if (FailStatus) throw new InvalidOperationException("Controlled status failure");
             return id?.ToString() != Offline;
         }

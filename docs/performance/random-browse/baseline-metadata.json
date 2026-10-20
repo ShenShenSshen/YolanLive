@@ -1,0 +1,26 @@
+{
+  "scenario": "Controlled single-platform metadata path, 40ms ready source, 800ms unrelated source, 120ms room detail; no video playback",
+  "runs": [
+    {
+      "step": 1,
+      "selection_and_detail_ms": 1069.1548,
+      "list_requests": 3,
+      "detail_requests": 2,
+      "status_requests": 1
+    },
+    {
+      "step": 2,
+      "selection_and_detail_ms": 1061.2014,
+      "list_requests": 6,
+      "detail_requests": 4,
+      "status_requests": 2
+    },
+    {
+      "step": 3,
+      "selection_and_detail_ms": 1053.5393,
+      "list_requests": 9,
+      "detail_requests": 6,
+      "status_requests": 3
+    }
+  ]
+}

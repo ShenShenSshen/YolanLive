@@ -1,0 +1,2 @@
+D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\Program.cs(32,68): warning CS0649: 从未对字段“FixtureSite.UrlCalls”赋值，字段将一直保持其默认值 0 [D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\RandomBrowseCheck.csproj]
+PASS Ready room is not blocked by unrelated slow overview sources

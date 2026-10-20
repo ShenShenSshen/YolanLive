@@ -1,0 +1,10 @@
+PASS Prepared selection reaches the real player view model without a second detail request
+PASS Ordinary opens and expired snapshots still fetch current details
+PASS Canceled prepared navigation cannot start quality or stream requests
+FAIL Real player page starts one metadata prefetch after playing and cancels it on unload
+System.TimeoutException: The operation has timed out.
+   at YolanLive.WinUI.RandomBrowseChecks.<>c__DisplayClass0_0.<<RunAsync>b__4>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 104
+--- End of stack trace from previous location ---
+   at YolanLive.WinUI.RandomBrowseChecks.<>c__DisplayClass0_0.<<RunAsync>b__4>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 111
+--- End of stack trace from previous location ---
+   at YolanLive.WinUI.RandomBrowseChecks.<>c__DisplayClass0_0.<<RunAsync>g__Test|0>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 28

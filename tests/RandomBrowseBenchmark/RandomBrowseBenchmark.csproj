@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings>
+    <RandomLiveSource Condition="'$(RandomLiveSource)' == ''">../../YolanLive.WinUI/Helper/RandomLive.cs</RandomLiveSource>
+    <DefineConstants Condition="'$(UsePrepared)' != 'false'">$(DefineConstants);PREPARED_PICKER</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../YolanLive.Core/YolanLive.Core.csproj" />
+    <Compile Include="$(RandomLiveSource)" Link="RandomLive.cs" />
+    <Compile Include="../../YolanLive.WinUI/Helper/GameCatalog.cs" Link="GameCatalog.cs" />
+  </ItemGroup>
+</Project>

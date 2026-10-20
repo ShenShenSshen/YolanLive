@@ -39,9 +39,9 @@ internal static class PlayerPerformanceChecks
         var deadline = DateTime.UtcNow.AddSeconds(20);
         while (!ready()) { if (DateTime.UtcNow > deadline) throw new TimeoutException(message); await Task.Delay(50); }
     }
-    private static async Task<string> MediaAsync()
+    internal static async Task<string> MediaAsync(string path = null)
     {
-        var path = Environment.GetEnvironmentVariable("YOLANLIVE_BENCH_MEDIA");
+        path ??= Environment.GetEnvironmentVariable("YOLANLIVE_BENCH_MEDIA");
         Check(!string.IsNullOrWhiteSpace(path) && Path.GetFullPath(path).StartsWith(Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), "Benchmark media must stay under the isolated D-drive temp root");
         if (File.Exists(path)) return path;
         Directory.CreateDirectory(Path.GetDirectoryName(path));
@@ -189,7 +189,7 @@ internal static class PlayerPerformanceChecks
         }
         var reference = new WeakReference(page); frame.Navigate(typeof(Page)); await UntilAsync(() => !page.IsLoaded, "Departed playback page remained loaded"); return reference;
     }
-    private sealed class LocalMediaServer : IDisposable
+    internal sealed class LocalMediaServer : IDisposable
     {
         private readonly TcpListener listener = new(IPAddress.Loopback, 0);
         private readonly CancellationTokenSource stop = new();

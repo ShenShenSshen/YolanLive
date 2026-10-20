@@ -151,10 +151,11 @@ namespace YolanLive.WinUI
             RandomLiveItem.Content = "正在挑选…";
             try
             {
-                var room = await RandomLive.PickAsync(operation.Token);
+                var selected = await RandomLive.PickPreparedAsync(operation.Token);
+                var room = selected?.Room;
                 if (!IsLoaded || operation.IsCancellationRequested) return;
                 if (room == null) Utils.ShowMessageToast("暂未找到已开播的游戏直播，请稍后再试");
-                else MessageCenter.OpenLiveRoom(room.Source, room, new RandomBrowseSession(room));
+                else MessageCenter.OpenLiveRoom(room.Source, room, new RandomBrowseSession(room, selected));
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)

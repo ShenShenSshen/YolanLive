@@ -31,7 +31,9 @@ public partial class App : Application
             RegisterWindow(window);
             try
             {
-                if (Environment.GetCommandLineArgs().Contains("--visual-checks")) await VisualDesignChecks.RunAsync(window);
+                if (Environment.GetCommandLineArgs().Contains("--random-browse-live")) await RandomBrowseChecks.LiveAsync(window);
+                else if (Environment.GetCommandLineArgs().Contains("--random-browse-checks")) await RandomBrowseChecks.RunAsync(window);
+                else if (Environment.GetCommandLineArgs().Contains("--visual-checks")) await VisualDesignChecks.RunAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--category-repro")) await CategoryRepro.RunAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--player-metrics")) await PlayerPerformanceChecks.RunAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--image-checks")) await CategoryImageChecks.RunAsync(window);

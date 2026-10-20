@@ -1,0 +1,13 @@
+PASS Prepared selection reaches the real player view model without a second detail request
+PASS Ordinary opens and expired snapshots still fetch current details
+PASS Canceled prepared navigation cannot start quality or stream requests
+PASS Real player page starts one metadata prefetch after playing and cancels it on unload
+PASS Previous and next recover after real player room switches
+FAIL Switch deadline restores buttons even when the platform ignores cancellation
+System.Exception: Platform received cancellation, but both buttons stayed locked beyond the deadline.
+   at YolanLive.WinUI.RandomBrowseChecks.Check(Boolean condition, String message) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 259
+   at YolanLive.WinUI.RandomBrowseChecks.<>c__DisplayClass0_0.<<RunAsync>b__6>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 163
+--- End of stack trace from previous location ---
+   at YolanLive.WinUI.RandomBrowseChecks.<>c__DisplayClass0_0.<<RunAsync>b__6>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 169
+--- End of stack trace from previous location ---
+   at YolanLive.WinUI.RandomBrowseChecks.<>c__DisplayClass0_0.<<RunAsync>g__Test|0>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 28

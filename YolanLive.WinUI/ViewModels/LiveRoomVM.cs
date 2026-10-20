@@ -153,7 +153,9 @@ namespace YolanLive.WinUI.ViewModels
 
 
         public async void LoadData(ILiveSite site, object roomId) => await LoadDataAsync(site, roomId);
-        internal async Task LoadDataAsync(ILiveSite site, object roomId, CancellationToken cancellationToken = default)
+        internal async void LoadData(ILiveSite site, object roomId, RandomRoomSelection prepared)
+            => await LoadDataAsync(site, roomId, prepared: prepared);
+        internal async Task LoadDataAsync(ILiveSite site, object roomId, CancellationToken cancellationToken = default, RandomRoomSelection prepared = null)
         {
             CancelPendingPlayback();
             var generation = ++loadGeneration;
@@ -162,6 +164,7 @@ namespace YolanLive.WinUI.ViewModels
             loadCancellation = operation;
             try
             {
+                operation.Token.ThrowIfCancellationRequested();
                 Loading = true;
                 Site = site;
                 RoomID = roomId?.ToString();
@@ -175,8 +178,9 @@ namespace YolanLive.WinUI.ViewModels
                 Photo = "";
 
                 RoomId = roomId;
-                var result = await site.GetRoomDetail(roomId, operation.Token);
+                var result = prepared?.GetFreshDetail(site, roomId) ?? await site.GetRoomDetail(roomId, operation.Token).WaitAsync(operation.Token);
                 if (generation != loadGeneration) return;
+                operation.Token.ThrowIfCancellationRequested();
                 detail = result;
                 RoomID = result.RoomID;
 
@@ -197,8 +201,9 @@ namespace YolanLive.WinUI.ViewModels
 
                 if (detail.Status)
                 {
-                    var qualities = await site.GetPlayQuality(result, operation.Token);
+                    var qualities = await site.GetPlayQuality(result, operation.Token).WaitAsync(operation.Token);
                     if (generation != loadGeneration) return;
+                    operation.Token.ThrowIfCancellationRequested();
                     Qualities = qualities;
                     if (Qualities != null && Qualities.Count > 0)
                     {

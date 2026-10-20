@@ -1,0 +1,4 @@
+PASS Prepared selection reaches the real player view model without a second detail request
+PASS Ordinary opens and expired snapshots still fetch current details
+PASS Canceled prepared navigation cannot start quality or stream requests
+PASS Real player page starts one metadata prefetch after playing and cancels it on unload

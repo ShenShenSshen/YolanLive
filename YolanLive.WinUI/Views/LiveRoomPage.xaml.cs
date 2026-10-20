@@ -352,6 +352,7 @@ namespace YolanLive.WinUI.Views
                         PlayBtnPause.Visibility = Visibility.Visible;
                         SetKeepAwake(true);
                         liveRoomVM.Living = true;
+                        _ = randomSession?.PrefetchNextAsync();
                         break;
                     case MediaPlaybackState.Paused:
                         SetKeepAwake(false);
@@ -698,7 +699,7 @@ namespace YolanLive.WinUI.Views
                 var data = pageArgs.Data as LiveRoomItem;
                 MessageCenter.ChangeTitle("", pageArgs.Site);
 
-                liveRoomVM.LoadData(pageArgs.Site, data.RoomID);
+                liveRoomVM.LoadData(pageArgs.Site, data.RoomID, randomSession?.TakeInitialSelection());
 
             }
         }
@@ -761,7 +762,7 @@ namespace YolanLive.WinUI.Views
                 PlayerLoading.Visibility = Visibility.Visible;
                 PlayerLoadText.Text = "加载中";
                 ShowControl(true);
-                await liveRoomVM.LoadDataAsync(site.LiveSite, choice.Room.RoomID, operation.Token);
+                await liveRoomVM.LoadDataAsync(site.LiveSite, choice.Room.RoomID, operation.Token, choice.Prepared);
             }
             catch (OperationCanceledException)
             {

@@ -1,0 +1,6 @@
+FAIL Smoke test interrupted
+System.Exception: Random cancellation did not reach status source
+   at YolanLive.WinUI.PerformanceRegressionChecks.Check(Boolean condition, String reason) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\PerformanceRegressionChecks.cs:line 18
+   at YolanLive.WinUI.PerformanceRegressionChecks.RandomNavigationAsync() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\PerformanceRegressionChecks.cs:line 115
+   at YolanLive.WinUI.PerformanceRegressionChecks.RunAsync(MainWindow window) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\PerformanceRegressionChecks.cs:line 90
+   at YolanLive.WinUI.App.OnLaunched(LaunchActivatedEventArgs args) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\App.xaml.cs:line 42

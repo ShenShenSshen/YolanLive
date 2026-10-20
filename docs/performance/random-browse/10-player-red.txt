@@ -1,0 +1,6 @@
+FAIL Prepared selection reaches the real player view model without a second detail request
+System.Exception: Expected one detail, quality and URL call; got 2,1,1
+   at YolanLive.WinUI.RandomBrowseChecks.Check(Boolean condition, String message) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 53
+   at YolanLive.WinUI.RandomBrowseChecks.<>c.<<RunAsync>b__0_1>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 42
+--- End of stack trace from previous location ---
+   at YolanLive.WinUI.RandomBrowseChecks.<>c__DisplayClass0_0.<<RunAsync>g__Test|0>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\RandomBrowseChecks.cs:line 23

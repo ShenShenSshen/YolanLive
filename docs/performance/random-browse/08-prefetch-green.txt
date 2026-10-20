@@ -1,0 +1,4 @@
+PASS Ready room is not blocked by unrelated slow overview sources
+PASS Next random pick reuses candidates and excludes the visited room
+PASS Selection confirms live status through one reusable detail request
+PASS Random session prepares just one next room without requesting stream URLs

@@ -1,0 +1,5 @@
+PASS user may decline the desktop shortcut
+PASS current-user install, version and default desktop shortcut with YolanLive D1 sail icon
+PASS reinstall restores program files without duplicate installation
+PASS installed application: 113 smoke checks including YolanLive branding
+PASS uninstall removes program, shortcuts, all user data and browser cache; real user data untouched by isolated testing

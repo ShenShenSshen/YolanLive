@@ -1,0 +1,1 @@
+PASS Prepared selection reaches the real player view model without a second detail request

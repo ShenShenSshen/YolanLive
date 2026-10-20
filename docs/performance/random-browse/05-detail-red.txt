@@ -1,0 +1,9 @@
+D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\Program.cs(49,68): warning CS0649: 从未对字段“FixtureSite.UrlCalls”赋值，字段将一直保持其默认值 0 [D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\RandomBrowseCheck.csproj]
+PASS Ready room is not blocked by unrelated slow overview sources
+PASS Next random pick reuses candidates and excludes the visited room
+FAIL Selection confirms live status through one reusable detail request
+System.Exception: Selection separately checks status instead of preparing room details.
+   at Program.<<Main>$>g__Check|0_1(Boolean condition, String message) in D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\Program.cs:line 14
+   at Program.<>c.<<<Main>$>b__0_4>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\Program.cs:line 42
+--- End of stack trace from previous location ---
+   at Program.<>c__DisplayClass0_0.<<<Main>$>g__Test|0>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\tests\RandomBrowseCheck\Program.cs:line 11
