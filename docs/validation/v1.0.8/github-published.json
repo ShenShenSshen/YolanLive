@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-20",
+  "repository": "ShenShenSshen/YolanLive",
+  "preserved_repository_id": 1418244152,
+  "preserved_historical_releases": [
+    {
+      "draft": false,
+      "id": 416834021,
+      "tag_name": "v1.0.7"
+    },
+    {
+      "draft": false,
+      "id": 413934411,
+      "tag_name": "v1.0.6"
+    },
+    {
+      "draft": false,
+      "id": 413561364,
+      "tag_name": "v1.0.5"
+    },
+    {
+      "draft": false,
+      "id": 413461597,
+      "tag_name": "v1.0.4"
+    },
+    {
+      "draft": false,
+      "id": 412717385,
+      "tag_name": "v1.0.3"
+    },
+    {
+      "draft": false,
+      "id": 412425127,
+      "tag_name": "v1.0.2"
+    },
+    {
+      "draft": false,
+      "id": 412289446,
+      "tag_name": "v1.0.1"
+    },
+    {
+      "draft": false,
+      "id": 412273753,
+      "tag_name": "v1.0.0"
+    }
+  ],
+  "code_commit": "3e44088790baca33c38a1f39fbbcaf3ee60d5cc5",
+  "tag": "v1.0.8",
+  "latest_formal_release_id": 417897545,
+  "compatibility_repository": "ShenShenSshen/PlayWin",
+  "compatibility_release_id": 417898430,
+  "formal_asset_sizes_hashes_urls_verified": true,
+  "old_updater_actual_download_verified": true,
+  "new_updater_actual_download_verified": true,
+  "bridge_installer_byte_identical": true,
+  "installers_executed_by_download_checks": false,
+  "github_name_search": {
+    "incomplete_results": false,
+    "items": [
+      "ShenShenSshen/YolanLive"
+    ],
+    "total_count": 1
+  }
+}

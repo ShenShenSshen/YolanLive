@@ -39,4 +39,14 @@
 | YolanLive-x64.zip | 129791518 | `a998aa859ce1e8d4fcfc2a02bb1a0f083579fdd5587e9fc975af44ef5c92848b` |
 | SHA256SUMS.txt | 182 | `44393f01266b9d65f25211a273f797c04c5f90906c7866dea1dcc94773340b86` |
 
-采用草稿上传、核对远端大小和 SHA-256、再发布最新正式版的流程。GitHub 仓库身份、历史 Release ID 与新旧更新下载的线上结果将在发布后补充，不以本地通过代替远端验证。
+## GitHub 与线上更新验证
+
+- 主仓库 [ShenShenSshen/YolanLive](https://github.com/ShenShenSshen/YolanLive) 由原仓库直接更名，仓库 ID `1418244152` 未变；8 个历史 Release 的 ID 与标签全部保留，[远端核对记录](v1.0.8/github-published.json)。本机 origin 已切换至新地址。
+- [v1.0.8](https://github.com/ShenShenSshen/YolanLive/releases/tag/v1.0.8) 已发布为最新正式版（Release ID `417897545`）；三个正式资产的远端大小、SHA-256 和下载 URL 与本地记录一致。
+- [PlayWin 旧版升级入口](https://github.com/ShenShenSshen/PlayWin/releases/tag/v1.0.8) 已正式发布；兼容安装器与 YolanLive 安装器逐字节一致。
+- [不可变 v1.0.7 更新器实测](v1.0.8/legacy-update-live.txt)：从旧仓库读取最新版本、真实下载旧名安装器并校验 SHA-256，与新版安装器一致；未启动安装器。
+- [正式新版 exe 更新器实测](v1.0.8/new-update-live.txt)：从新仓库取得 v1.0.8，下载 92,463,507 字节安装器并验证 SHA-256；未启动安装器。两项均使用 D 盘隔离目录，不读取日常账号。
+- [44 个核心、平台与会话加密源文件](v1.0.8/rename-source-check.txt)与 v1.0.7 对照，仅有名称替换。
+- 2026-10-20 GitHub 全局 `YolanLive in:name fork:true` 检索返回 1 项，为正式仓库，查询未截断；这是本次发布时的检索结果，不保证未来名称独占或搜索排名。
+
+发布代码与包对应标签 v1.0.8（`3e44088`）；发布后的在线验证记录单独补充至主分支，不移动已发布标签。

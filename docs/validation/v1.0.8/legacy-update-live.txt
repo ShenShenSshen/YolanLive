@@ -1,0 +1,4 @@
+PASS immutable v1.0.7 client accepts old-name v1.0.8 bridge metadata
+PASS immutable old client rejects redirected asset URL; bridge repository is necessary
+PASS immutable v1.0.7 updater checks public PlayWin bridge and downloads byte-identical YolanLive v1.0.8 installer
+Installer executed=False; account data accessed=False

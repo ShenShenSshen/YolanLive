@@ -1,0 +1,2 @@
+PASS 44 core/platform/project and encrypted-session source files match v1.0.7 after branding-only substitution
+PASS no platform request or session encryption behavior changed

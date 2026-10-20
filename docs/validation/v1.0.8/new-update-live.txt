@@ -1,0 +1,5 @@
+PASS Public GitHub release metadata and real installer download
+Tag=v1.0.8
+Size=92463507
+SHA256 verified=True
+Installer executed=False
