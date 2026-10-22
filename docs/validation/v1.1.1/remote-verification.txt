@@ -1,0 +1,5 @@
+PASS remote size and SHA-256: YolanLive-1.1.1-x64-Setup.exe
+PASS remote size and SHA-256: YolanLive-x64.zip
+PASS remote size and SHA-256: SHA256SUMS.txt
+https://github.com/ShenShenSshen/YolanLive/releases/tag/v1.1.1
+PASS latest stable release is v1.1.1

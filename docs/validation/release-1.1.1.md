@@ -19,7 +19,9 @@
 - [便携包检查](v1.1.1/package.json)：584 个文件逐一 SHA-256 一致，运行依赖与字体许可齐全，未包含账号、数据库、设置、日志或测试目录。
 - [内嵌图标](v1.1.1/icons.txt)通过；[原始 v1.0.6 更新器离线检查](v1.1.1/legacy-offline.txt)确认直接识别 v1.1.1，同时继续拒绝不匹配的下载地址。
 - [界面检查](v1.1.1/visual-checks.txt) 25 项全部通过，包含 960×540 顶栏、窄页反馈、浅色／深色及键盘重试；实际缩放 100%。
-- 发布资产为 `YolanLive-1.1.1-x64-Setup.exe`、`YolanLive-x64.zip`、`SHA256SUMS.txt`；GitHub 草稿核对大小及 SHA-256 后设为最新正式版，并同步旧 PlayWin 更新入口。远端结果在完成后补记。
+- 发布资产为 `YolanLive-1.1.1-x64-Setup.exe`、`YolanLive-x64.zip`、`SHA256SUMS.txt`；[远端核对](v1.1.1/remote-verification.txt)确认三个文件的大小与 SHA-256 均和本地一致，再设为最新正式版。[正式发布元数据](v1.1.1/github-published.json)保留。
+- 发布地址：[YolanLive v1.1.1](https://github.com/ShenShenSshen/YolanLive/releases/tag/v1.1.1)。源码标签 `v1.1.1` 指向 `17457b47808ede05ce8e5c5a611b112fd45ea94b`。
+- [旧 PlayWin 更新入口](https://github.com/ShenShenSshen/PlayWin/releases/tag/v1.1.1)已同步为最新正式版，[同步核对](v1.1.1/legacy-sync.txt)确认兼容安装器仅文件名不同，大小与 SHA-256 和主仓库一致。未将远端元数据核对等同于软件内完整下载实测。
 
 ## 范围与限制
 
