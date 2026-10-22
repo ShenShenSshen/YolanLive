@@ -1,0 +1,2 @@
+PASS immutable v1.0.6 client accepts direct latest version metadata: v1.1.1
+PASS immutable old client rejects redirected asset URL; bridge repository is necessary

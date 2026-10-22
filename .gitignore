@@ -12,3 +12,5 @@ settings.json
 DouyinWebView/
 HuyaWebView/
 DouyuWebView/
+# Obtain Fontshare fonts directly; application embedding does not permit a public font mirror.
+YolanLive.WinUI/Assets/Fonts/Satoshi-Regular.ttf

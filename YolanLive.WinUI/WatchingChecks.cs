@@ -148,7 +148,19 @@ internal static class WatchingChecks
         ((DispatcherTimer)type.GetField("miniHoverTimer", methods).GetValue(page)).Stop();
         type.GetMethod("FinishToolbarVisibility", methods).Invoke(page, new object[] { false });
         await Task.Delay(150);
-        Check(window.AppWindow.ClientSize.Width == videoSize.Width && window.AppWindow.ClientSize.Height == videoSize.Height, "Window fullscreen included chrome in the video size.");
+        // Layout can restart hover checks; freeze the fixture after it settles before measuring the hidden rail.
+        for (var settle = 0; settle < 8; settle++)
+        {
+            ((DispatcherTimer)type.GetField("miniHoverTimer", methods).GetValue(page)).Stop();
+            type.GetMethod("FinishToolbarVisibility", methods).Invoke(page, new object[] { false });
+            await Task.Delay(40);
+            ((DispatcherTimer)type.GetField("miniHoverTimer", methods).GetValue(page)).Stop();
+            type.GetMethod("FinishToolbarVisibility", methods).Invoke(page, new object[] { false });
+            page.UpdateLayout();
+            if (Math.Abs(viewport.ActualWidth * page.XamlRoot.RasterizationScale - videoSize.Width) <= 1 &&
+                Math.Abs(viewport.ActualHeight * page.XamlRoot.RasterizationScale - videoSize.Height) <= 1) break;
+        }
+        Check(window.AppWindow.ClientSize.Width == videoSize.Width && window.AppWindow.ClientSize.Height == videoSize.Height, "Window fullscreen included chrome in the video size: expected=" + videoSize.Width + "x" + videoSize.Height + "; actual=" + window.AppWindow.ClientSize.Width + "x" + window.AppWindow.ClientSize.Height);
         Check(Math.Abs(viewport.ActualWidth * page.XamlRoot.RasterizationScale - videoSize.Width) <= 1 && Math.Abs(viewport.ActualHeight * page.XamlRoot.RasterizationScale - videoSize.Height) <= 1, "Window fullscreen rescaled the video viewport: expected=" + videoSize.Width + "x" + videoSize.Height + ", actual=" + viewport.ActualWidth + "x" + viewport.ActualHeight + ", scale=" + page.XamlRoot.RasterizationScale);
         Check(window.AppWindow.Presenter is OverlappedPresenter { IsAlwaysOnTop: false, HasTitleBar: false }, "Window fullscreen gained topmost or retained its caption.");
         Check(window.CanDragVideo, "Window fullscreen has no video drag entry.");
@@ -341,6 +353,18 @@ internal static class WatchingChecks
                         var brightnessX = brightness.TransformToVisual(rail).TransformPoint(default).X;
                         var optionsX = options.TransformToVisual(rail).TransformPoint(default).X;
                         var actionsX = actions.TransformToVisual(rail).TransformPoint(default).X;
+                        var play = (StackPanel)page.FindName("PlayControls");
+                        var playRight = play.TransformToVisual(rail).TransformPoint(new Windows.Foundation.Point(play.ActualWidth, 0)).X;
+                        Check(Math.Abs(volumeX - playRight - 24) <= 1, "Playback/audio gap changes with window width: " + width);
+                        var optionFrame = (Border)page.FindName("QualityFrame");
+                        var lineFrame = (Border)page.FindName("LineFrame");
+                        Check(Math.Abs(optionFrame.ActualWidth - lineFrame.ActualWidth) <= 1, "Quality and line widths differ");
+                        foreach (var name in new[] { "BottomBtnRefresh", "PlayerMoreButton" })
+                        {
+                            var action = (Button)page.FindName(name);
+                            if (action.Visibility == Visibility.Visible)
+                                Check(action.ActualWidth == 40 && action.ActualHeight == 40, "Action target is inconsistent: " + name);
+                        }
                         Check(brightnessX >= volumeX + volume.ActualWidth && optionsX >= brightnessX + brightness.ActualWidth &&
                             actionsX >= optionsX + options.ActualWidth && actionsX + actions.ActualWidth <= width + 1,
                             "Toolbar groups overlap at " + width + " random=" + random);

@@ -33,31 +33,55 @@ public class CategoryVM : BaseViewModel
             DoPropertyChanged(nameof(SelectedGroup));
         }
     }
-    public async Task LoadAsync()
+    public Task LoadAsync() => LoadCoreAsync(false);
+    public Task RefreshAsync()
+    {
+        if (Loading) return Task.CompletedTask;
+        GameCatalog.Invalidate(MainVM.BrowseSite.LiveSite);
+        return LoadCoreAsync(true);
+    }
+    private async Task LoadCoreAsync(bool preserve)
     {
         CancelPending();
         var current = generation;
         var cancellation = requests.Token;
         var site = MainVM.BrowseSite.LiveSite;
+        var retain = preserve && loadedSite == site;
+        CanRetry = false;
+        StatusMessage = retain && Items.Count > 0 ? "正在刷新…" : "";
         Loading = true;
         EmptyMessage = "暂无可用游戏分类";
-        SelectedGroup = null;
-        loadedCategories = null;
-        loadedSite = null;
-        Items.Clear();
-        Groups.Clear();
+        if (!retain)
+        {
+            SelectedGroup = null;
+            loadedCategories = null;
+            loadedSite = null;
+            Items.Clear(); Groups.Clear();
+        }
+        IsEmpty = Items.Count == 0;
         try
         {
             var categories = await GameCatalog.GetCategoriesAsync(site, cancellation);
             if (current != generation) return;
+            SelectedGroup = null;
+            Items.Clear(); Groups.Clear();
             loadedSite = site;
             loadedCategories = categories;
             foreach (var category in categories) Groups.Add(category);
             SelectedGroup = BrowsePreferences.RestoreGroup(MainVM.Sites.Single(s => s.LiveSite == site), Groups);
+            StatusMessage = "";
             _ = CompletePicturesAsync();
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
-        catch (Exception ex) { if (current == generation) { EmptyMessage = RequestErrorMessage.Report(ex, site.Name); HandleError(ex, EmptyMessage); } }
+        catch (Exception ex)
+        {
+            if (current == generation)
+            {
+                EmptyMessage = RequestErrorMessage.Report(ex, site.Name); CanRetry = true;
+                StatusMessage = Items.Count > 0 ? "刷新失败，保留上次内容。" + EmptyMessage : "";
+                LogHelper.Log("分类读取失败", LogType.ERROR, ex);
+            }
+        }
         finally { if (current == generation) { IsEmpty = Items.Count == 0; Loading = false; } }
     }
     public void ShowGroup(LiveCategory group)
@@ -122,6 +146,6 @@ public class CategoryVM : BaseViewModel
     }
     private static bool NeedsPictures(IEnumerable<LiveCategory> categories) =>
         categories.SelectMany(c => c.Children).Any(c => string.IsNullOrWhiteSpace(c.Pic));
-    public void CancelPending() { generation++; requests.Cancel(); requests.Dispose(); requests = new(); Loading = false; }
-    public override async void Refresh() { GameCatalog.Invalidate(MainVM.BrowseSite.LiveSite); await LoadAsync(); }
+    public void CancelPending() { generation++; requests.Cancel(); requests.Dispose(); requests = new(); if (Loading) StatusMessage = ""; Loading = false; }
+    public override async void Refresh() => await RefreshAsync();
 }

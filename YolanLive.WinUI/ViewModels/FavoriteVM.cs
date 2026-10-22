@@ -58,6 +58,8 @@ namespace YolanLive.WinUI.ViewModels
             if (Loading) return;
             var current = generation;
             var cancellation = requests.Token;
+            IsEmpty = Items.Count == 0;
+            CanRetry = false; StatusMessage = "";
             Loading = true;
             LoaddingLiveStatus = true;
             try
@@ -78,19 +80,25 @@ namespace YolanLive.WinUI.ViewModels
                     finally { limit.Release(); }
                 }));
                 if (current != generation) return;
+                var retained = Items.ToDictionary(item => item.ID);
                 Items.Clear();
                 foreach (var check in checks.Where(c => c.live)) { check.item.LiveStatus = true; Items.Add(check.item); }
+                foreach (var check in checks.Where(c => c.failed))
+                    if (retained.TryGetValue(check.item.ID, out var old)) { old.LiveStatus = false; Items.Add(old); }
                 var failure = checks.FirstOrDefault(c => c.error != null);
                 EmptyMessage = failure.error != null ? RequestErrorMessage.Report(failure.error, failure.item.SiteName) : checks.Any(c => c.failed) ? "关注状态查询失败，请稍后刷新" : saved.Count == 0 ? "还没有关注主播" : "关注的主播暂未开播";
+                CanRetry = checks.Any(c => c.failed);
+                StatusMessage = checks.Any(c => c.failed) && Items.Count > 0 ? "部分状态未能更新，保留上次内容。" + EmptyMessage : "";
                 IsEmpty = Items.Count == 0;
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
-            catch (Exception ex) { if (current == generation) { EmptyMessage = "关注数据加载失败，请刷新重试"; IsEmpty = Items.Count == 0; HandleError(ex); } }
+            catch (Exception ex) { if (current == generation) { EmptyMessage = "关注数据加载失败，请重试"; CanRetry = true; StatusMessage = Items.Count > 0 ? "刷新失败，保留上次内容。" + EmptyMessage : ""; IsEmpty = Items.Count == 0; LogHelper.Log("关注读取失败", LogType.ERROR, ex); } }
             finally { if (current == generation) { Loading = false; LoaddingLiveStatus = false; } }
         }
-        public void CancelPending() { generation++; requests.Cancel(); requests.Dispose(); requests = new(); Loading = false; LoaddingLiveStatus = false; }
+        public void CancelPending() { generation++; requests.Cancel(); requests.Dispose(); requests = new(); if (Loading) StatusMessage = ""; Loading = false; LoaddingLiveStatus = false; }
         public override async void Refresh()
         {
+            if (Loading) return;
             foreach (var site in MainVM.Sites.Select(s => s.LiveSite).OfType<YolanLive.Core.Douyin>()) site.ClearLiveStatusCache();
             CancelPending(); await LoadAsync();
         }
@@ -140,6 +148,7 @@ namespace YolanLive.WinUI.ViewModels
                         });
                     }
                     Utils.ShowMessageToast("导入成功");
+                    CancelPending();
                     Refresh();
                 }
                 catch (Exception ex)

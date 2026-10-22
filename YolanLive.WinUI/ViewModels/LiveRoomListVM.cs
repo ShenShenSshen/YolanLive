@@ -25,26 +25,41 @@ public abstract class LiveRoomListVM : BaseViewModel
     protected virtual string PlatformName => "直播平台";
     protected abstract Task<List<LiveGameSource>> GetSourcesAsync(CancellationToken cancellationToken);
     protected virtual Task<LiveCategoryResult> FetchAsync(LiveGameSource source, int page, CancellationToken cancellationToken) => source.Site.GetCategoryRooms(source.Category, page, cancellationToken);
-    public async Task LoadAsync()
+    public Task LoadAsync() => LoadCoreAsync(false);
+    public virtual async Task RefreshAsync()
     {
-        if (Loading || Items.Count >= MaxCachedRooms) return;
+        if (Loading) return;
+        foreach (var site in MainVM.Sites.Select(s => s.LiveSite).OfType<YolanLive.Core.Douyin>()) site.ClearLiveStatusCache();
+        CancelPending();
+        await LoadCoreAsync(true);
+    }
+    private async Task LoadCoreAsync(bool replace)
+    {
+        if (Loading || (!replace && Items.Count >= MaxCachedRooms)) return;
         var current = generation;
         var cancellation = requests.Token;
+        IsEmpty = Items.Count == 0;
+        CanRetry = false;
+        StatusMessage = Items.Count > 0 ? replace ? "正在刷新…" : "正在加载更多…" : "";
         Loading = true;
         try
         {
-            if (sources == null)
+            var activeSources = replace ? null : sources;
+            var activePages = replace ? new Dictionary<LiveGameSource, int>() : pages;
+            var activeFinished = replace ? new HashSet<LiveGameSource>() : finished;
+            if (activeSources == null)
             {
                 var loaded = await GetSourcesAsync(cancellation);
                 if (current != generation) return;
-                sources = loaded;
+                activeSources = loaded;
+                if (!replace) sources = loaded;
             }
             if (current != generation) return;
-            var batches = await Task.WhenAll(sources.Where(s => !finished.Contains(s)).Select(async source =>
+            var batches = await Task.WhenAll(activeSources.Where(s => !activeFinished.Contains(s)).Select(async source =>
             {
                 try
                 {
-                    var page = pages.TryGetValue(source, out var next) ? next : 1;
+                    var page = activePages.TryGetValue(source, out var next) ? next : 1;
                     using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
                     timeout.CancelAfter(TimeSpan.FromSeconds(20));
                     var result = await FetchAsync(source, page, timeout.Token);
@@ -58,18 +73,44 @@ public abstract class LiveRoomListVM : BaseViewModel
             {
                 if (batch.error != null)
                 {
-                    finished.Add(batch.source);
+                    activeFinished.Add(batch.source);
                     LogHelper.Log(batch.source.Site.Name + "直播列表读取失败", LogType.ERROR, batch.error);
                     continue;
                 }
-                pages[batch.source] = batch.page + 1;
-                if (!batch.result.HasMore) finished.Add(batch.source);
+                activePages[batch.source] = batch.page + 1;
+                if (!batch.result.HasMore) activeFinished.Add(batch.source);
                 foreach (var room in batch.result.Rooms)
                 {
                     if (LiveOnly && room.IsLive != true) continue;
                     room.Source = batch.source.Site;
                     rooms.Add(room);
                 }
+            }
+            var failedBatch = batches.FirstOrDefault(b => b.error != null || b.result?.Error != null);
+            var error = failedBatch.error ?? failedBatch.result?.Error;
+            var unknownOnly = LiveOnly && rooms.Count == 0 && batches.Any(b => b.result?.Rooms.Any(r => r.IsLive == null) == true);
+            EmptyMessage = error != null ? RequestErrorMessage.Report(error, failedBatch.source.Site.Name) :
+                unknownOnly ? "部分开播状态查询失败，请稍后重试" : LiveOnly ? "当前没有已开播的直播" : "没有找到相关直播";
+            var failed = error != null || unknownOnly;
+            CanRetry = failed;
+            if (replace && failed)
+            {
+                if (LiveOnly)
+                {
+                    var stopped = batches.SelectMany(b => (b.result?.Rooms ?? new List<LiveRoomItem>())
+                        .Where(r => r.IsLive == false).Select(r => b.source.Site.Name + ":" + r.RoomID)).ToHashSet();
+                    foreach (var room in Items.Where(r => stopped.Contains(r.Source.Name + ":" + r.RoomID)).ToArray()) Items.Remove(room);
+                }
+                CanLoadMore = false;
+                StatusMessage = Items.Count > 0 ? "刷新失败，保留上次内容。" + EmptyMessage : "";
+                return;
+            }
+            if (replace)
+            {
+                sources = activeSources;
+                pages.Clear(); foreach (var entry in activePages) pages[entry.Key] = entry.Value;
+                finished.Clear(); foreach (var source in activeFinished) finished.Add(source);
+                Items.Clear();
             }
             var keys = new HashSet<string>(Items.Select(r => r.Source.Name + ":" + r.RoomID));
             foreach (var room in rooms.OrderByDescending(r => r.Online))
@@ -80,16 +121,18 @@ public abstract class LiveRoomListVM : BaseViewModel
             CanLoadMore = Items.Count < MaxCachedRooms && sources.Any(s => !finished.Contains(s));
             if (Items.Count >= MaxCachedRooms)
                 Utils.ShowMessageToast("已加载 300 个直播间，可刷新列表或缩小分类、搜索范围");
-            var failedBatch = batches.FirstOrDefault(b => b.error != null || b.result?.Error != null);
-            var error = failedBatch.error ?? failedBatch.result?.Error;
-            EmptyMessage = error != null ? RequestErrorMessage.Report(error, failedBatch.source.Site.Name) :
-                LiveOnly && batches.Any(b => b.result.Rooms.Any(r => r.IsLive == null)) ? "部分开播状态查询失败，请稍后刷新" : LiveOnly ? "当前没有已开播的直播" : "没有找到相关直播";
-            if (error != null) Utils.ShowMessageToast(EmptyMessage);
+            StatusMessage = failed && Items.Count > 0 ? EmptyMessage : "";
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
         catch (Exception ex)
         {
-            if (current == generation) { CanLoadMore = false; EmptyMessage = RequestErrorMessage.Report(ex, PlatformName); HandleError(ex, EmptyMessage); }
+            if (current == generation)
+            {
+                CanLoadMore = false;
+                EmptyMessage = RequestErrorMessage.Report(ex, PlatformName); CanRetry = true;
+                StatusMessage = Items.Count > 0 ? "加载失败，保留上次内容。" + EmptyMessage : "";
+                LogHelper.Log("直播列表读取失败", LogType.ERROR, ex);
+            }
         }
         finally
         {
@@ -135,12 +178,9 @@ public abstract class LiveRoomListVM : BaseViewModel
         CanLoadMore = false;
         IsEmpty = false;
         HasLoaded = false;
+        CanRetry = false; StatusMessage = "";
     }
-    public void CancelPending() { generation++; requests.Cancel(); requests.Dispose(); requests = new(); Loading = false; }
-    public override async void Refresh()
-    {
-        foreach (var site in MainVM.Sites.Select(s => s.LiveSite).OfType<YolanLive.Core.Douyin>()) site.ClearLiveStatusCache();
-        Reset(); await LoadAsync();
-    }
+    public void CancelPending() { generation++; requests.Cancel(); requests.Dispose(); requests = new(); if (Loading) StatusMessage = ""; Loading = false; }
+    public override async void Refresh() => await RefreshAsync();
     public override async void LoadMore() { if (CanLoadMore) await LoadAsync(); }
 }

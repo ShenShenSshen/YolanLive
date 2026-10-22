@@ -52,6 +52,7 @@ internal static class SmokeTests
         Check("Image", () => XamlReader.Load("<Image " + ns + " Source=\"ms-appx:///Assets/YolanLive.png\" />"));
         Check("Pinned games: limit, order, removal, identity and platform isolation", BrowseChecks.Pins);
         await CheckAsync("Browse platform and group persistence without temporary reset", BrowseChecks.MemoryAsync);
+        await CheckAsync("Category refresh retains the group and exposes retry only on failure", BrowseChecks.RefreshFeedbackAsync);
         await CheckAsync("Search platform/status labels preserve original room data", BrowseChecks.SearchAsync);
         Check("Raw search status only labels explicitly known platform codes", BrowseChecks.SearchStatuses);
         await CheckAsync("Browse preferences restore in a new process", BrowseChecks.RestartAsync);
@@ -266,6 +267,7 @@ internal static class SmokeTests
         window.Activate();
         await CheckAsync("Update download survives settings navigation, cancels and requires manual install", () => UpdateChecks.BackgroundAsync(window));
         await CheckAsync("Merged source pagination, live filtering and favorite preservation", GameBrowseChecks.RunAsync);
+        await CheckAsync("Refresh retains content, retries, coalesces clicks and rejects cancelled responses", GameBrowseChecks.RefreshFeedbackAsync);
         await CheckAsync("Recovery is bounded, stops offline and cancels stale operations", WatchingChecks.RecoveryAsync);
         Check("Login failure differs from network and platform failure", WatchingChecks.LoginErrors);
         await CheckAsync("Manage all favorites without live-status filtering", WatchingChecks.ManageFavoritesAsync);

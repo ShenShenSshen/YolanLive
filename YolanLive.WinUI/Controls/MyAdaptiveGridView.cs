@@ -54,7 +54,7 @@ public partial class MyAdaptiveGridView : GridView
         panel.ItemHeight = ItemTemplate == (DataTemplate)App.Current.Resources["RoomItemTemplate"]
             ? Math.Max(1, panel.ItemWidth - 16) * 9 / 16 + 80
             : ItemTemplate == (DataTemplate)App.Current.Resources["GameItemTemplate"]
-                ? Math.Max(1, panel.ItemWidth - 34) * 3 / 4 + 86 : ItemHeight;
+                ? Math.Max(1, panel.ItemWidth - 34) * 3 / 4 + 82 : ItemHeight;
     }
     private void ScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs args)
     {

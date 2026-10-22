@@ -1,0 +1,2 @@
+PASS embedded YolanLive D1 sail icon: YolanLive.exe
+PASS embedded YolanLive D1 sail icon: YolanLive-1.1.1-x64-Setup.exe

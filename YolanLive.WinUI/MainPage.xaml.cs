@@ -37,6 +37,23 @@ namespace YolanLive.WinUI
         internal Page ActivePage => frame.Content as Page;
         internal bool IsTopNavigation => navigationView.PaneDisplayMode == NavigationViewPaneDisplayMode.Top;
 
+        private AutoSuggestBox headerSearch;
+
+        internal void SetHeaderSearch(AutoSuggestBox search)
+        {
+            if (headerSearch == search) return;
+            if (search != null) search.Text = headerSearch?.Text ?? searchBox.Text;
+            else if (headerSearch != null) searchBox.Text = headerSearch.Text;
+            headerSearch = search;
+            navigationView.AutoSuggestBox = search == null ? searchBox : null;
+        }
+
+        internal void ClearHeaderSearch(AutoSuggestBox search)
+        {
+            if (headerSearch == search) SetHeaderSearch(null);
+        }
+
+        private bool paneInitialized;
         private bool startupUpdateChecked;
         private System.Threading.CancellationTokenSource randomLiveOperation;
 
@@ -49,7 +66,7 @@ namespace YolanLive.WinUI
             this.KeyDown += MainPage_KeyDown;
             SetPaneMode();
             Loaded += MainPage_CheckUpdateOnStartup;
-            Unloaded += (_, _) => { randomLiveOperation?.Cancel(); MessageCenter.UpdatePanelDisplayModeEvent -= MessageCenter_UpdatePanelDisplayModeEvent; };
+            Unloaded += (_, _) => { SetHeaderSearch(null); randomLiveOperation?.Cancel(); MessageCenter.UpdatePanelDisplayModeEvent -= MessageCenter_UpdatePanelDisplayModeEvent; };
         }
 
         private async void MainPage_CheckUpdateOnStartup(object sender, RoutedEventArgs e)
@@ -91,7 +108,7 @@ namespace YolanLive.WinUI
             else if (e.Key == Windows.System.VirtualKey.GamepadY)
             {
                 e.Handled = true;
-                searchBox.Focus(FocusState.Programmatic);
+                (headerSearch ?? searchBox).Focus(FocusState.Programmatic);
             }
         }
 
@@ -137,6 +154,7 @@ namespace YolanLive.WinUI
             {
                 item.Tag = "SettingsPage";
             }
+            SetHeaderSearch(null);
             frame.Navigate(Type.GetType("YolanLive.WinUI.Views." + item.Tag));
             RefreshWindowChrome();
 
@@ -173,14 +191,19 @@ namespace YolanLive.WinUI
 
         private async void searchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
-            if (string.IsNullOrEmpty(args.QueryText))
+            await SubmitSearchAsync(args.QueryText);
+        }
+
+        internal async Task SubmitSearchAsync(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
             {
                 Helper.Utils.ShowMessageToast("关键字不能为空");
                 return;
             }
-            if (!await ParseUrl(args.QueryText))
+            if (!await ParseUrl(query))
             {
-                this.Frame.Navigate(typeof(SearchPage), args.QueryText);
+                this.Frame.Navigate(typeof(SearchPage), query);
             }
         }
 
@@ -208,7 +231,11 @@ namespace YolanLive.WinUI
 
         private void navigationView_Loaded(object sender, RoutedEventArgs e)
         {
-            navigationView.IsPaneOpen = false;
+            if (!paneInitialized)
+            {
+                navigationView.IsPaneOpen = navigationView.DisplayMode == NavigationViewDisplayMode.Expanded;
+                paneInitialized = true;
+            }
             if (navigationView.SettingsItem is NavigationViewItem settings)
             {
                 settings.MinHeight = 44; settings.Margin = new Thickness(0, 2, 0, 2);

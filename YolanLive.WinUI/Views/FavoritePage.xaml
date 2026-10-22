@@ -3,20 +3,23 @@
     <Grid x:Name="PageLayoutRoot" design:PageDesign.Insets="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" Margin="0" MinHeight="48">
-            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" Margin="0" MinHeight="72" ColumnSpacing="12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <TextBlock x:Name="PageTitle" Margin="0,0,8,0" Style="{StaticResource PageTitleStyle}" Text="我的关注"/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button x:Name="ManageFavorites" Click="ManageFavorites_Click" Style="{StaticResource PageActionButtonStyle}">管理全部关注</Button>
+            <AutoSuggestBox x:Name="HeaderSearch" Grid.Column="2" design:PageDesign.Search="True" Style="{StaticResource BrowseSearchStyle}" Width="240" PlaceholderText="搜索主播或粘贴链接" QueryIcon="Find" AutomationProperties.Name="搜索主播或直播链接"/>
+            <StackPanel x:Name="HeaderActions" Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button x:Name="ManageFavorites" Width="112" Click="ManageFavorites_Click" Style="{StaticResource PageActionButtonStyle}">管理全部关注</Button>
                 <Grid Width="36" Height="36">
-                    <Button x:Name="HeaderRefresh" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind favoriteVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新" Visibility="{x:Bind favoriteVM.LoaddingLiveStatus, Mode=OneWay, Converter={StaticResource displayConvert}}"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/></Button>
+                    <Button x:Name="HeaderRefresh" IsEnabled="{x:Bind favoriteVM.CanRefresh, Mode=OneWay}" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind favoriteVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新" Visibility="{x:Bind favoriteVM.LoaddingLiveStatus, Mode=OneWay, Converter={StaticResource displayConvert}}"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/></Button>
                     <ProgressRing Width="20" Height="20" IsActive="True" Visibility="{x:Bind favoriteVM.LoaddingLiveStatus, Mode=OneWay}"/>
                 </Grid>
                 <Button x:Name="FavoriteMore" Style="{StaticResource ToolbarIconStyle}" ToolTipService.ToolTip="更多关注操作" AutomationProperties.Name="更多关注操作">
                     <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/>
                     <Button.Flyout><MenuFlyout>
+                        <MenuFlyoutItem x:Name="ManageFavoritesOverflow" Visibility="Collapsed" Text="管理全部关注" Click="ManageFavorites_Click"/>
                         <MenuFlyoutItem x:Name="ImportFavorites" Text="导入列表" Command="{x:Bind favoriteVM.InputCommand}"/>
                         <MenuFlyoutItem x:Name="ExportFavorites" Text="导出列表" Command="{x:Bind favoriteVM.OutputCommand}"/>
                         <MenuFlyoutSeparator/>
@@ -25,7 +28,7 @@
                 </Button>
             </StackPanel>
         </Grid></TitleBar>
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <controls:MyAdaptiveGridView Padding="0" Margin="-8,0,-8,-8" CanLoadMore="False" DesiredWidth="400" IsItemClickEnabled="True" ItemClick="ls_ItemClick" ItemHeight="96" ItemsSource="{x:Bind Path=favoriteVM.Items, Mode=OneWay}" SelectionMode="None">
                 <controls:MyAdaptiveGridView.ItemContainerStyle>
                     <Style BasedOn="{StaticResource GridViewItemCornerRadiusStyle}" TargetType="GridViewItem">
@@ -64,11 +67,20 @@
                     </DataTemplate>
                 </controls:MyAdaptiveGridView.ItemTemplate>
             </controls:MyAdaptiveGridView>
-            <TextBlock Style="{StaticResource BodyTextStyle}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{ThemeResource ReadableSecondaryTextBrush}" Visibility="{x:Bind Path=favoriteVM.IsEmpty, Mode=OneWay}">
-                <Run Text="{x:Bind favoriteVM.EmptyMessage, Mode=OneWay}"/>
-            </TextBlock>
+<StackPanel x:Name="EmptyState"  MaxWidth="440" Margin="12" Spacing="12" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind favoriteVM.ShowEmptyStatus, Mode=OneWay}">
+ <TextBlock Style="{StaticResource BodyTextStyle}" Text="{x:Bind favoriteVM.EmptyMessage, Mode=OneWay}" TextWrapping="Wrap" TextAlignment="Center"/>
+ <Button x:Name="EmptyRetry" Content="重试" HorizontalAlignment="Center" Style="{StaticResource PageActionButtonStyle}" Command="{x:Bind favoriteVM.RefreshCommand}" IsEnabled="{x:Bind favoriteVM.CanRefresh, Mode=OneWay}" Visibility="{x:Bind favoriteVM.CanRetry, Mode=OneWay}"/>
+ </StackPanel>
 
 
         </Grid>
-    </Grid>
+    <Border x:Name="LoadStatus" Grid.Row="1" Margin="0,0,0,12" Padding="12,8" CornerRadius="10" Background="{ThemeResource AppHoverBrush}" Visibility="{x:Bind favoriteVM.ShowInlineStatus, Mode=OneWay}">
+ <Grid ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+ <TextBlock Text="{x:Bind favoriteVM.StatusMessage, Mode=OneWay}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+ <Button x:Name="InlineRetry" Grid.Column="1" Content="重试" Style="{StaticResource PageActionButtonStyle}" Command="{x:Bind favoriteVM.RefreshCommand}" IsEnabled="{x:Bind favoriteVM.CanRefresh, Mode=OneWay}" Visibility="{x:Bind favoriteVM.CanRetry, Mode=OneWay}"/>
+ </Grid></Border>
+ <Border x:Name="LoadingPlaceholder" Grid.Row="2" Padding="24" CornerRadius="10" Background="{ThemeResource AppHoverBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind favoriteVM.ShowLoadingPlaceholder, Mode=OneWay}">
+ <TextBlock Text="正在加载当前页面…" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" TextAlignment="Center"/>
+ </Border>
+</Grid>
 </Page>

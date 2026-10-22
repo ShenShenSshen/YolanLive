@@ -9,27 +9,43 @@
  </ControlTemplate></Setter.Value></Setter>
  <Setter Property="FontSize" Value="14"/><Setter Property="FontFamily" Value="{StaticResource NavigationFontFamily}"/></Style>
  </Page.Resources>
- <Grid x:Name="PageLayoutRoot" design:PageDesign.Insets="True"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
- <StackPanel Margin="0,0,0,8" Spacing="12">
- <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" MinHeight="48"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CompactPageTitle" Text="分类" Style="{StaticResource PageTitleStyle}" Visibility="Collapsed"/><Border x:Name="PlatformSurface" Padding="0" VerticalAlignment="Center" HorizontalAlignment="Left" CornerRadius="12" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource BrowsingOutlineBrush}" BorderThickness="0">
+ <Grid x:Name="PageLayoutRoot" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" design:PageDesign.Insets="True"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+ <StackPanel Margin="0,0,0,16" Spacing="12">
+ <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" MinHeight="72" ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CompactPageTitle" Text="分类" Style="{StaticResource PageTitleStyle}" Visibility="Collapsed"/><Border x:Name="PlatformSurface" Padding="4" VerticalAlignment="Center" HorizontalAlignment="Left" CornerRadius="12" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource BrowsingOutlineBrush}" BorderThickness="0">
  <ListView x:Name="PlatformPicker" Padding="0" ItemsSource="{x:Bind viewModels:MainVM.Sites}" SelectionChanged="PlatformPicker_SelectionChanged" SelectionMode="Single" IsMultiSelectCheckBoxEnabled="False" HorizontalAlignment="Left" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.VerticalScrollMode="Disabled" ItemContainerStyle="{StaticResource PlatformTabStyle}" AutomationProperties.Name="直播平台">
- <ListView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" ItemWidth="96" ItemHeight="36"/></ItemsPanelTemplate></ListView.ItemsPanel>
+ <ListView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" ItemWidth="96" ItemHeight="44"/></ItemsPanelTemplate></ListView.ItemsPanel>
  <ListView.ItemTemplate><DataTemplate><TextBlock Style="{StaticResource NavigationTextStyle}" Text="{Binding Label}" FontSize="{StaticResource BodyTextSize}" Margin="0" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" LineHeight="20" FontFamily="{StaticResource NavigationFontFamily}"/></DataTemplate></ListView.ItemTemplate>
  </ListView>
- </Border><Button x:Name="HeaderRefresh" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind categoryVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/></Button></Grid></TitleBar>
+ </Border><AutoSuggestBox x:Name="HeaderSearch" Grid.Column="2" design:PageDesign.Search="True" Style="{StaticResource BrowseSearchStyle}" Width="240" PlaceholderText="搜索主播或粘贴链接" QueryIcon="Find" AutomationProperties.Name="搜索主播或直播链接"/><Button x:Name="HeaderRefresh" IsEnabled="{x:Bind categoryVM.CanRefresh, Mode=OneWay}" Grid.Column="3" Margin="0" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind categoryVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新"><Grid><FontIcon Visibility="{x:Bind categoryVM.CanRefresh, Mode=OneWay}" FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/><ProgressRing Width="16" Height="16" IsActive="{x:Bind categoryVM.Loading, Mode=OneWay}" Visibility="{x:Bind categoryVM.Loading, Mode=OneWay}"/></Grid></Button></Grid></TitleBar>
  <Border x:Name="PlatformOverflowHost" Visibility="Collapsed" HorizontalAlignment="Left"/>
  <ListView x:Name="GroupPicker" Padding="0" ItemsSource="{x:Bind categoryVM.Groups}" SelectedItem="{x:Bind categoryVM.SelectedGroup, Mode=TwoWay}" SelectionMode="Single" AutomationProperties.Name="游戏大类" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemContainerStyle="{StaticResource GameGroupItemStyle}">
  <ListView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" ItemWidth="112"/></ItemsPanelTemplate></ListView.ItemsPanel>
  <ListView.ItemTemplate><DataTemplate x:DataType="models:LiveCategory"><TextBlock Style="{StaticResource NavigationTextStyle}" Margin="0" VerticalAlignment="Center" Text="{x:Bind Name}" TextTrimming="None" TextWrapping="Wrap" TextAlignment="Center" ToolTipService.ToolTip="{x:Bind Name}" FontSize="{StaticResource BodyTextSize}" LineHeight="20"/></DataTemplate></ListView.ItemTemplate>
  </ListView>
  </StackPanel>
- <controls:MyAdaptiveGridView DesiredWidth="160" ItemTemplate="{StaticResource GameItemTemplate}" x:Name="GamesGrid" Grid.Row="1" Padding="0" Margin="-8,0,-8,-8" ItemsSource="{x:Bind categoryVM.Items}" SelectionMode="None" IsItemClickEnabled="True" ItemClick="GridView_ItemClick" ContainerContentChanging="GamesGrid_ContainerContentChanging">
+ <controls:MyAdaptiveGridView DesiredWidth="160" ItemTemplate="{StaticResource GameItemTemplate}" x:Name="GamesGrid" Grid.Row="2" Padding="0" Margin="-8,0,-8,-8" ItemsSource="{x:Bind categoryVM.Items}" SelectionMode="None" IsItemClickEnabled="True" ItemClick="GridView_ItemClick" ContainerContentChanging="GamesGrid_ContainerContentChanging">
+ <controls:MyAdaptiveGridView.Resources>
+ <SolidColorBrush x:Key="GridViewItemBackgroundPointerOver" Color="{ThemeResource AppHoverColor}"/>
+ <SolidColorBrush x:Key="GridViewItemBackgroundPressed" Color="{ThemeResource AppPressedColor}"/>
+ </controls:MyAdaptiveGridView.Resources>
  <controls:MyAdaptiveGridView.ItemContainerStyle><Style TargetType="GridViewItem" BasedOn="{StaticResource GridViewItemCornerRadiusStyle}">
  <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="{StaticResource ContentItemMargin}"/><Setter Property="CornerRadius" Value="10"/>
  <Setter Property="Background" Value="Transparent"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="VerticalContentAlignment" Value="Stretch"/>
+ <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AppAccentBrush}"/>
+ <Setter Property="FocusVisualPrimaryThickness" Value="2"/>
  </Style></controls:MyAdaptiveGridView.ItemContainerStyle>
 </controls:MyAdaptiveGridView>
- <ProgressRing Grid.Row="1" IsActive="True" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind categoryVM.Loading, Mode=OneWay}"/>
- <TextBlock Style="{StaticResource BodyTextStyle}" Grid.Row="1" Text="{x:Bind categoryVM.EmptyMessage, Mode=OneWay}" Margin="12" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind categoryVM.IsEmpty, Mode=OneWay}"/>
+<StackPanel x:Name="EmptyState" Grid.Row="2" MaxWidth="440" Margin="12" Spacing="12" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind categoryVM.ShowEmptyStatus, Mode=OneWay}">
+ <TextBlock Style="{StaticResource BodyTextStyle}" Text="{x:Bind categoryVM.EmptyMessage, Mode=OneWay}" TextWrapping="Wrap" TextAlignment="Center"/>
+ <Button x:Name="EmptyRetry" Content="重试" HorizontalAlignment="Center" Style="{StaticResource PageActionButtonStyle}" Command="{x:Bind categoryVM.RefreshCommand}" IsEnabled="{x:Bind categoryVM.CanRefresh, Mode=OneWay}" Visibility="{x:Bind categoryVM.CanRetry, Mode=OneWay}"/>
+ </StackPanel>
 
- </Grid></Page>
+ <Border x:Name="LoadStatus" Grid.Row="1" Margin="0,0,0,12" Padding="12,8" CornerRadius="10" Background="{ThemeResource AppHoverBrush}" Visibility="{x:Bind categoryVM.ShowInlineStatus, Mode=OneWay}">
+ <Grid ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+ <TextBlock Text="{x:Bind categoryVM.StatusMessage, Mode=OneWay}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+ <Button x:Name="InlineRetry" Grid.Column="1" Content="重试" Style="{StaticResource PageActionButtonStyle}" Command="{x:Bind categoryVM.RefreshCommand}" IsEnabled="{x:Bind categoryVM.CanRefresh, Mode=OneWay}" Visibility="{x:Bind categoryVM.CanRetry, Mode=OneWay}"/>
+ </Grid></Border>
+ <Border x:Name="LoadingPlaceholder" Grid.Row="2" Padding="24" CornerRadius="10" Background="{ThemeResource AppHoverBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind categoryVM.ShowLoadingPlaceholder, Mode=OneWay}">
+ <TextBlock Text="正在加载当前页面…" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" TextAlignment="Center"/>
+ </Border>
+</Grid></Page>

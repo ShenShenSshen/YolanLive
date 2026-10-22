@@ -79,7 +79,7 @@
 
                         <Grid x:Name="StandardControl">
     <Grid x:Name="StandardToolbarLayout" MinHeight="60" Padding="20,0" VerticalAlignment="Center">
-        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="24"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="24"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="24"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="24"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="24"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="24"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <StackPanel x:Name="PlayControls" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
             <Button x:Name="RandomPrevious" Style="{StaticResource PlayerToolbarButtonStyle}" Visibility="Collapsed" Click="RandomBrowse_Click" ToolTipService.ToolTip="上一个直播间" AutomationProperties.Name="上一个直播间"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/></Button>
             <Button x:Name="PlayBtnPlay" Style="{StaticResource PlayerToolbarPlayStyle}" Click="PlayBtnPlay_Click" ToolTipService.ToolTip="播放" AutomationProperties.Name="播放"><Button.Resources>
@@ -144,9 +144,9 @@
                 <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/>
             </Button>
             </StackPanel>
-            <Button x:Name="BottomBtnRefresh" Style="{StaticResource PlayerToolbarButtonStyle}" Click="BottomBtnRefresh_Click" ToolTipService.ToolTip="刷新直播" AutomationProperties.Name="刷新直播"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/></Button>
+            <Button x:Name="BottomBtnRefresh" Style="{StaticResource PlayerToolbarButtonStyle}" Width="40" Height="40" Click="BottomBtnRefresh_Click" ToolTipService.ToolTip="刷新直播" AutomationProperties.Name="刷新直播"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/></Button>
 
-            <Button x:Name="PlayerMoreButton" Style="{StaticResource PlayerToolbarButtonStyle}" ToolTipService.ToolTip="更多操作" AutomationProperties.Name="更多操作"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/>
+            <Button x:Name="PlayerMoreButton" Style="{StaticResource PlayerToolbarButtonStyle}" Width="40" Height="40" ToolTipService.ToolTip="更多操作" AutomationProperties.Name="更多操作"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="18" Glyph=""/>
                 <Button.Flyout><MenuFlyout x:Name="PlayerMoreMenu" Opening="PlayerMoreMenu_Opening"><MenuFlyoutItem x:Name="OverflowFavorite" Text="关注" Click="MiniFavoriteItem_Click" Visibility="Collapsed"/><MenuFlyoutItem x:Name="OverflowRefresh" Text="刷新" Click="BottomBtnRefresh_Click" Visibility="Collapsed"/>
 
                     <MenuFlyoutSeparator x:Name="OverflowSeparator" Visibility="Collapsed"/>

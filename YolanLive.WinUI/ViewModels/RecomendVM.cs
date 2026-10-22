@@ -9,5 +9,10 @@ public class RecomendVM : LiveRoomListVM
 {
     protected override string PlatformName => MainVM.BrowseSite.Name;
     protected override async Task<List<LiveGameSource>> GetSourcesAsync(CancellationToken cancellationToken) => GameBrowse.OverviewSources(await GameCatalog.LoadAsync(MainVM.BrowseSite.LiveSite, cancellationToken));
-    public override void Refresh() { GameCatalog.Invalidate(MainVM.BrowseSite.LiveSite); base.Refresh(); }
+    public override Task RefreshAsync()
+    {
+        if (Loading) return Task.CompletedTask;
+        GameCatalog.Invalidate(MainVM.BrowseSite.LiveSite);
+        return base.RefreshAsync();
+    }
 }

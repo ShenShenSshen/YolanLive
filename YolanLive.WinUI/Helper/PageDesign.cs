@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Windowing;
 using System;
+using System.Linq;
 using Windows.UI.ViewManagement;
 
 namespace YolanLive.WinUI.Helper;
@@ -11,6 +12,21 @@ namespace YolanLive.WinUI.Helper;
 // Shared browsing insets and native integrated headers; player chrome is separate.
 public static class PageDesign
 {
+    public static readonly DependencyProperty SearchProperty = DependencyProperty.RegisterAttached(
+        "Search", typeof(bool), typeof(PageDesign), new PropertyMetadata(false, OnSearchChanged));
+    public static bool GetSearch(DependencyObject value) => (bool)value.GetValue(SearchProperty);
+    public static void SetSearch(DependencyObject value, bool enabled) => value.SetValue(SearchProperty, enabled);
+    private static void OnSearchChanged(DependencyObject value, DependencyPropertyChangedEventArgs change)
+    {
+        if (value is not AutoSuggestBox search) return;
+        search.QuerySubmitted -= SearchSubmitted;
+        if ((bool)change.NewValue) search.QuerySubmitted += SearchSubmitted;
+    }
+    private static async void SearchSubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        var shell = GetShell(sender);
+        if (shell != null) await shell.SubmitSearchAsync(args.QueryText);
+    }
     public static readonly DependencyProperty InsetsProperty = DependencyProperty.RegisterAttached(
         "Insets", typeof(bool), typeof(PageDesign), new PropertyMetadata(false, OnInsetsChanged));
     public static bool GetInsets(DependencyObject value) => (bool)value.GetValue(InsetsProperty);
@@ -38,6 +54,12 @@ public static class PageDesign
         }
         return false;
     }
+    private static MainPage GetShell(DependencyObject child)
+    {
+        for (var current = child; current != null; current = VisualTreeHelper.GetParent(current))
+            if (current is MainPage shell) return shell;
+        return null;
+    }
     private static void ApplyInset(Grid root)
     {
         var inset = root.ActualWidth < 640 ? 16 : 24;
@@ -53,13 +75,52 @@ public static class PageDesign
     }
     private static void UpdatePlatformLayout(Grid root, TitleBar bar)
     {
+        if (root.FindName("PlatformSurface") == null &&
+            root.FindName("BrowseHeader") is Grid plainHeader &&
+            root.FindName("HeaderSearch") is AutoSuggestBox plainSearch &&
+            root.FindName("HeaderActions") is StackPanel actions)
+        {
+            var owner = App.GetWindowFor(root);
+            var inset = owner?.AppWindow.TitleBar.RightInset / (root.XamlRoot?.RasterizationScale ?? 1) ?? 138;
+            var drag = (double)App.Current.Resources["TitleBarMinDragRegionWidth"];
+            var innerWidth = Math.Max(0, bar.ActualWidth - inset - drag - 8);
+            var manage = root.FindName("ManageFavorites") as Button;
+            if (manage != null)
+            {
+                var direct = innerWidth >= 348;
+                manage.Visibility = direct ? Visibility.Visible : Visibility.Collapsed;
+                ((MenuFlyoutItem)root.FindName("ManageFavoritesOverflow")).Visibility = direct ? Visibility.Collapsed : Visibility.Visible;
+            }
+            // Loading may hide a button; reserve its slot to keep the search position stable.
+            var actionItems = actions.Children.OfType<FrameworkElement>().Where(c => c != manage || manage.Visibility == Visibility.Visible).ToArray();
+            var actionWidth = actionItems.Sum(c => c.Width) + Math.Max(0, actionItems.Length - 1) * actions.Spacing;
+            var availableWidth = innerWidth - actionWidth - 3 * plainHeader.ColumnSpacing - 112;
+            var plainShell = GetShell(root);
+            var show = availableWidth >= 180 && plainShell?.IsTopNavigation != true;
+            plainSearch.Width = Math.Clamp(availableWidth, 180, 320);
+            plainSearch.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            if (root.IsLoaded && plainShell?.ActivePage == GetPage(root)) plainShell.SetHeaderSearch(show ? plainSearch : null);
+            return;
+        }
         if (root.FindName("PlatformSurface") is not Border surface ||
             root.FindName("PlatformOverflowHost") is not Border overflow ||
             root.FindName("BrowseHeader") is not Grid header) return;
         var window = App.GetWindowFor(root);
         var captionInset = window?.AppWindow.TitleBar.RightInset / (root.XamlRoot?.RasterizationScale ?? 1) ?? 138;
-        var available = Math.Max(0, bar.ActualWidth - captionInset - 56);
-        var compact = available < 384;
+        // Budget every header column, including the native drag strip, before sizing search.
+        var refresh = (Button)root.FindName("HeaderRefresh");
+        var dragWidth = (double)App.Current.Resources["TitleBarMinDragRegionWidth"];
+        var available = Math.Max(0, bar.ActualWidth - captionInset - dragWidth - refresh.Width - 3 * header.ColumnSpacing - 8);
+        var search = root.FindName("HeaderSearch") as AutoSuggestBox;
+        var shell = GetShell(root);
+        var showSearch = search != null && available >= 80 + 180 && shell?.IsTopNavigation != true;
+        var compact = available < (showSearch ? 392 + 180 : 392);
+        if (search != null)
+        {
+            search.Visibility = showSearch ? Visibility.Visible : Visibility.Collapsed;
+            search.Width = Math.Clamp(available - (compact ? 80 : 392), 180, 320);
+            if (root.IsLoaded && shell != null && shell.ActivePage == GetPage(root)) shell.SetHeaderSearch(showSearch ? search : null);
+        }
         if (compact && surface.Parent == header)
         {
             header.Children.Remove(surface); overflow.Child = surface;
@@ -98,7 +159,10 @@ public static class PageDesign
     internal static void DeactivateHeader(Page page)
     {
         if (page?.Content is Grid root && root.FindName("BrowserTitleBar") is TitleBar bar)
+        {
             bar.AutoRefreshDragRegions = false;
+            if (root.FindName("HeaderSearch") is AutoSuggestBox search) GetShell(root)?.ClearHeaderSearch(search);
+        }
     }
     private static void BackRequested(TitleBar sender, object args)
     {
@@ -114,19 +178,18 @@ public static class PageDesign
             bar.SizeChanged -= HeaderSizeChanged; bar.SizeChanged += HeaderSizeChanged;
         }
         ActivateHeader(GetPage(root));
-        var visual = ElementCompositionPreview.GetElementVisual(root);
-        visual.StopAnimation("Opacity"); visual.Opacity = 1;
-        if (!new UISettings().AnimationsEnabled) return;
-        var fade = visual.Compositor.CreateScalarKeyFrameAnimation();
-        fade.InsertKeyFrame(0, 0.6f); fade.InsertKeyFrame(1, 1);
-        fade.Duration = TimeSpan.FromMilliseconds(160);
-        visual.StartAnimation("Opacity", fade);
+        // Keep native header/search stable while page content enters.
+        foreach (var child in root.Children)
+            if (child is FrameworkElement content && Grid.GetRow(content) > 0)
+                InteractionMotion.Reveal(content, 160);
     }
     private static void Unloaded(object sender, RoutedEventArgs args)
     {
         if (((Grid)sender).FindName("BrowserTitleBar") is TitleBar bar)
         { bar.AutoRefreshDragRegions = false; bar.BackRequested -= BackRequested; bar.SizeChanged -= HeaderSizeChanged; }
-        var visual = ElementCompositionPreview.GetElementVisual((Grid)sender);
-        visual.StopAnimation("Opacity"); visual.Opacity = 1;
+        if (((Grid)sender).FindName("HeaderSearch") is AutoSuggestBox search) GetShell((Grid)sender)?.ClearHeaderSearch(search);
+        foreach (var child in ((Grid)sender).Children)
+            if (child is FrameworkElement content && Grid.GetRow(content) > 0)
+                InteractionMotion.Reset(content);
     }
 }

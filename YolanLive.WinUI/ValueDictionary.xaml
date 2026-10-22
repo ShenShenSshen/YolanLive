@@ -8,7 +8,7 @@
             <SolidColorBrush x:Key="PlatformSelectedForegroundBrush" Color="{ThemeResource AppAccentTextColor}"/>
             <SolidColorBrush x:Key="ReadableSecondaryTextBrush" Color="{ThemeResource AppSecondaryColor}"/>
             <SolidColorBrush x:Key="ChromeSurfaceBrush" Color="#18FFFFFF"/>
-            <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="#EFF3F8"/>
+            <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="#F2F5F9"/>
             <SolidColorBrush x:Key="LayerFillColorDefaultBrush" Color="{ThemeResource AppSurfaceColor}"/>
             <SolidColorBrush x:Key="CardOutlineBrush" Color="{ThemeResource AppBorderColor}"/>
             <Color x:Key="CategorySelectedColor">#DCE9F4</Color>
@@ -56,6 +56,19 @@
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="14,8"/>
         <Setter Property="MinHeight" Value="36"/>
+    </Style>
+    <Style x:Key="BrowseSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource AutoSuggestBoxTextBoxStyle}">
+        <Setter Property="TextAlignment" Value="Left"/>
+    </Style>
+    <Style x:Key="BrowseSearchStyle" TargetType="AutoSuggestBox" BasedOn="{StaticResource DefaultAutoSuggestBoxStyle}">
+        <Setter Property="TextBoxStyle" Value="{StaticResource BrowseSearchTextBoxStyle}"/>
+        <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
+        <Setter Property="FontSize" Value="14"/><Setter Property="Height" Value="38"/>
+        <Setter Property="CornerRadius" Value="19"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Background" Value="{ThemeResource AppSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource AppBorderBrush}"/>
     </Style>
     <Style x:Key="PlatformTabStyle" TargetType="ListViewItem">
         <Setter Property="CornerRadius" Value="8"/><Setter Property="Padding" Value="12,3"/><Setter Property="Margin" Value="4"/>

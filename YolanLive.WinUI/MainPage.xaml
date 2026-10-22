@@ -1,5 +1,15 @@
 <?xml version="1.0" ?><Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="using:YolanLive.WinUI" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:muxc="using:Microsoft.UI.Xaml.Controls" x:Class="YolanLive.WinUI.MainPage" mc:Ignorable="d">
     <Page.Resources>
+        <Style x:Key="SidebarSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource AutoSuggestBoxTextBoxStyle}">
+            <Setter Property="TextAlignment" Value="Left"/>
+        </Style>
+        <Style x:Key="SidebarSearchStyle" TargetType="AutoSuggestBox" BasedOn="{StaticResource DefaultAutoSuggestBoxStyle}">
+            <Setter Property="TextBoxStyle" Value="{StaticResource SidebarSearchTextBoxStyle}"/>
+            <Setter Property="CornerRadius" Value="18"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
         <Thickness x:Key="NavigationViewContentPresenterMargin">0,0,0,0</Thickness>
         <Thickness x:Key="NavigationViewContentGridBorderThickness">0</Thickness>
         <CornerRadius x:Key="NavigationViewContentGridCornerRadius">0</CornerRadius>
@@ -10,6 +20,7 @@
             <Setter Property="FontSize" Value="20"/>
         </Style>
         <Style TargetType="muxc:NavigationViewItem">
+            <Setter Property="FontWeight" Value="Normal"/>
             <Setter Property="CornerRadius" Value="10"/>
             <Setter Property="Margin" Value="0,2"/>
             <Setter Property="MinHeight" Value="44"/>
@@ -18,9 +29,10 @@
     <Grid>
 
 
-        <muxc:NavigationView FontFamily="{StaticResource NavigationFontFamily}" FontSize="{StaticResource NavigationTextSize}" x:Name="navigationView" Background="{ThemeResource ChromeSurfaceBrush}" IsTitleBarAutoPaddingEnabled="False" IsBackButtonVisible="Collapsed" IsPaneOpen="False" IsSettingsVisible="true" Loaded="navigationView_Loaded" CompactPaneLength="56" OpenPaneLength="208" PaneOpened="NavigationView_PaneStateChanged" PaneClosed="NavigationView_PaneStateChanged" PaneDisplayMode="Left" SelectionChanged="NavigationView_SelectionChanged" ItemInvoked="NavigationView_ItemInvoked">
+        <muxc:NavigationView FontFamily="{StaticResource NavigationFontFamily}" FontSize="{StaticResource NavigationTextSize}" x:Name="navigationView" Background="{ThemeResource ChromeSurfaceBrush}" IsTitleBarAutoPaddingEnabled="False" IsBackButtonVisible="Collapsed" IsPaneOpen="True" IsSettingsVisible="true" Loaded="navigationView_Loaded" CompactPaneLength="56" OpenPaneLength="188" PaneOpened="NavigationView_PaneStateChanged" PaneClosed="NavigationView_PaneStateChanged" PaneDisplayMode="Left" SelectionChanged="NavigationView_SelectionChanged" ItemInvoked="NavigationView_ItemInvoked">
+            <muxc:NavigationView.PaneCustomContent><Border Height="24"/></muxc:NavigationView.PaneCustomContent>
             <muxc:NavigationView.AutoSuggestBox>
-                <AutoSuggestBox x:Name="searchBox" FontFamily="{StaticResource ContentControlThemeFontFamily}" AutomationProperties.Name="搜索主播或直播链接" PlaceholderText="搜索主播或粘贴链接" QueryIcon="Find" QuerySubmitted="searchBox_QuerySubmitted" CornerRadius="10" FontSize="14"/>
+                <AutoSuggestBox x:Name="searchBox" Style="{StaticResource SidebarSearchStyle}" FontFamily="{StaticResource ContentControlThemeFontFamily}" AutomationProperties.Name="搜索主播或直播链接" PlaceholderText="搜索主播或粘贴链接" QueryIcon="Find" QuerySubmitted="searchBox_QuerySubmitted" FontSize="14"/>
             </muxc:NavigationView.AutoSuggestBox>
 
 

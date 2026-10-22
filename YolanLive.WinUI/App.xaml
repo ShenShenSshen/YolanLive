@@ -8,6 +8,7 @@
             <x:String x:Key="AppDisplayName">游岚</x:String>
             <FontFamily x:Key="ContentControlThemeFontFamily">Microsoft YaHei UI</FontFamily>
             <FontFamily x:Key="NavigationFontFamily">ms-appx:///Assets/Fonts/ResourceHanRoundedCN-Regular.ttf#Resource Han Rounded CN</FontFamily>
+            <FontFamily x:Key="LatinNumberFontFamily">ms-appx:///Assets/Fonts/Satoshi-Regular.ttf#Satoshi, Microsoft YaHei UI</FontFamily>
             <FontFamily x:Key="BrandFontFamily">ms-appx:///Assets/Fonts/ChillRound.ttf#寒蝉全圆体</FontFamily>
 
             <x:Double x:Key="BodyTextSize">14</x:Double>
@@ -25,11 +26,13 @@
             <Thickness x:Key="ContentItemMargin">8</Thickness>
             <CornerRadius x:Key="GridViewItemCornerRadius">10</CornerRadius>
 <Style x:Key="BrowserTitleBarStyle" TargetType="TitleBar">
-                <Setter Property="MinHeight" Value="48"/>
+                <Setter Property="MinHeight" Value="72"/>
                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                 <Setter Property="Background" Value="Transparent"/>
             </Style>
             <HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Stretch</HorizontalAlignment>
+            <x:Double x:Key="TitleBarCompactHeight">72</x:Double>
+            <x:Double x:Key="TitleBarExpandedHeight">72</x:Double>
             <Thickness x:Key="TitleBarCompactContentMargin">0</Thickness>
             <x:Double x:Key="TitleBarLeftPaddingWidth">0</x:Double>
             <x:Double x:Key="TitleBarLeftHeaderPaddingWidth">0</x:Double>
@@ -61,15 +64,16 @@
             <Windows10version1903:ThemeShadow x:Key="Shadow"/>
             <!--  DataTemplate  -->
             <DataTemplate x:Key="RoomItemTemplate">
-                <Grid><Grid.RowDefinitions><RowDefinition/><RowDefinition Height="64"/></Grid.RowDefinitions>
+                <Grid perf:InteractionMotion.RoomCard="True"><Grid.RowDefinitions><RowDefinition/><RowDefinition Height="64"/></Grid.RowDefinitions>
                     <Border CornerRadius="10">
                         <Grid>
                             <Image Stretch="UniformToFill" perf:DecodedImage.Url="{Binding Cover}"/>
+                            <Grid x:Name="RoomHover" Opacity="0" Background="#30000000" IsHitTestVisible="False"><FontIcon FontFamily="{StaticResource SegoeFluent}" Glyph="&#xE768;" FontSize="28" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/></Grid>
                             <Grid Padding="8" VerticalAlignment="Bottom">
                                 <Grid.Background><LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1"><GradientStop Offset="0" Color="#00000000"/><GradientStop Offset="1" Color="#99000000"/></LinearGradientBrush></Grid.Background>
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="14" Glyph="&#xE814;" Foreground="White" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding Online, Converter={StaticResource numberToStringConvert}}" Style="{StaticResource SecondaryTextStyle}" Foreground="White"/>
+                                    <TextBlock Text="{Binding Online, Converter={StaticResource numberToStringConvert}}" FontFamily="{StaticResource LatinNumberFontFamily}" Style="{StaticResource SecondaryTextStyle}" Foreground="White"/>
                                 </StackPanel>
                             </Grid>
                         </Grid>
@@ -90,8 +94,8 @@
             </DataTemplate>
 
             <DataTemplate x:Key="GameItemTemplate">
-                <Border CornerRadius="10" Padding="8" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource BrowsingOutlineBrush}" BorderThickness="1" ToolTipService.ToolTip="{Binding Name}">
-                    <Grid RowSpacing="12"><Grid.RowDefinitions><RowDefinition/><RowDefinition Height="40"/></Grid.RowDefinitions>
+                <Border CornerRadius="10" Padding="8" Background="Transparent" BorderBrush="{ThemeResource BrowsingOutlineBrush}" BorderThickness="1" ToolTipService.ToolTip="{Binding Name}">
+                    <Grid RowSpacing="8"><Grid.RowDefinitions><RowDefinition/><RowDefinition Height="40"/></Grid.RowDefinitions>
                         <Border CornerRadius="8" Background="Transparent"><Grid>
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4" IsHitTestVisible="False" Visibility="{Binding ElementName=GameImage, Path=(perf:DecodedImage.HasPicture), Converter={StaticResource displayConvert}}">
                                 <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="28" Glyph="&#xE7FC;" Foreground="{ThemeResource AppSecondaryBrush}"/>

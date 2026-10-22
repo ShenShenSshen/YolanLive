@@ -20,21 +20,33 @@ namespace YolanLive.WinUI.ViewModels
         public ICommand CleanCommand { get; set; }
 
         public ObservableCollection<HistoryItem> Items { get; set; }
+        private string emptyMessage = "还没有观看记录";
+        public string EmptyMessage { get => emptyMessage; private set { emptyMessage = value; DoPropertyChanged(nameof(EmptyMessage)); } }
 
-        public async void LoadData()
+        public async void LoadData() => await LoadAsync();
+        public async Task LoadAsync()
         {
+            if (Loading) return;
+            CanRetry = false; StatusMessage = "";
+            IsEmpty = Items.Count == 0;
             try
             {
                 Loading = true;
-                foreach (var item in await DatabaseHelper.GetHistory())
+                var history = await DatabaseHelper.GetHistory();
+                Items.Clear();
+                foreach (var item in history)
                 {
                     Items.Add(item);
                 }
                 IsEmpty = Items.Count == 0;
+                EmptyMessage = "还没有观看记录";
             }
             catch (Exception ex)
             {
-                HandleError(ex);
+                EmptyMessage = "观看历史加载失败，请重试"; CanRetry = true;
+                StatusMessage = Items.Count > 0 ? "加载失败，保留上次内容。" + EmptyMessage : "";
+                IsEmpty = Items.Count == 0;
+                LogHelper.Log("历史读取失败", LogType.ERROR, ex);
             }
             finally
             {
@@ -45,7 +57,6 @@ namespace YolanLive.WinUI.ViewModels
         public override void Refresh()
         {
             base.Refresh();
-            Items.Clear();
             LoadData();
         }
 

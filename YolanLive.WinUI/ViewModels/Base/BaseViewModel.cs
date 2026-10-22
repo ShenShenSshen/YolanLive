@@ -30,10 +30,22 @@ namespace YolanLive.WinUI.ViewModels
         public int Page { get; set; } = 1;
 
         private bool _loading;
+        private bool _canRetry;
+        private string _statusMessage = "";
+        public bool CanRefresh => !Loading;
+        public bool CanRetry { get => _canRetry && !Loading; protected set { _canRetry = value; DoPropertyChanged(nameof(CanRetry)); } }
+        public string StatusMessage
+        {
+            get => _statusMessage;
+            protected set { _statusMessage = value; DoPropertyChanged(nameof(StatusMessage)); DoPropertyChanged(nameof(ShowInlineStatus)); }
+        }
+        public bool ShowInlineStatus => !IsEmpty && !Loading && !string.IsNullOrEmpty(StatusMessage);
+        public bool ShowEmptyStatus => IsEmpty && !Loading;
+        public bool ShowLoadingPlaceholder => IsEmpty && Loading;
         public bool Loading
         {
             get { return _loading; }
-            set { _loading = value; DoPropertyChanged("Loading"); }
+            set { _loading = value; DoPropertyChanged("Loading"); DoPropertyChanged(nameof(CanRefresh)); DoPropertyChanged(nameof(CanRetry)); DoPropertyChanged(nameof(ShowInlineStatus)); DoPropertyChanged(nameof(ShowEmptyStatus)); DoPropertyChanged(nameof(ShowLoadingPlaceholder)); }
         }
 
         private bool _canLoadMore;
@@ -49,7 +61,7 @@ namespace YolanLive.WinUI.ViewModels
         public bool IsEmpty
         {
             get { return _empty; }
-            set { _empty = value; DoPropertyChanged("IsEmpty"); }
+            set { _empty = value; DoPropertyChanged("IsEmpty"); DoPropertyChanged(nameof(ShowInlineStatus)); DoPropertyChanged(nameof(ShowEmptyStatus)); DoPropertyChanged(nameof(ShowLoadingPlaceholder)); }
         }
 
 

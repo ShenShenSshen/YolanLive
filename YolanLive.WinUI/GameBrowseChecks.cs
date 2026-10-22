@@ -12,6 +12,42 @@ namespace YolanLive.WinUI;
 internal static class GameBrowseChecks
 {
     private static void Check(bool value, string message) { if (!value) throw new Exception(message); }
+    internal static async Task RefreshFeedbackAsync()
+    {
+        var site = new TestSite("刷新测试");
+        var vm = new TestList(new() { new() { Site = site, Category = new() { ID = "game" } } });
+        await vm.LoadAsync();
+        var retained = vm.Items.Single();
+        var pending = new TaskCompletionSource<LiveCategoryResult>();
+        site.Pending = pending.Task;
+        var refresh = vm.RefreshAsync();
+        Check(vm.Loading && !vm.CanRefresh && vm.Items.Single() == retained && !vm.ShowEmptyStatus,
+            "Refreshing cleared or disabled the retained content");
+        var calls = site.Calls;
+        vm.Refresh(); await vm.RefreshAsync();
+        Check(site.Calls == calls, "Repeated refresh submitted another request");
+        pending.SetException(new System.Net.Http.HttpRequestException("Isolated refresh failure"));
+        await refresh;
+        Check(vm.Items.Single() == retained && vm.CanRetry && vm.ShowInlineStatus && vm.StatusMessage.Contains("保留"),
+            "Failed refresh lost the old content or its retry feedback");
+        site.Pending = null;
+        await vm.RefreshAsync();
+        Check(vm.Items.Count == 1 && vm.Items[0] != retained && !vm.CanRetry && !vm.ShowInlineStatus,
+            "Retry appended instead of replacing, or left an error visible");
+        retained = vm.Items.Single();
+        pending = new(); site.Pending = pending.Task;
+        refresh = vm.RefreshAsync(); vm.CancelPending();
+        pending.SetResult(new() { Rooms = new() { new() { RoomID = "stale", IsLive = true } } });
+        await refresh;
+        Check(vm.Items.Single() == retained && !vm.Loading && !vm.CanRetry, "Cancelled refresh committed stale content or reported an error");
+        site.Pending = null; site.Empty = true;
+        await vm.RefreshAsync();
+        Check(vm.IsEmpty && vm.ShowEmptyStatus && !vm.CanRetry && vm.Items.Count == 0, "Successful empty result looked like a failed request");
+        site.Empty = false;
+        for (var i = 0; i < 300; i++) vm.Items.Add(new() { RoomID = "cap-" + i, Source = site, IsLive = true });
+        await vm.RefreshAsync();
+        Check(vm.Items.Count == 1 && vm.Items[0].RoomID == "same", "Room cap prevented a fresh replacement");
+    }
     public static async Task RunAsync()
     {
         var a = new TestSite("A");
@@ -76,7 +112,7 @@ internal static class GameBrowseChecks
             Check(favorites.Items.Count == 2, "Favorite did not reappear when live again.");
             a.StatusFail = b.StatusFail = true;
             await favorites.LoadAsync();
-            Check(favorites.IsEmpty && favorites.EmptyMessage.Contains("失败") && (await DatabaseHelper.GetFavorites()).Count == 2, "Failed favorite queries were mislabeled or saved records changed.");
+            Check(favorites.Items.Count == 2 && favorites.Items.All(item => !item.LiveStatus) && favorites.CanRetry && favorites.EmptyMessage.Contains("失败") && (await DatabaseHelper.GetFavorites()).Count == 2, "Failed favorite queries lost retained items, guessed live status, or changed saved records.");
             await CheckQualityPreferencesAsync();
         }
         finally { MainVM.Sites = original; }
@@ -131,12 +167,16 @@ internal static class GameBrowseChecks
         public bool Fail;
         public bool Empty;
         public bool StatusFail;
+        public Task<LiveCategoryResult> Pending;
+        public int Calls;
         public List<LivePlayQuality> QualityOptions { get; } = new() { new() { Quality = "原画" }, new() { Quality = "高清" } };
         public List<int> Pages { get; } = new();
         public TestSite(string name) { Name = name; }
         public Task<LiveCategoryResult> GetCategoryRooms(LiveSubCategory category, int page, System.Threading.CancellationToken cancellationToken) => GetCategoryRooms(category, page).WaitAsync(cancellationToken);
         public Task<LiveCategoryResult> GetCategoryRooms(LiveSubCategory category, int page = 1)
         {
+            Calls++;
+            if (Pending != null) return Pending;
             if (Fail) throw new Exception("Test endpoint unavailable");
             Pages.Add(page);
             if (Empty) return Task.FromResult(new LiveCategoryResult { HasMore = false, Rooms = new() });

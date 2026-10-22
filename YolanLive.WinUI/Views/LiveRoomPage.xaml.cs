@@ -925,7 +925,7 @@ namespace YolanLive.WinUI.Views
             var random = RandomNext.Visibility == Visibility.Visible;
             var playWidth = random ? 132 : 40;
             var soundWidth = 2 * volumeWidth + 12;
-            var rightWidth = overflow ? 180 + 2 * spacing : 256 + 4 * spacing;
+            var rightWidth = overflow ? 184 + 2 * spacing : 264 + 4 * spacing;
             var optionGap = availableWidth >= 1100 ? 16 : 12;
             var middleWidth = availableWidth - 2 * padding - 72 - playWidth - soundWidth - rightWidth;
             var compact = isMini || middleWidth < 256 + optionGap;

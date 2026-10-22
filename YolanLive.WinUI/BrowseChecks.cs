@@ -93,6 +93,45 @@ internal static class BrowseChecks
         finally { MainVM.Sites = originalSites; MainVM.BrowseSite = originalSite; }
     }
 
+    internal static async Task RefreshFeedbackAsync()
+    {
+        var oldSites = MainVM.Sites; var oldSite = MainVM.BrowseSite;
+        var api = new CatalogSite();
+        var site = new Site { SiteType = oldSites[0].SiteType, LiveSite = api, Name = oldSites[0].Name };
+        try
+        {
+            MainVM.Sites = new() { site }; MainVM.BrowseSite = site;
+            var vm = new CategoryVM(); await vm.LoadAsync();
+            var retained = vm.Items.ToArray(); var selected = vm.SelectedGroup;
+            var pending = new TaskCompletionSource<List<LiveCategory>>(); api.Pending = pending.Task;
+            var refresh = vm.RefreshAsync();
+            Check(vm.Items.SequenceEqual(retained) && vm.SelectedGroup == selected && vm.Loading && !vm.CanRefresh,
+                "Category refresh cleared the current group before a response");
+            vm.Refresh();
+            pending.SetException(new System.Net.Http.HttpRequestException("Isolated category refresh failure"));
+            await refresh;
+            Check(vm.Items.SequenceEqual(retained) && vm.SelectedGroup == selected && vm.CanRetry && vm.ShowInlineStatus,
+                "Category error lost retained content or retry feedback");
+            api.Pending = null;
+            await vm.RefreshAsync();
+            Check(vm.Items.Count > 0 && !vm.CanRetry && !vm.ShowInlineStatus && vm.SelectedGroup.ID == selected.ID,
+                "Retry did not restore the selected category cleanly");
+            api.Pending = Task.FromResult(new List<LiveCategory>());
+            await vm.RefreshAsync();
+            Check(vm.Items.Count > 0 && vm.CanRetry && vm.SelectedGroup.ID == selected.ID,
+                "An unavailable platform directory discarded the retained category");
+            api.Pending = Task.FromResult(new List<LiveCategory>
+            {
+                new() { ID = selected.ID, Name = selected.Name, Children = new() },
+                new() { ID = "3", Name = "手游", Children = new() { new() { ID = "mobile", ParentID = "3", Name = "测试手游" } } }
+            });
+            await vm.RefreshAsync();
+            Check(vm.Items.Count == 0 && vm.IsEmpty && !vm.CanRetry && vm.ShowEmptyStatus,
+                "A valid empty game group was confused with a request error");
+        }
+        finally { MainVM.Sites = oldSites; MainVM.BrowseSite = oldSite; GameCatalog.Invalidate(api); }
+    }
+
     internal static void SearchStatuses()
     {
         foreach (var type in new[] { typeof(YolanLive.Core.BiliBili), typeof(YolanLive.Core.Douyin) })
@@ -159,7 +198,7 @@ internal static class BrowseChecks
 
     private static Task<LiveSearchResult> SearchResults() => Task.FromResult(new LiveSearchResult { HasMore = false,
         Rooms = new bool?[] { true, false, null }.Select((live, index) => new LiveRoomItem { RoomID = index.ToString(), Title = "测试标题", UserName = "测试主播", Cover = "test-cover", Online = 42, IsLive = live }).ToList() });
-    private sealed class CatalogSite : YolanLive.Core.BiliBili, ILiveSite
+    internal sealed class CatalogSite : YolanLive.Core.BiliBili, ILiveSite
     {
         internal Task<List<LiveCategory>> Pending;
         internal int SearchCalls, StatusCalls;

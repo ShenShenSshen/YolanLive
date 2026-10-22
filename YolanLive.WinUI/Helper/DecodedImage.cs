@@ -35,7 +35,12 @@ public static class DecodedImage
             loaded = element.IsLoaded;
             if (element is Image target)
             {
-                target.ImageOpened += (_, _) => { if (bitmap != null && ReferenceEquals(target.Source, bitmap)) SetHasPicture(element, true); };
+                target.ImageOpened += (_, _) =>
+                {
+                    if (bitmap == null || !ReferenceEquals(target.Source, bitmap)) return;
+                    SetHasPicture(element, true);
+                    InteractionMotion.Reveal(element, 160);
+                };
                 target.ImageFailed += (_, _) => { if (ReferenceEquals(target.Source, bitmap)) SetHasPicture(element, false); };
             }
             element.Loaded += (_, _) =>
@@ -48,6 +53,7 @@ public static class DecodedImage
             element.Unloaded += (_, _) =>
             {
                 loaded = false;
+                InteractionMotion.Reset(element);
                 if (root != null) root.Changed -= RootChanged;
                 root = null;
                 SetSource(null);

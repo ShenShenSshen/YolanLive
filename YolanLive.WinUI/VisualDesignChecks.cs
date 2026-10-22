@@ -110,11 +110,31 @@ internal static class VisualDesignChecks
                 var refresh = (Button)category.FindName("HeaderRefresh");
                 var platform = (ListView)category.FindName("PlatformPicker");
                 var root = (Grid)category.Content;
+                var search = (AutoSuggestBox)category.FindName("HeaderSearch");
+                var visibleSearch = search.Visibility == Visibility.Visible;
+                if (visibleSearch)
+                {
+                    var input = Children(search).OfType<TextBox>().FirstOrDefault();
+                    Check(navigation.AutoSuggestBox == null && input != null, "Top search duplicated the sidebar input");
+                    Check(search.ActualHeight == 38 && input.CornerRadius.TopLeft == 19 && input.TextAlignment == TextAlignment.Left,
+                        "Top search must retain its native rounded input and left alignment");
+                    var searchRight = search.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(search.ActualWidth, 0)).X;
+                    var refreshLeft = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).X;
+                    Check(searchRight + 11 <= refreshLeft, "Search and refresh overlap or lose their group spacing");
+                }
+                else Check(ReferenceEquals(navigation.AutoSuggestBox, shell.FindName("searchBox")), "Narrow layout lost its sidebar search fallback");
+                var nativeHeader = Children(bar).OfType<Grid>().FirstOrDefault(g => g.Name == "PART_LayoutRoot");
+                Check(nativeHeader != null && nativeHeader.ActualHeight >= header.ActualHeight,
+                    "Native titlebar clips the taller browser header");
+                Check(navigation.OpenPaneLength == 188, "Expanded sidebar differs from selected layout");
                 Check(((Grid)chrome.FindName("TitleBarGrid")).Visibility == Visibility.Collapsed && Grid.GetRow(outer) == 0, "Old blank title row remains");
                 Check(root.Padding.Top == 0 && bar.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).Y <= 1,
                     "Browser header does not reach the top: padding=" + root.Padding + "; y=" + bar.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).Y);
                 var rightInset = window.AppWindow.TitleBar.RightInset / chrome.XamlRoot.RasterizationScale;
                 var refreshRight = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(refresh.ActualWidth, 0)).X;
+                var nativeContent = Children(bar).OfType<ContentPresenter>().First(p => p.Name == "PART_ContentPresenter");
+                var contentRight = nativeContent.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(nativeContent.ActualWidth, 0)).X;
+                Check(refreshRight <= contentRight + .5, "Native header clips refresh: preset=" + preset + "; expanded=" + expanded + "; refreshRight=" + refreshRight + "; contentRight=" + contentRight);
                 Check(refreshRight <= chrome.ActualWidth - rightInset + 1, "Refresh overlaps system caption buttons");
                 var gameGrid = (GridView)category.FindName("GamesGrid");
                 var first = gameGrid.ContainerFromIndex(0) as GridViewItem;
@@ -139,16 +159,63 @@ internal static class VisualDesignChecks
                 }
                 var center = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(refresh.ActualWidth / 2, refresh.ActualHeight / 2));
                 Check(IsInteractive(center), "Native drag region intercepts refresh clicks: caption=" + string.Join(";", caption.Select(r => $"{r.X},{r.Y},{r.Width},{r.Height}")) + "; center=" + center);
+                if (visibleSearch)
+                {
+                    var searchCenter = search.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(search.ActualWidth / 2, search.ActualHeight / 2));
+                    Check(IsInteractive(searchCenter) && search.Focus(FocusState.Keyboard), "Top search is intercepted by window dragging or cannot receive keyboard focus");
+                }
                 if (((Border)category.FindName("PlatformSurface")).Parent == header)
                 {
                     var firstTab = (ListViewItem)platform.ContainerFromIndex(0);
                     var tabCenter = firstTab.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(firstTab.ActualWidth / 2, firstTab.ActualHeight / 2));
                     Check(IsInteractive(tabCenter), "Native drag region intercepts platform selection");
                 }
-                if (preset == "1280×720" && !expanded) await Capture(chrome, "merged-browser-" + theme + ".png");
+                await Capture(chrome, "merged-browser-" + theme + "-" + preset.Replace("×", "x") + (expanded ? "-expanded" : "") + ".png");
             }
             window.Root.Content = null; await Task.Delay(150);
             Check(!((TitleBar)category.FindName("BrowserTitleBar")).AutoRefreshDragRegions, "Inactive cached header still listens for layout changes");
+        });
+        foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
+        foreach (var pageType in new[] { typeof(Views.FavoritePage), typeof(Views.HistoryPage) })
+        await Case("consistent top search and action overflow " + pageType.Name + " " + theme, async () =>
+        {
+            var chrome = new BaseFramePage { RequestedTheme = theme };
+            var shell = new MainPage();
+            ((Frame)chrome.FindName("MainFrame")).Content = shell;
+            var page = (Page)Activator.CreateInstance(pageType);
+            ((Frame)shell.FindName("frame")).Content = page;
+            await Show(chrome);
+            // Initial NavigationView loading selects Home; mount the target after that completes.
+            ((Frame)shell.FindName("frame")).Content = page;
+            await Task.Delay(200); chrome.RefreshChrome();
+            var navigation = (NavigationView)shell.FindName("navigationView");
+            foreach (var preset in new[] { "1280×720", "960×540", "640×360" })
+            foreach (var expanded in new[] { false, true })
+            {
+                window.ApplyWindowSize(preset); navigation.IsPaneOpen = expanded;
+                await Task.Delay(250); chrome.UpdateLayout(); chrome.RefreshChrome();
+                var bar = (TitleBar)page.FindName("BrowserTitleBar");
+                var search = (AutoSuggestBox)page.FindName("HeaderSearch");
+                var actions = (StackPanel)page.FindName("HeaderActions");
+                var native = Children(bar).OfType<ContentPresenter>().First(p => p.Name == "PART_ContentPresenter");
+                var actionRight = actions.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(actions.ActualWidth, 0)).X;
+                var nativeRight = native.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(native.ActualWidth, 0)).X;
+                Check(actionRight <= nativeRight + .5, "Account/history actions are clipped: " + preset);
+                if (search.Visibility == Visibility.Visible)
+                {
+                    var searchRight = search.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(search.ActualWidth, 0)).X;
+                    var actionLeft = actions.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).X;
+                    Check(searchRight + 11 <= actionLeft && navigation.AutoSuggestBox == null && search.ActualHeight == 38,
+                        "Top search overlaps actions or duplicates sidebar input: " + preset);
+                    Check(search.Focus(FocusState.Keyboard), "Unified search cannot receive keyboard focus");
+                }
+                else Check(ReferenceEquals(navigation.AutoSuggestBox, shell.FindName("searchBox")), "Narrow page lost its search fallback");
+                if (page.FindName("ManageFavorites") is Button manage)
+                    Check((manage.Visibility == Visibility.Visible) != (((MenuFlyoutItem)page.FindName("ManageFavoritesOverflow")).Visibility == Visibility.Visible),
+                        "Favorite management must have one available entrance");
+                if (preset == "960×540" && !expanded) await Capture(chrome, pageType.Name + "-" + theme + "-960x540.png");
+            }
+            window.Root.Content = null; await Task.Delay(100);
         });
         foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
         foreach (var width in new[] { 280d,480d,640d,960d,1280d })
@@ -182,13 +249,17 @@ internal static class VisualDesignChecks
                 var art = (Border)VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(image));
                 Check(Math.Abs(art.ActualWidth / art.ActualHeight - 4d / 3) < .02, "Game image slot lost 4:3 ratio");
                 Check(image.Stretch == Stretch.Uniform && surface.CornerRadius.TopLeft == 10 && art.CornerRadius.TopLeft == 8, "Game image crop or corner hierarchy incorrect");
+                Check(((SolidColorBrush)surface.Background).Color.A == 0, "Category cards still have a permanent panel background");
+                var gamePresenter = Children(card).OfType<ListViewItemPresenter>().First();
+                Check(((SolidColorBrush)gamePresenter.PointerOverBackground).Color.A > 0 && card.UseSystemFocusVisuals && card.FocusVisualPrimaryThickness.Left == 2,
+                    "Category pointer and keyboard feedback is missing");
                 Check(((SolidColorBrush)art.Background).Color.A == 0, "Game artwork still has a tinted nested frame");
                 Check(card.Focus(FocusState.Keyboard) && card.FocusState == FocusState.Keyboard, "Keyboard focus feedback is missing");
                 if (!new Windows.UI.ViewManagement.AccessibilitySettings().HighContrast)
                     Check(((SolidColorBrush)surface.BorderBrush).Color.A == 0, "Persistent category outline remains");
                 Check(Math.Abs(surface.TransformToVisual(root).TransformPoint(new Windows.Foundation.Point()).X - header.TransformToVisual(root).TransformPoint(new Windows.Foundation.Point()).X) <= 1, "Header and first card are misaligned");
                 var text = Children(card).OfType<TextBlock>().First(t => t.Text == "三角洲行动");
-                Check(Contrast(((SolidColorBrush)text.Foreground).Color, ((SolidColorBrush)surface.Background).Color) >= 4.5, "Body contrast too low");
+                Check(Contrast(((SolidColorBrush)text.Foreground).Color, ((SolidColorBrush)root.Background).Color) >= 4.5, "Body contrast too low");
                 if (width == 960) await Capture(root, "category-layout-" + theme + ".png");
             });
         foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
@@ -225,6 +296,45 @@ internal static class VisualDesignChecks
                 }
                 if (width == 960) await Capture(page, "settings-layout.png");
             });
+        foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
+        await Case("retained category loading and in-place retry " + theme, async () =>
+        {
+            var originalSites = MainVM.Sites; var originalSite = MainVM.BrowseSite;
+            var api = new BrowseChecks.CatalogSite();
+            var site = new Site { Name = originalSites[0].Name, SiteType = originalSites[0].SiteType, LiveSite = api };
+            try
+            {
+                MainVM.Sites = new() { site }; MainVM.BrowseSite = site;
+                var page = new Views.CategoryPage(); var root = (Grid)page.Content;
+                root.Width = 480; root.HorizontalAlignment = HorizontalAlignment.Left; root.RequestedTheme = theme;
+                var vm = (CategoryVM)typeof(Views.CategoryPage).GetField("categoryVM", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(page);
+                await vm.LoadAsync(); await Show(page);
+                var count = vm.Items.Count;
+                var pending = new TaskCompletionSource<List<LiveCategory>>(); api.Pending = pending.Task;
+                var refresh = vm.RefreshAsync(); await Task.Delay(30);
+                Check(vm.Items.Count == count && !((Button)page.FindName("HeaderRefresh")).IsEnabled &&
+                    ((Border)page.FindName("LoadStatus")).Visibility == Visibility.Collapsed &&
+                    ((StackPanel)page.FindName("EmptyState")).Visibility == Visibility.Collapsed,
+                    "Normal refresh clears the content or moves it with a status banner");
+                pending.SetException(new System.Net.Http.HttpRequestException("Isolated layout failure"));
+                await refresh; await Task.Delay(80); page.UpdateLayout();
+                var status = (Border)page.FindName("LoadStatus");
+                var retry = (Button)page.FindName("InlineRetry");
+                Check(status.Visibility == Visibility.Visible && retry.Visibility == Visibility.Visible && retry.Focus(FocusState.Keyboard),
+                    "Retained content failure has no reachable inline retry");
+                var label = Children(status).OfType<TextBlock>().First();
+                Check(Contrast(((SolidColorBrush)label.Foreground).Color, ((SolidColorBrush)status.Background).Color) >= 4.5,
+                    "Error feedback contrast is too low");
+                Check(status.ActualWidth <= root.ActualWidth - root.Padding.Left - root.Padding.Right + 1 && label.TextWrapping == TextWrapping.Wrap,
+                    "Inline error feedback overflows the narrow page");
+                await Capture(page, "refresh-feedback-" + theme + ".png");
+                api.Pending = null;
+                retry.Command.Execute(null); await Task.Delay(100);
+                Check(!vm.Loading && !vm.CanRetry && status.Visibility == Visibility.Collapsed && vm.Items.Count > 0,
+                    "The visible retry control did not recover its current page");
+            }
+            finally { window.Root.Content = null; MainVM.Sites = originalSites; MainVM.BrowseSite = originalSite; GameCatalog.Invalidate(api); }
+        });
         report.Add("INFO actual rasterization scale=" + window.Root.XamlRoot.RasterizationScale + "; 150/200 percent physical font rendering and OS high contrast remain manual checks.");
         File.WriteAllLines(Path.Combine(folder, "visual-checks.log"), report);
         Environment.ExitCode = failed ? 1 : 0;

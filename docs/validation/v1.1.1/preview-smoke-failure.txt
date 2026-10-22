@@ -1,0 +1,121 @@
+PASS Published XAML resources
+PASS YolanLive filenames and runtime dependency references
+PASS Four-platform game browsing, badges, links and pin isolation
+PASS Missing Huya and Douyu state is an error, not stopped
+PASS Button
+PASS System font
+PASS Bundled font
+PASS Image
+PASS Pinned games: limit, order, removal, identity and platform isolation
+PASS Browse platform and group persistence without temporary reset
+PASS Category refresh retains the group and exposes retry only on failure
+PASS Search platform/status labels preserve original room data
+PASS Raw search status only labels explicitly known platform codes
+PASS Browse preferences restore in a new process
+PASS Update release versions, stable channel and package validation
+PASS Update package download, checksum, cache and failed-file cleanup
+PASS Update states distinguish newest, available and request failures
+PASS Light/dark theme contrast
+PASS BaseFramePage
+PASS MainPage
+PASS RecomendPage
+PASS CategoryPage
+PASS CategoryDetailPage
+PASS SearchPage
+PASS FavoritePage
+PASS HistoryPage
+PASS SettingsPage
+PASS ParsePage
+PASS LiveRoomPage
+PASS BiliLoginDialog
+PASS FFmpeg desktop component
+PASS YolanLive metadata and clean title bar
+PASS Room title stays visible and home branding stays hidden
+PASS Closing a secondary window keeps the active window registered
+PASS Native materials and solid content surface
+PASS Compact platform selectors and category labels
+PASS About version matches running executable
+PASS Desktop player loads without legacy Xbox controls
+PASS Window preset validation and screen fitting
+PASS Mini toolbar expands without moving or resizing the video
+PASS Playback viewport fitting with DPI and window chrome
+PASS Update download survives settings navigation, cancels and requires manual install
+PASS Merged source pagination, live filtering and favorite preservation
+PASS Refresh retains content, retries, coalesces clicks and rejects cancelled responses
+PASS Recovery is bounded, stops offline and cancels stale operations
+PASS Login failure differs from network and platform failure
+PASS Manage all favorites without live-status filtering
+PASS Saved window placement and missing-display fallback
+PASS Browse scroll position survives leaving and returning
+PASS Protected Douyin session persistence
+PASS Fixed preset 960×540
+PASS Fixed preset 1280×720
+PASS Fixed preset 1600×900
+PASS Fixed preset 1920×1080
+PASS External resize cannot bypass fixed size
+PASS Maximize cannot bypass fixed size
+PASS Full screen uses display bounds
+PASS Preset change during full screen is deferred
+PASS Exit full screen restores latest preset
+PASS Fixed compact overlay
+PASS Compact overlay cannot be externally resized
+PASS Preset change during compact overlay is deferred
+PASS Exit compact overlay restores preset
+PASS Player uses proportional scaling
+PASS Player toolbar keeps occasional actions in More
+FAIL Player pause, volume, double-click and idle controls
+System.Exception: Window fullscreen rescaled the video viewport: expected=1280x719, actual=1280x779, scale=1
+   at YolanLive.WinUI.WatchingChecks.Check(Boolean condition, String message) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\WatchingChecks.cs:line 20
+   at YolanLive.WinUI.WatchingChecks.PlayerControlsAsync(MainWindow window, LiveRoomPage page) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\WatchingChecks.cs:line 164
+   at YolanLive.WinUI.SmokeTests.<>c.<<RunAsync>b__0_44>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\SmokeTests.cs:line 356
+--- End of stack trace from previous location ---
+   at YolanLive.WinUI.SmokeTests.<>c__DisplayClass0_0.<<RunAsync>g__CheckAsync|2>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\SmokeTests.cs:line 29
+PASS Playback viewport ratio 960×540
+PASS Playback viewport ratio 1280×720
+PASS Playback viewport ratio 1600×900
+PASS Playback viewport ratio 1920×1080
+PASS Player controls follow FullScreen
+PASS Player controls follow CompactOverlay
+PASS Player controls follow FullScreen
+PASS Player controls follow Default
+PASS Four platform labels wrap at 480 in Light
+PASS Four platform labels wrap at 480 in Dark
+PASS Four platform labels wrap at 320 in Light
+PASS Four platform labels wrap at 320 in Dark
+PASS Four platform labels wrap at 280 in Light
+PASS Four platform labels wrap at 280 in Dark
+PASS Four platform labels wrap at 480 in Light
+PASS Four platform labels wrap at 480 in Dark
+PASS Four platform labels wrap at 320 in Light
+PASS Four platform labels wrap at 320 in Dark
+PASS Four platform labels wrap at 280 in Light
+PASS Four platform labels wrap at 280 in Dark
+PASS Native YaHei UI controls in Light
+PASS Native YaHei UI controls in Dark
+PASS Room cover ratio at width 960
+PASS Room cover ratio at width 640
+PASS Room cover ratio at width 480
+PASS Room card rounded cover and full-title tooltip
+PASS Search badges render with known/unknown status in Light
+PASS Search badges render with known/unknown status in Dark
+PASS Empty shortcut row is hidden
+PASS Pinned games wrap and native menus at width 960 in Light
+PASS Pinned games wrap and native menus at width 960 in Dark
+PASS Pinned games wrap and native menus at width 480 in Light
+PASS Pinned games wrap and native menus at width 480 in Dark
+PASS Pinned games wrap and native menus at width 280 in Light
+PASS Pinned games wrap and native menus at width 280 in Dark
+PASS Game category exposes native pin context menu
+PASS Category selected surface alignment and centered labels
+PASS Full game-group labels at width 520
+PASS Full game-group labels at width 280
+PASS Settings layout width 1280
+PASS Settings layout width 960
+PASS Settings layout width 640
+PASS Settings layout width 480
+PASS Size selection updates all open windows and saved value
+PASS New window inherits saved preset
+PASS Independent player enters compact overlay
+PASS Closing compact player leaves main window unchanged
+PASS Douyin login browser and logout cookie cleanup
+PASS Independent Huya and Douyu login protection and logout
