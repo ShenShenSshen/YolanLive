@@ -16,6 +16,6 @@
 - `package.json`：便携包全部文件逐一 SHA-256 核对，必需依赖、字体许可齐全，不含账号、设置、数据库、日志或测试目录。
 - `legacy-offline.txt`：旧 v1.0.6 更新器接受直接升级至 v1.1.2 的元数据，仍拒绝非预期下载地址。
 
-GitHub 草稿核对三个资产大小与 SHA-256 后公开为最新正式版，随后同步旧 PlayWin 直升入口。远端核对记录完成后保存于同目录。
+GitHub 草稿三个资产的远端大小与 SHA-256 和本地一致，已公开为最新正式版：[v1.1.2](https://github.com/ShenShenSshen/YolanLive/releases/tag/v1.1.2)。源码标签对应提交 `0578307`。远端记录为 `v1.1.2/remote-verification.txt` 及 `github-published.json`；旧更新入口同步结果另记 `legacy-sync.txt`。元数据校验不冒充软件内完整下载实测。
 
 交付 `YolanLive-1.1.2-x64-Setup.exe`、`YolanLive-x64.zip` 与 `SHA256SUMS.txt`。覆盖升级保留资料，安装版卸载清空资料。程序与安装器仍未签名。
