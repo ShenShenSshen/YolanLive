@@ -126,7 +126,7 @@ internal static class VisualDesignChecks
                 var nativeHeader = Children(bar).OfType<Grid>().FirstOrDefault(g => g.Name == "PART_LayoutRoot");
                 Check(nativeHeader != null && nativeHeader.ActualHeight >= header.ActualHeight,
                     "Native titlebar clips the taller browser header");
-                Check(navigation.OpenPaneLength == 188, "Expanded sidebar differs from selected layout");
+                Check(navigation.OpenPaneLength == 176, "Expanded sidebar differs from selected layout");
                 Check(((Grid)chrome.FindName("TitleBarGrid")).Visibility == Visibility.Collapsed && Grid.GetRow(outer) == 0, "Old blank title row remains");
                 Check(root.Padding.Top == 0 && bar.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).Y <= 1,
                     "Browser header does not reach the top: padding=" + root.Padding + "; y=" + bar.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).Y);
@@ -228,6 +228,17 @@ internal static class VisualDesignChecks
                 var header = (Grid)page.FindName("BrowseHeader");
                 games.ItemsSource = new[] { BrowseChecks.Game(MainVM.Sites[0], "design-1", "三角洲行动"), BrowseChecks.Game(MainVM.Sites[0], "design-2", "暗区突围：无限与较长名称") };
                 page.Content = null; await Show(root);
+                platform.SelectedIndex = 1; await Task.Delay(40); root.UpdateLayout();
+                var selectedTab = (ListViewItem)platform.ContainerFromIndex(1);
+                var otherTab = (ListViewItem)platform.ContainerFromIndex(0);
+                var selectedPresenter = Children(selectedTab).OfType<ListViewItemPresenter>().First();
+                var selectedMark = Children(selectedTab).OfType<Border>().First(b => b.Name == "PlatformUnderline");
+                var otherMark = Children(otherTab).OfType<Border>().First(b => b.Name == "PlatformUnderline");
+                Check(selectedTab.IsSelected && !otherTab.IsSelected && selectedMark.Visibility == Visibility.Visible && otherMark.Visibility == Visibility.Collapsed && selectedMark.ActualHeight == 2,
+                    "Platform selection did not move its underline between real native items");
+                if (!new Windows.UI.ViewManagement.AccessibilitySettings().HighContrast)
+                    Check(((SolidColorBrush)selectedPresenter.SelectedBackground).Color.A == 0,
+                        "Platform tabs still use a filled segment instead of an underline");
                 Check(root.Padding.Left == (width < 640 ? 16 : 24), "Wrong responsive inset");
                 for (var i = 0; i < 4; i++)
                 {
@@ -240,7 +251,9 @@ internal static class VisualDesignChecks
                     if (container.IsSelected)
                     {
                         var presenter = Children(container).OfType<ListViewItemPresenter>().First();
-                        Check(Contrast(((SolidColorBrush)label.Foreground).Color, ((SolidColorBrush)presenter.SelectedBackground).Color) >= 4.5, "Selected platform text contrast too low");
+                        var background = ((SolidColorBrush)presenter.SelectedBackground).Color;
+                        if (background.A == 0) background = ((SolidColorBrush)root.Background).Color;
+                        Check(Contrast(((SolidColorBrush)label.Foreground).Color, background) >= 4.5, "Selected platform text contrast too low");
                     }
                 }
                 var card = (GridViewItem)games.ContainerFromIndex(0);

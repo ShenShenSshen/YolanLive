@@ -1,0 +1,11 @@
+PASS 哔哩哔哩直播 decoded_line=1 available_lines=2
+PASS 哔哩哔哩直播 selection_with_details_ms=831 quality_ms=55 address_ms=55 decode_ready_ms=3175
+PASS 抖音直播 decoded_line=1 available_lines=2
+PASS 抖音直播 selection_with_details_ms=11727 quality_ms=1 address_ms=0 decode_ready_ms=2388
+FAIL 虎牙直播 line=1 hresult=80004005 http=403 content_type=video/x-flv
+FAIL 虎牙直播 line=2 hresult=80004005 http=403 content_type=
+FAIL 虎牙直播 line=3 hresult=80004005 http=403 content_type=text/html
+FAIL 虎牙直播 stage=decode readiness elapsed_ms=1315 error=COMException inner=
+PASS 斗鱼直播 decoded_line=1 available_lines=2
+PASS 斗鱼直播 selection_with_details_ms=599 quality_ms=2825 address_ms=537 decode_ready_ms=2754
+INFO isolated guest profiles only; decode readiness means Playing with video dimensions, not measured visible first pixels; no baseline live-stream comparison.

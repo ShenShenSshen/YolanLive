@@ -380,12 +380,17 @@ namespace YolanLive.Core
             var response = await HttpUtil.GetString(
                 "https://api.bilibili.com/x/web-interface/nav",
                 headers: await GetRequestHeader(cancellationToken: cancellationToken), cancellationToken: cancellationToken);
-            var obj = ParseResponse(response);
-
-            var imgUrl = obj["data"]["wbi_img"]["img_url"].ToString();
-            var subUrl = obj["data"]["wbi_img"]["sub_url"].ToString();
-            var imgKey = imgUrl.Substring(imgUrl.LastIndexOf('/') + 1).Split('.')[0];
-            var subKey = subUrl.Substring(subUrl.LastIndexOf('/') + 1).Split('.')[0];
+            var obj = JObject.Parse(response);
+            // nav reports guest status as -101 while still returning public signing keys.
+            // This exception belongs only to key discovery, not protected room/account APIs.
+            if ((int?)obj["code"] != -101) LiveRequestException.EnsureSuccess(obj, "code", true);
+            if (!Uri.TryCreate((string)obj["data"]?["wbi_img"]?["img_url"], UriKind.Absolute, out var imgUrl) ||
+                !Uri.TryCreate((string)obj["data"]?["wbi_img"]?["sub_url"], UriKind.Absolute, out var subUrl))
+                throw new LiveRequestException(LiveFailureKind.Platform, "B站未返回有效的公开签名参数");
+            var imgKey = System.IO.Path.GetFileNameWithoutExtension(imgUrl.AbsolutePath);
+            var subKey = System.IO.Path.GetFileNameWithoutExtension(subUrl.AbsolutePath);
+            if (!Regex.IsMatch(imgKey, "^[a-fA-F0-9]{32}$") || !Regex.IsMatch(subKey, "^[a-fA-F0-9]{32}$"))
+                throw new LiveRequestException(LiveFailureKind.Platform, "B站公开签名参数格式已变化");
 
             _imgKey = imgKey;
             _subKey = subKey;

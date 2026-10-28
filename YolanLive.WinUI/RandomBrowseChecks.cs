@@ -96,7 +96,13 @@ internal static class RandomBrowseChecks
                     for (var wait = 0; wait < 40 && !window.Root.IsLoaded; wait++) await Task.Delay(25);
                     Check(window.Root.IsLoaded, "Playback host was not loaded.");
                     window.Root.Navigate(typeof(Views.LiveRoomPage), new Models.PageArgs { Site = site, Data = room, RandomSession = session });
-                    await site.NextStarted.Task.WaitAsync(TimeSpan.FromSeconds(6));
+                    try { await site.NextStarted.Task.WaitAsync(TimeSpan.FromSeconds(6)); }
+                    catch (TimeoutException error)
+                    {
+                        var page = (Views.LiveRoomPage)window.Root.Content;
+                        var view = (MediaPlayerElement)page.FindName("player");
+                        throw new InvalidOperationException("Prefetch did not start: loaded=" + page.IsLoaded + ", source=" + (view.MediaPlayer?.Source != null) + ", state=" + view.MediaPlayer?.PlaybackSession.PlaybackState + ", width=" + view.MediaPlayer?.PlaybackSession.NaturalVideoWidth + ", url_calls=" + site.UrlCalls, error);
+                    }
                     Check(site.DetailCalls == 2 && site.QualityCalls == 1 && site.UrlCalls == 1,
                         "Playing did not start exactly one metadata-only prefetch.");
                     window.Root.Content = null;
@@ -208,14 +214,30 @@ internal static class RandomBrowseChecks
                     Check(urls?.Count > 0, "No stream address");
                     var addressMs = watch.ElapsedMilliseconds;
                     stage = "decode readiness"; watch.Restart();
-                    await DecodeReadyAsync(window, urls[0], selected.Detail.Url ?? "", timeout.Token);
+                    Exception lineError = null;
+                    var decoded = false;
+                    foreach (var (url, index) in urls.Take(3).Select((url, index) => (url, index)))
+                    {
+                        try
+                        {
+                            await DecodeReadyAsync(window, url, selected.Detail.Url ?? "", timeout.Token);
+                            report.Add("PASS " + platform.Name + " decoded_line=" + (index + 1) + " available_lines=" + urls.Count);
+                            decoded = true; break;
+                        }
+                        catch (Exception error)
+                        {
+                            lineError = error;
+                            report.Add("FAIL " + platform.Name + " line=" + (index + 1) + " hresult=" + error.HResult.ToString("X8") + " " + await ProbeStreamAsync(url, selected.Detail.Url, timeout.Token));
+                        }
+                    }
+                    if (!decoded) throw lineError ?? new InvalidOperationException("No line decoded");
                     report.Add("PASS " + platform.Name + " selection_with_details_ms=" + pickMs + " quality_ms=" + qualityMs +
                         " address_ms=" + addressMs + " decode_ready_ms=" + watch.ElapsedMilliseconds);
                 }
                 catch (Exception ex)
                 {
                     failed = true;
-                    report.Add("FAIL " + platform.Name + " stage=" + stage + " elapsed_ms=" + watch.ElapsedMilliseconds + " error=" + ex.GetType().Name);
+                    report.Add("FAIL " + platform.Name + " stage=" + stage + " elapsed_ms=" + watch.ElapsedMilliseconds + " error=" + ex.GetType().Name + " inner=" + ex.InnerException?.GetType().Name);
                 }
                 File.WriteAllLines(Path.Combine(AppPaths.EnsureDirectory(), "random-browse-live.log"), report);
             }
@@ -256,12 +278,28 @@ internal static class RandomBrowseChecks
             player.Pause(); player.Source = null; view.SetMediaPlayer(null); window.Root.Content = null;
         }
     }
+    private static async Task<string> ProbeStreamAsync(string url, string referer, CancellationToken cancellation)
+    {
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation); timeout.CancelAfter(TimeSpan.FromSeconds(5));
+            using var client = new System.Net.Http.HttpClient();
+            using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+            request.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0");
+            if (!string.IsNullOrEmpty(referer)) request.Headers.Referrer = new Uri(referer);
+            using var response = await client.SendAsync(request, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, timeout.Token);
+            return "http=" + (int)response.StatusCode + " content_type=" + response.Content.Headers.ContentType?.MediaType;
+        }
+        catch (Exception error) { return "http_probe=" + error.GetType().Name; }
+    }
     private static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
-    private sealed class FixtureSite : BiliBili, ILiveSite
+    internal sealed class FixtureSite : BiliBili, ILiveSite
     {
         internal int DetailCalls, QualityCalls, UrlCalls;
         internal string StreamUrl = "https://example.invalid/not-downloaded.flv";
         internal bool HoldNext, HoldNextQuality;
+        internal Task<List<string>> PendingUrls;
+        internal readonly TaskCompletionSource UrlStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal readonly TaskCompletionSource NextQualityStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal readonly TaskCompletionSource NextQualityCanceled = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal readonly TaskCompletionSource ReleaseQuality = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -294,6 +332,6 @@ internal static class RandomBrowseChecks
             return new List<LivePlayQuality> { new() { Quality = "fixture" } };
         }
         public new Task<List<string>> GetPlayUrls(LiveRoomDetail detail, LivePlayQuality quality, CancellationToken cancellationToken)
-        { UrlCalls++; return Task.FromResult(new List<string> { StreamUrl }); }
+        { UrlCalls++; UrlStarted.TrySetResult(); return PendingUrls ?? Task.FromResult(new List<string> { StreamUrl }); }
     }
 }

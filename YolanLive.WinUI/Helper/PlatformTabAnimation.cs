@@ -7,8 +7,36 @@ using Windows.UI.ViewManagement;
 
 namespace YolanLive.WinUI.Helper;
 
-internal static class PlatformTabAnimation
+public static class PlatformTabAnimation
 {
+    // Draw inside item content, retaining the native presenter as the template root.
+    // Synchronize on selection/materialization only; no polling or extra animation clock.
+    public static readonly DependencyProperty UnderlineProperty = DependencyProperty.RegisterAttached(
+        "Underline", typeof(bool), typeof(PlatformTabAnimation), new PropertyMetadata(false, UnderlineChanged));
+    public static bool GetUnderline(DependencyObject value) => (bool)value.GetValue(UnderlineProperty);
+    public static void SetUnderline(DependencyObject value, bool enabled) => value.SetValue(UnderlineProperty, enabled);
+    private static void UnderlineChanged(DependencyObject value, DependencyPropertyChangedEventArgs change)
+    {
+        if (value is not ListView picker) return;
+        picker.Loaded -= PickerLoaded;
+        picker.SelectionChanged -= PickerSelectionChanged;
+        picker.ContainerContentChanging -= ContainerChanged;
+        if (!(bool)change.NewValue) return;
+        picker.Loaded += PickerLoaded;
+        picker.SelectionChanged += PickerSelectionChanged;
+        picker.ContainerContentChanging += ContainerChanged;
+    }
+    private static void PickerLoaded(object sender, RoutedEventArgs args) => RefreshUnderline((ListView)sender);
+    private static void PickerSelectionChanged(object sender, SelectionChangedEventArgs args) => RefreshUnderline((ListView)sender);
+    private static void ContainerChanged(ListViewBase sender, ContainerContentChangingEventArgs args)
+        => sender.DispatcherQueue.TryEnqueue(() => { if (sender.IsLoaded) RefreshUnderline((ListView)sender); });
+    private static void RefreshUnderline(ListView picker)
+    {
+        foreach (var item in picker.Items)
+            if (picker.ContainerFromItem(item) is ListViewItem container &&
+                container.ContentTemplateRoot is FrameworkElement root && root.FindName("PlatformUnderline") is Border mark)
+                mark.Visibility = container.IsSelected ? Visibility.Visible : Visibility.Collapsed;
+    }
     internal static void Play(ListView picker, SelectionChangedEventArgs change)
     {
         if (!picker.IsLoaded) return;

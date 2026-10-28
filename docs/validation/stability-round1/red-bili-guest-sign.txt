@@ -1,0 +1,7 @@
+Unhandled exception. YolanLive.Core.Helper.LiveRequestException: 平台要求重新登录
+   at YolanLive.Core.Helper.LiveRequestException.EnsureSuccess(JObject response, String codeField, Boolean bilibili) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.Core\Helper\LiveRequestException.cs:line 16
+   at YolanLive.Core.BiliBili.ParseResponse(String payload) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.Core\BiliBili.cs:line 22
+   at YolanLive.Core.BiliBili.GetWbiKeys(CancellationToken cancellationToken) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.Core\BiliBili.cs:line 380
+   at YolanLive.Core.BiliBili.GetWbiSign(String url, CancellationToken cancellationToken) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.Core\BiliBili.cs:line 405
+   at Program.<Main>$(String[] args) in D:\Program Files (x86)\PlayWin\PlayWin\tests\WinUIDataCheck\Program.cs:line 28
+   at Program.<Main>(String[] args)

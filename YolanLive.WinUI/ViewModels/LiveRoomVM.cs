@@ -207,9 +207,12 @@ namespace YolanLive.WinUI.ViewModels
                     Qualities = qualities;
                     if (Qualities != null && Qualities.Count > 0)
                     {
-                        restoringQuality = true;
+                        restoringQuality = suppressPlayback = true;
                         try { CurrentQuality = GetPreferredQuality(Site, Qualities); }
-                        finally { restoringQuality = false; }
+                        finally { restoringQuality = suppressPlayback = false; }
+                        await LoadPlayUrlAsync(operation.Token);
+                        operation.Token.ThrowIfCancellationRequested();
+                        if (generation != loadGeneration) return;
                     }
                     // var u = await Site.GetPlayUrls(result, q[0]);
                     //ChangedPlayUrl?.Invoke(this, u[0]);
@@ -274,15 +277,18 @@ namespace YolanLive.WinUI.ViewModels
             MessageCenter.UpdateFavorite();
         }
 
-        public async void LoadPlayUrl()
+        public async void LoadPlayUrl() => await LoadPlayUrlAsync();
+        internal async Task LoadPlayUrlAsync(CancellationToken cancellationToken = default)
         {
             urlCancellation?.Cancel();
-            var operation = new CancellationTokenSource(TimeSpan.FromSeconds(25));
+            var operation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            operation.CancelAfter(TimeSpan.FromSeconds(25));
             urlCancellation = operation;
             var generation = ++urlGeneration;
             try
             {
-                var data = await Site.GetPlayUrls(detail, CurrentQuality, operation.Token);
+                var data = await Site.GetPlayUrls(detail, CurrentQuality, operation.Token).WaitAsync(operation.Token);
+                operation.Token.ThrowIfCancellationRequested();
                 if (generation != urlGeneration) return;
                 if (data.Count == 0)
                 {
@@ -303,7 +309,7 @@ namespace YolanLive.WinUI.ViewModels
                 CurrentLine = Lines[0];
             }
             catch (OperationCanceledException) when (operation.IsCancellationRequested)
-            { if (generation == urlGeneration) Utils.ShowMessageToast("播放地址加载超时，请重试"); }
+            { if (generation == urlGeneration && !cancellationToken.IsCancellationRequested) Utils.ShowMessageToast("播放地址加载超时，请重试"); }
             catch (Exception ex)
             {
                 if (generation == urlGeneration) Utils.ShowMessageToast(RequestErrorMessage.Report(ex, Site.Name));

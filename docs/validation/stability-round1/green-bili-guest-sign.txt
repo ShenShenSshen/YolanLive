@@ -1,0 +1,1 @@
+PASS guest obtains public WBI keys and signs room query without an account

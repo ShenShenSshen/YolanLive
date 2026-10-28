@@ -18,6 +18,73 @@ namespace YolanLive.WinUI;
 internal static class WatchingChecks
 {
     private static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
+    internal static async Task RunControlsAsync()
+    {
+        await DatabaseHelper.InitializeDatabase();
+        var report = new System.Collections.Generic.List<string>();
+        var failed = false;
+        try { await AddressLifetimeAsync(); report.Add("PASS room loading includes address resolution and caller cancellation"); }
+        catch (Exception error) { failed = true; report.Add("FAIL address lifetime " + error); }
+        for (var attempt = 0; attempt < 4; attempt++)
+        {
+            var window = App.OpenWindow(typeof(Page));
+            try
+            {
+                var page = new Views.LiveRoomPage(); window.Root.Content = page;
+                window.Activate(); await Task.Delay(300);
+                await PlayerControlsAsync(window, page);
+                report.Add("PASS player modes and controls iteration=" + attempt);
+            }
+            catch (Exception error) { failed = true; report.Add("FAIL iteration=" + attempt + " " + error); }
+            finally { window.Close(); }
+            File.WriteAllLines(Path.Combine(AppPaths.EnsureDirectory(), "player-controls.log"), report);
+        }
+        Environment.ExitCode = failed ? 1 : 0;
+    }
+    internal static async Task AddressLifetimeAsync()
+    {
+        var pending = new TaskCompletionSource<System.Collections.Generic.List<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var site = new RandomBrowseChecks.FixtureSite { PendingUrls = pending.Task };
+        var vm = new ViewModels.LiveRoomVM();
+        using var cancellation = new System.Threading.CancellationTokenSource();
+        var plays = 0;
+        vm.ChangedPlayUrl += (_, _) => plays++;
+        var loading = vm.LoadDataAsync(site, "address-lifetime", cancellation.Token);
+        try
+        {
+            await site.UrlStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            Check(!loading.IsCompleted && vm.Loading, "Room became ready while its stream-address request was still pending");
+            cancellation.Cancel();
+            await loading.WaitAsync(TimeSpan.FromSeconds(1));
+            Check(!vm.Loading && plays == 0, "Caller cancellation left the room busy or started a stream");
+            pending.TrySetResult(new() { site.StreamUrl }); await Task.Delay(50);
+            Check(plays == 0, "Late address response started a cancelled room");
+        }
+        finally { cancellation.Cancel(); vm.CancelPendingPlayback(); pending.TrySetResult(new() { site.StreamUrl }); }
+
+        var activeSite = new RandomBrowseChecks.FixtureSite();
+        var active = new ViewModels.LiveRoomVM();
+        var activePlays = 0;
+        active.ChangedPlayUrl += (_, _) => activePlays++;
+        await active.LoadDataAsync(activeSite, "active-address");
+        var previousLine = active.CurrentLine;
+        var next = new TaskCompletionSource<System.Collections.Generic.List<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        activeSite.PendingUrls = next.Task;
+        using var cancelQuality = new System.Threading.CancellationTokenSource();
+        var switching = active.LoadPlayUrlAsync(cancelQuality.Token);
+        try
+        {
+            Check(!switching.IsCompleted, "Address switching completed before its response");
+            cancelQuality.Cancel();
+            await switching.WaitAsync(TimeSpan.FromSeconds(1));
+            next.TrySetResult(new() { "https://example.invalid/late-stream.flv" }); await Task.Delay(50);
+            Check(activePlays == 1 && active.CurrentLine == previousLine, "Cancelled quality request replaced the current line");
+            activeSite.PendingUrls = null;
+            await active.LoadPlayUrlAsync();
+            Check(activePlays == 2 && active.CurrentLine != previousLine, "Address selection did not recover after cancellation");
+        }
+        finally { active.CancelPendingPlayback(); next.TrySetResult(new() { activeSite.StreamUrl }); }
+    }
     internal static async Task RecoveryAsync()
     {
         var recovery = new PlaybackRecovery();
@@ -197,8 +264,11 @@ internal static class WatchingChecks
         ((Button)page.FindName("BottomBtnAddFavorite")).Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
         type.GetField("showControlsFlag", methods).SetValue(page, 5);
         type.GetMethod("ControlTimer_Tick", methods).Invoke(page, new object[] { null, null });
+        var idleAnimation = type.GetField("toolbarFade", methods).GetValue(page) as Microsoft.UI.Xaml.Media.Animation.Storyboard;
+        var idleCompleted = false;
+        if (idleAnimation != null) idleAnimation.Completed += (_, _) => idleCompleted = true;
         await Task.Delay(200);
-        Check(((Grid)page.FindName("control")).Visibility == Visibility.Collapsed, "Idle player controls stayed visible: visible=" + window.AppWindow.IsVisible + ", floating=" + type.GetField("floatingToolbar", methods).GetValue(page) + ", hiding=" + type.GetField("toolbarHiding", methods).GetValue(page));
+        Check(((Grid)page.FindName("control")).Visibility == Visibility.Collapsed, "Idle player controls stayed visible: visible=" + window.AppWindow.IsVisible + ", floating=" + type.GetField("floatingToolbar", methods).GetValue(page) + ", hiding=" + type.GetField("toolbarHiding", methods).GetValue(page) + ", animation_completed=" + idleCompleted + ", animation_state=" + idleAnimation?.GetCurrentState());
         type.GetMethod("Grid_DoubleTapped", methods).Invoke(page, new object[] { null, null });
         await Task.Delay(250);
         var beforeMiniSize = window.AppWindow.Size;

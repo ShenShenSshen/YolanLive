@@ -29,7 +29,7 @@
     <Grid>
 
 
-        <muxc:NavigationView FontFamily="{StaticResource NavigationFontFamily}" FontSize="{StaticResource NavigationTextSize}" x:Name="navigationView" Background="{ThemeResource ChromeSurfaceBrush}" IsTitleBarAutoPaddingEnabled="False" IsBackButtonVisible="Collapsed" IsPaneOpen="True" IsSettingsVisible="true" Loaded="navigationView_Loaded" CompactPaneLength="56" OpenPaneLength="188" PaneOpened="NavigationView_PaneStateChanged" PaneClosed="NavigationView_PaneStateChanged" PaneDisplayMode="Left" SelectionChanged="NavigationView_SelectionChanged" ItemInvoked="NavigationView_ItemInvoked">
+        <muxc:NavigationView FontFamily="{StaticResource NavigationFontFamily}" FontSize="{StaticResource NavigationTextSize}" x:Name="navigationView" Background="{ThemeResource ChromeSurfaceBrush}" IsTitleBarAutoPaddingEnabled="False" IsBackButtonVisible="Collapsed" IsPaneOpen="True" IsSettingsVisible="true" Loaded="navigationView_Loaded" CompactPaneLength="56" OpenPaneLength="176" PaneOpened="NavigationView_PaneStateChanged" PaneClosed="NavigationView_PaneStateChanged" PaneDisplayMode="Left" SelectionChanged="NavigationView_SelectionChanged" ItemInvoked="NavigationView_ItemInvoked">
             <muxc:NavigationView.PaneCustomContent><Border Height="24"/></muxc:NavigationView.PaneCustomContent>
             <muxc:NavigationView.AutoSuggestBox>
                 <AutoSuggestBox x:Name="searchBox" Style="{StaticResource SidebarSearchStyle}" FontFamily="{StaticResource ContentControlThemeFontFamily}" AutomationProperties.Name="搜索主播或直播链接" PlaceholderText="搜索主播或粘贴链接" QueryIcon="Find" QuerySubmitted="searchBox_QuerySubmitted" FontSize="14"/>

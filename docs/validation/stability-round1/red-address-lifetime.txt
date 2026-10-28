@@ -1,0 +1,8 @@
+FAIL address lifetime System.Exception: Room became ready while its stream-address request was still pending
+   at YolanLive.WinUI.WatchingChecks.Check(Boolean condition, String message) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\WatchingChecks.cs:line 20
+   at YolanLive.WinUI.WatchingChecks.AddressLifetimeAsync() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\WatchingChecks.cs:line 56
+   at YolanLive.WinUI.WatchingChecks.RunControlsAsync() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\WatchingChecks.cs:line 26
+PASS player modes and controls iteration=0
+PASS player modes and controls iteration=1
+PASS player modes and controls iteration=2
+PASS player modes and controls iteration=3

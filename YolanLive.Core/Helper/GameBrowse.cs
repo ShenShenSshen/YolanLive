@@ -57,10 +57,19 @@ namespace YolanLive.Core.Helper
                 Pic = g.Select(s => s.Category.Pic).FirstOrDefault(p => !string.IsNullOrEmpty(p)),
                 Sources = g.GroupBy(s => s.Site.Name + ":" + s.Category.ParentID + ":" + s.Category.ID).Select(s => s.First()).ToList()
             }).OrderBy(c => c.Name).ToList();
-        public static List<LiveGameSource> OverviewSources(IEnumerable<LiveGameSource> sources) => sources.Where(s =>
-            (s.Site is BiliBili && ((new[] { "2", "3", "6" }.Contains(s.Category.ParentID) && s.Category.ID == "0") ||
-                (s.Category.ParentID == "13" && s.Category.ID == "561"))) ||
-            (s.Site is Douyin && s.Category.ID == "103,4") ||
-            ((s.Site is Huya || s.Site is Douyu) && s.Category.ID == "0" && s.Category.ParentID == "1")).ToList();
+        public static List<LiveGameSource> OverviewSources(IEnumerable<LiveGameSource> sources)
+        {
+            var catalog = sources.ToList();
+            // The directory lists games, not synthetic area=0 entries. Build overview queries
+            // separately so homepage and random browsing retain all three game parent areas.
+            var bili = catalog.Where(s => s.Site is BiliBili && new[] { "2", "3", "6" }.Contains(s.Category.ParentID))
+                .GroupBy(s => new { s.Site, s.Category.ParentID })
+                .Select(g => new LiveGameSource { Site = g.Key.Site, Category = new LiveSubCategory { ID = "0", ParentID = g.Key.ParentID, Name = "全部游戏" } });
+            return bili.Concat(catalog.Where(s =>
+                (s.Site is BiliBili && s.Category.ParentID == "13" && s.Category.ID == "561") ||
+                (s.Site is Douyin && s.Category.ID == "103,4") ||
+                ((s.Site is Huya || s.Site is Douyu) && s.Category.ID == "0" && s.Category.ParentID == "1")))
+                .GroupBy(s => new { s.Site, s.Category.ParentID, s.Category.ID }).Select(g => g.First()).ToList();
+        }
     }
 }

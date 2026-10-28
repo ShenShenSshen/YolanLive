@@ -1,0 +1,5 @@
+PASS room loading includes address resolution and caller cancellation
+PASS player modes and controls iteration=0
+PASS player modes and controls iteration=1
+PASS player modes and controls iteration=2
+PASS player modes and controls iteration=3

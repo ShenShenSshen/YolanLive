@@ -15,6 +15,21 @@ var biliFixture = new List<YolanLive.Core.Models.LiveCategory> {
     new() { ID = "13", Name = "赛事", Children = new() { new() { ID = "561", ParentID = "13", Name = "游戏赛事" }, new() { ID = "563", ParentID = "13", Name = "赛事综合" } } }
 };
 var biliSite = new YolanLive.Core.BiliBili();
+var overviewInputs = new[] { (parent: "2", id: "86"), (parent: "3", id: "35"), (parent: "6", id: "236"), (parent: "13", id: "561"), (parent: "13", id: "563"), (parent: "1", id: "100") }
+    .Select(c => new YolanLive.Core.Models.LiveGameSource { Site = biliSite, Category = new() { ID = c.id, ParentID = c.parent, Name = "Directory game" } }).ToArray();
+var biliOverview = YolanLive.Core.Helper.GameBrowse.OverviewSources(overviewInputs);
+Check(biliOverview.Select(s => s.Category.ParentID + ":" + s.Category.ID).Order().SequenceEqual(new[] { "13:561", "2:0", "3:0", "6:0" }),
+    "Bilibili game overview must derive its parent-area queries from actual games; directory contains no synthetic area zero");
+Check(overviewInputs[0].Category.ID == "86", "Overview mutated a game category used for navigation");
+if (args.Contains("--overview-check")) { Console.WriteLine("PASS real-shape Bilibili directory maps to three game roots and game events without mutation"); return; }
+if (args.Contains("--bili-sign-live"))
+{
+    using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+    var signed = await biliSite.GetWbiSign("room_id=1", timeout.Token);
+    Check(signed.Contains("room_id=1") && System.Text.RegularExpressions.Regex.IsMatch(signed, @"(?:^|&)w_rid=[a-fA-F0-9]{32}(?:&|$)"), "Guest WBI signature missing");
+    Console.WriteLine("PASS guest obtains public WBI keys and signs room query without an account");
+    return;
+}
 var dySite = new YolanLive.Core.Douyin();
 var selected = YolanLive.Core.Helper.GameBrowse.SelectCategories(biliSite, biliFixture);
 Check(selected.Count == 2 && selected.Last().Children.Count == 1 && selected.Last().Children[0].ID == "561", "Non-game categories survived or game events were lost.");

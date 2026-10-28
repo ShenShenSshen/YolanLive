@@ -1,0 +1,5 @@
+FAIL 哔哩哔哩直播 stage=selection including details elapsed_ms=946 error=InvalidOperationException
+PASS 抖音直播 selection_with_details_ms=10543 quality_ms=2 address_ms=0 decode_ready_ms=540
+FAIL 虎牙直播 stage=decode readiness elapsed_ms=168 error=COMException
+PASS 斗鱼直播 selection_with_details_ms=529 quality_ms=2559 address_ms=430 decode_ready_ms=561
+INFO isolated guest profiles only; decode readiness means Playing with video dimensions, not measured visible first pixels; no baseline live-stream comparison.

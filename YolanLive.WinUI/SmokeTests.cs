@@ -269,6 +269,7 @@ internal static class SmokeTests
         await CheckAsync("Merged source pagination, live filtering and favorite preservation", GameBrowseChecks.RunAsync);
         await CheckAsync("Refresh retains content, retries, coalesces clicks and rejects cancelled responses", GameBrowseChecks.RefreshFeedbackAsync);
         await CheckAsync("Recovery is bounded, stops offline and cancels stale operations", WatchingChecks.RecoveryAsync);
+        await CheckAsync("Room loading awaits stream addresses and releases cancelled requests", WatchingChecks.AddressLifetimeAsync);
         Check("Login failure differs from network and platform failure", WatchingChecks.LoginErrors);
         await CheckAsync("Manage all favorites without live-status filtering", WatchingChecks.ManageFavoritesAsync);
         await CheckAsync("Saved window placement and missing-display fallback", WatchingChecks.WindowPlacementAsync);
