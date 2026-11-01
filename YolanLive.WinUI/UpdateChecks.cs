@@ -126,7 +126,7 @@ internal static class UpdateChecks
             }
             vm.Cancel(); await download; await Task.Delay(100);
             Check(vm.Status.Contains("取消") && !vm.Busy && !vm.HideDownload && vm.HideInstall &&
-                !File.Exists(client.GetInstallerPath(UpdateClient.ParseRelease(Metadata().ToString())) + ".partial"), "Cancel left the download locked or executable.");
+                !File.Exists(client.GetInstallerPath(UpdateClient.ParseRelease(Metadata().ToString()))), "Cancel left the download locked or executable.");
             var checkCalls = 0;
             using var completeHttp = new HttpClient(new Handler((request, _) =>
             {
@@ -151,16 +151,156 @@ internal static class UpdateChecks
         string report;
         try
         {
-            var client = new UpdateClient();
+            using var directHttp = Environment.GetCommandLineArgs().Contains("--update-no-proxy") ?
+                new HttpClient(new HttpClientHandler { UseProxy = false, UseCookies = false }) { Timeout = Timeout.InfiniteTimeSpan } : null;
+            directHttp?.DefaultRequestHeaders.UserAgent.ParseAdd("YolanLive-update-check");
+            var client = new UpdateClient(directHttp);
             var release = await client.CheckAsync(CancellationToken.None);
-            var path = await client.DownloadAsync(release, _ => { }, CancellationToken.None);
+            var sources = new System.Collections.Generic.List<string>();
+            var path = await client.DownloadAsync(release, _ => { }, CancellationToken.None, sources.Add);
             Check(await client.VerifyAsync(release, path, CancellationToken.None), "Published installer checksum mismatch.");
-            report = "PASS Public GitHub release metadata and real installer download\nTag=" + release.Tag + "\nSize=" + release.Size + "\nSHA256 verified=True\nInstaller executed=False";
+            report = "PASS Public GitHub release metadata and real installer download\nTag=" + release.Tag + "\nSize=" + release.Size +
+                "\nSources=" + string.Join(" -> ", sources) + "\nExplicit proxy disabled=" + (directHttp != null) + "\nSHA256 verified=True\nInstaller executed=False";
             Environment.ExitCode = 0;
         }
         catch (Exception ex) { report = "FAIL Public GitHub update check\n" + ex; Environment.ExitCode = 1; }
         var directory = Directory.CreateDirectory(AppPaths.DataDirectory);
         File.WriteAllText(Path.Combine(directory.FullName, "update-check.log"), report);
+    }
+    internal static async Task FallbackAsync()
+    {
+        using var http = new HttpClient(new Handler((request, _) =>
+            request.RequestUri.Host == "github.com" ? Task.FromException<HttpResponseMessage>(new HttpRequestException("Direct GitHub download is unreachable")) :
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Package) })));
+        var client = new UpdateClient(http, TestDirectory());
+        var release = UpdateClient.ParseRelease(Metadata().ToString());
+        var path = await client.DownloadAsync(release, _ => { }, CancellationToken.None);
+        Check(await client.VerifyAsync(release, path, CancellationToken.None), "Free acceleration did not deliver the verified installer when GitHub was unreachable.");
+    }
+    internal static async Task OfflineAsync(MainWindow window)
+    {
+        var lines = new System.Collections.Generic.List<string>();
+        foreach (var (name, run) in new (string, Func<Task>)[] {
+            ("Release validation", () => { Releases(); return Task.CompletedTask; }),
+            ("Download verification and cache", DownloadsAsync),
+            ("Version and network states", StatesAsync),
+            ("Background download and manual install", () => BackgroundAsync(window)),
+            ("GitHub unavailable with free acceleration", FallbackAsync),
+            ("Cancel and resume partial installer", ResumeAsync),
+            ("Range ignored or malformed", RangeResponsesAsync),
+            ("Corrupt accelerator and direct fallback", SourceFailuresAsync),
+            ("Connect and stalled-body timeouts", TimeoutsAsync) })
+        {
+            try { await run(); lines.Add("PASS " + name); }
+            catch (Exception ex) { lines.Add("FAIL " + name + "\n" + ex); }
+        }
+        Environment.ExitCode = lines.Any(line => line.StartsWith("FAIL")) ? 1 : 0;
+        File.WriteAllLines(Path.Combine(AppPaths.EnsureDirectory(), "update-offline.log"), lines);
+    }
+    internal static async Task ResumeAsync()
+    {
+        var directory = TestDirectory();
+        var release = UpdateClient.ParseRelease(Metadata().ToString());
+        using var cancel = new CancellationTokenSource();
+        using var blocked = new PausedStream(Package);
+        using var firstHttp = new HttpClient(new Handler((_, _) => Task.FromResult(
+            new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(blocked) })));
+        var firstClient = new UpdateClient(firstHttp, directory);
+        try { await firstClient.DownloadAsync(release, value => { if (value > 0) cancel.Cancel(); }, cancel.Token); throw new Exception("Cancel was ignored."); }
+        catch (OperationCanceledException) { }
+        var target = firstClient.GetInstallerPath(release);
+        Check(!File.Exists(target) && File.Exists(target + ".partial") && new FileInfo(target + ".partial").Length == 16,
+            "Cancel deleted resumable bytes or exposed an unverified installer.");
+        var ranged = false;
+        using var nextHttp = new HttpClient(new Handler((request, _) =>
+        {
+            ranged = request.Headers.Range?.ToString() == "bytes=16-";
+            var response = new HttpResponseMessage(HttpStatusCode.PartialContent) { Content = new ByteArrayContent(Package[16..]) };
+            response.Content.Headers.ContentRange = new System.Net.Http.Headers.ContentRangeHeaderValue(16, 63, 64);
+            return Task.FromResult(response);
+        }));
+        var nextClient = new UpdateClient(nextHttp, directory);
+        var path = await nextClient.DownloadAsync(release, _ => { }, CancellationToken.None);
+        Check(ranged && await nextClient.VerifyAsync(release, path, CancellationToken.None) && !File.Exists(target + ".partial"),
+            "Retry did not resume the exact byte range and verify the completed installer.");
+    }
+    internal static async Task RangeResponsesAsync()
+    {
+        var release = UpdateClient.ParseRelease(Metadata().ToString());
+        foreach (var malformed in new[] { false, true })
+        {
+            using var http = new HttpClient(new Handler((_, _) =>
+            {
+                var response = new HttpResponseMessage(malformed ? HttpStatusCode.PartialContent : HttpStatusCode.OK)
+                    { Content = new ByteArrayContent(Package) };
+                if (malformed) response.Content.Headers.ContentRange = new System.Net.Http.Headers.ContentRangeHeaderValue(0, 63, 64);
+                return Task.FromResult(response);
+            }));
+            var client = new UpdateClient(http, TestDirectory());
+            var path = client.GetInstallerPath(release);
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            await File.WriteAllBytesAsync(path + ".partial", Package[..16]);
+            if (malformed)
+            {
+                try { await client.DownloadAsync(release, _ => { }, CancellationToken.None); throw new Exception("Wrong range was accepted."); }
+                catch (InvalidDataException) { }
+                Check(!File.Exists(path) && (await File.ReadAllBytesAsync(path + ".partial")).SequenceEqual(Package[..16]),
+                    "Malformed range corrupted the saved prefix or exposed an installer.");
+            }
+            else
+            {
+                await client.DownloadAsync(release, _ => { }, CancellationToken.None);
+                Check(await client.VerifyAsync(release, path, CancellationToken.None), "Server ignoring Range appended duplicate bytes instead of restarting.");
+            }
+        }
+    }
+    internal static async Task SourceFailuresAsync()
+    {
+        var release = UpdateClient.ParseRelease(Metadata().ToString());
+        foreach (var corrupt in new[] { false, true })
+        {
+            using var http = new HttpClient(new Handler((request, _) =>
+            {
+                if (!corrupt && request.RequestUri.Host != "github.com") return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) {
+                    Content = new ByteArrayContent(corrupt && request.RequestUri.Host == "gh-proxy.org" ? new byte[64] : Package) });
+            }));
+            var sources = new System.Collections.Generic.List<string>();
+            var client = new UpdateClient(http, TestDirectory());
+            var path = await client.DownloadAsync(release, _ => { }, CancellationToken.None, sources.Add);
+            Check(await client.VerifyAsync(release, path, CancellationToken.None) &&
+                sources.Last().Contains(corrupt ? "ghfast.top" : "GitHub"),
+                "Broken accelerators blocked direct fallback or a corrupt installer was accepted.");
+        }
+    }
+    internal static async Task TimeoutsAsync()
+    {
+        var release = UpdateClient.ParseRelease(Metadata().ToString());
+        foreach (var stall in new[] { false, true })
+        {
+            using var stream = new PausedStream(Package);
+            var timeoutCanceled = false;
+            var resumed = false;
+            using var http = new HttpClient(new Handler(async (request, token) =>
+            {
+                if (request.RequestUri.Host == "gh-proxy.org")
+                {
+                    if (stall) return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(stream) };
+                    try { await Task.Delay(Timeout.Infinite, token); }
+                    finally { timeoutCanceled = token.IsCancellationRequested; }
+                }
+                resumed = request.Headers.Range?.ToString() == "bytes=16-";
+                var response = new HttpResponseMessage(stall ? HttpStatusCode.PartialContent : HttpStatusCode.OK)
+                    { Content = new ByteArrayContent(stall ? Package[16..] : Package) };
+                if (stall) response.Content.Headers.ContentRange = new System.Net.Http.Headers.ContentRangeHeaderValue(16, 63, 64);
+                return response;
+            }));
+            var client = new UpdateClient(http, TestDirectory());
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(40));
+            var path = await client.DownloadAsync(release, _ => { }, deadline.Token);
+            Check(await client.VerifyAsync(release, path, CancellationToken.None) && (stall ? resumed && stream.Canceled : timeoutCanceled),
+                "A stalled source was not canceled underneath and replaced with a valid resumable source.");
+        }
     }
     private sealed class Handler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> send) : HttpMessageHandler
     {
@@ -169,9 +309,14 @@ internal static class UpdateChecks
     private sealed class PausedStream(byte[] bytes) : MemoryStream(bytes)
     {
         private bool read;
+        internal bool Canceled { get; private set; }
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken token = default)
         {
-            if (read) { await Task.Delay(Timeout.Infinite, token); return 0; }
+            if (read)
+            {
+                try { await Task.Delay(Timeout.Infinite, token); return 0; }
+                finally { Canceled = token.IsCancellationRequested; }
+            }
             read = true;
             return await base.ReadAsync(buffer[..Math.Min(16, buffer.Length)], token);
         }

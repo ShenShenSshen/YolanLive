@@ -58,6 +58,8 @@ internal static class SmokeTests
         await CheckAsync("Browse preferences restore in a new process", BrowseChecks.RestartAsync);
         Check("Update release versions, stable channel and package validation", UpdateChecks.Releases);
         await CheckAsync("Update package download, checksum, cache and failed-file cleanup", UpdateChecks.DownloadsAsync);
+        await CheckAsync("Update accelerated fallback and corrupt-source rejection", UpdateChecks.SourceFailuresAsync);
+        await CheckAsync("Update interrupted package resumes and validates ranges", async () => { await UpdateChecks.ResumeAsync(); await UpdateChecks.RangeResponsesAsync(); });
         await CheckAsync("Update states distinguish newest, available and request failures", UpdateChecks.StatesAsync);
         await CheckAsync("Light/dark theme contrast", async () =>
         {

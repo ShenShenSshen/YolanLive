@@ -41,9 +41,13 @@ public sealed class UpdateVM : BaseNotifyPropertyChanged
     private void Finish() { Busy = Downloading = false; operation.Dispose(); operation = null; Notify(); }
     private void Failed(Exception ex)
     {
-        Status = ex is OperationCanceledException ? operation.IsCancellationRequested ? "已取消，可以重新尝试" : "请求超时，请稍后重试" :
+        Status = ex is OperationCanceledException ? operation.IsCancellationRequested ?
+            Downloading ? "已取消下载，重新下载时会尝试续传" : "已取消，可以重新尝试" :
+            Downloading ? "连接超时，重新下载时会尝试续传" : "请求超时，请稍后重试" :
             ex is HttpRequestException http && http.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.TooManyRequests ? "GitHub 请求受限，请稍后重试" :
-            ex is HttpRequestException ? "网络连接失败，请检查网络后重试" : ex is InvalidDataException ? ex.Message : "更新操作失败，请重试";
+            ex is HttpRequestException ? Downloading ? "所有下载源连接失败，请检查网络后重试；下载进度会尝试保留" : "网络连接失败，请检查网络后重试" :
+            ex is InvalidDataException ? ex.Message : ex is IOException || ex is UnauthorizedAccessException ?
+            "无法写入安装包，请检查磁盘空间、目录权限或文件占用后重试" : "更新操作失败，请重试";
         if (ex is not OperationCanceledException || !operation.IsCancellationRequested) LogHelper.Log("更新操作失败", LogType.ERROR, ex);
     }
     public async Task CheckAsync()
@@ -70,12 +74,18 @@ public sealed class UpdateVM : BaseNotifyPropertyChanged
         Begin(true);
         try
         {
+            var source = "";
             installerPath = await client.DownloadAsync(release, value =>
             {
                 Progress = value;
-                Status = "正在下载 " + release.Tag + "（" + value.ToString("0") + "%），切换页面后继续";
+                Status = "正在下载 " + release.Tag + "（" + value.ToString("0") + "%） · " + source;
                 Notify();
-            }, operation.Token);
+            }, operation.Token, value =>
+            {
+                source = value;
+                Status = "正在连接 " + source + "，失败时自动切换下载源…";
+                Notify();
+            });
             Status = release.Tag + " 已下载并校验完成，点击启动安装器；覆盖升级保留用户数据";
         }
         catch (Exception ex) { installerPath = null; Failed(ex); }

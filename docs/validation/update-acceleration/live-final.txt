@@ -1,0 +1,8 @@
+PASS Public GitHub release metadata and real installer download
+Tag=v1.1.2
+Size=92597834
+Sources=免费加速 1 · gh-proxy.org
+Explicit proxy disabled=True
+SHA256 verified=True
+Installer executed=False
+Profile=D:\Program Files (x86)\PlayWin\PlayWin\artifacts\cache\temp\YolanLive-smoke-test\update-3bc97330ab7b4746877f387eacc27a88

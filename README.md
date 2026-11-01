@@ -6,16 +6,18 @@ A focused Windows game livestream viewer for Bilibili, Douyin, Huya and Douyu, b
 
 简洁的 Windows 游戏直播客户端。支持哔哩哔哩、抖音、虎牙和斗鱼，仅展示游戏分类，不显示弹幕。使用 WinUI 3，栏位采用磨砂材质，内容保持清晰。
 
-**已发布版本：v1.1.2 · Windows x64 · MIT**
+**已发布版本：v1.1.3 · Windows x64 · MIT**
 
-v1.1.2 更新为浅色影音界面：灰白与蓝紫配色、平台下划线导航、更大封面；修复 B站访客播放与游戏入口，完善地址请求取消。已知窗口尺寸与虎牙线路问题仍保留，详见 [更新说明](RELEASE_NOTES.md) 和 [发布检查](docs/validation/release-1.1.2.md)。
+v1.1.3 增加免费安装包加速、自动换源与断点续传，下载后继续核对 GitHub 的大小和 SHA-256；保持当前界面与播放行为。公共加速源的可用性不受本项目控制，版本检测仍需访问 GitHub。详见 [更新说明](RELEASE_NOTES.md) 和 [发布检查](docs/validation/release-1.1.3.md)。
 
 ## 下载
 
-- [安装版 YolanLive-1.1.2-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.2/YolanLive-1.1.2-x64-Setup.exe)
-- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.2/YolanLive-x64.zip)
-- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.2/SHA256SUMS.txt)
+- [安装版 YolanLive-1.1.3-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/YolanLive-1.1.3-x64-Setup.exe)
+- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/YolanLive-x64.zip)
+- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/SHA256SUMS.txt)
 - [所有发布版本](https://github.com/ShenShenSshen/YolanLive/releases)
+
+GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh-proxy.org/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/YolanLive-1.1.3-x64-Setup.exe) / [线路二](https://ghfast.top/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/YolanLive-1.1.3-x64-Setup.exe)。两者是第三方服务，请与正式发布的 SHA-256 核对。旧客户端先安装一次 v1.1.3 后，后续更新才会自动使用加速。
 
 安装版默认安装到当前用户目录，创建开始菜单入口，默认创建桌面快捷方式，可取消。便携版解压后运行 `YolanLive.exe`，请保留整个目录。
 
@@ -48,7 +50,7 @@ v1.1.2 更新为浅色影音界面：灰白与蓝紫配色、平台下划线导�
 - **固定比例与位置记忆**：16:9 播放区域尺寸预设，适配显示器工作区；主窗口和独立窗口分别记住位置。
 - **关注与历史**：日常关注页只显示确认开播的房间，管理入口可查看和移除停播主播；观看历史保留。支持 JSON 导入导出。
 - **账号登录**：哔哩哔哩扫码登录，抖音、虎牙、斗鱼使用各自官方网页登录，浏览器与加密会话分别保存；区分登录失效、网络失败与平台接口异常。
-- **外观与更新**：雾蓝浅色 / 深色主题、磨砂栏位，圆体标题与导航搭配微软雅黑 UI 正文；每次启动检测正式更新，设置支持后台下载安装包，校验后由用户启动安装器。
+- **外观与更新**：浅色影音 / 深色主题、磨砂栏位，圆体标题与导航搭配微软雅黑 UI 正文；每次启动检测正式更新，设置支持后台下载、免费加速、失败换源及断点续传，校验后由用户启动安装器。
 - **资源使用**：窗口位置及音量延迟 500 毫秒合并保存；日志按天或 10 MB 滚动、最多保留 7 份归档和 7 天；首页、分类详情和搜索每页最多保留 300 个直播条目。
 
 公共数据请求复用连接、全应用最多并发 4 个，游戏目录缓存 10 分钟并合并重复加载；离开页面取消请求，最小化暂停列表检查。后台签名浏览器空闲后暂停或回收，图片按显示像素解码。实测方法、收益及限制见 [性能报告](PERFORMANCE_REPORT.md)。
@@ -74,6 +76,7 @@ v1.1.2 更新为浅色影音界面：灰白与蓝紫配色、平台下划线导�
 .\build-winui.ps1
 dotnet run --project tests/WinUIDataCheck/WinUIDataCheck.csproj -c Release
 .\run-smoke-test.ps1
+.\tests\UpdateCheck.ps1
 .\build-installer.ps1 -CompilerPath '编译器目录\ISCC.exe'
 ```
 
@@ -95,7 +98,7 @@ dotnet run --project tests/WinUIDataCheck/WinUIDataCheck.csproj -c Release
 
 脚本从 YolanLive 的最新正式发布读取版本，将同一安装包以旧客户端识别的 PlayWin 文件名发布到旧仓库；发布前后核对大小与 SHA-256，不覆盖历史正式包。旧版可一次覆盖升级至最新版，之后使用 YolanLive 更新源。
 
-本次发布检查及限制见 [v1.1.2 发布检查](docs/validation/release-1.1.2.md)，随机浏览受控前后对照见 [报告](docs/performance/random-browse/REPORT.md)。测试使用 D 盘隔离访客目录，不读取日常账号。预览访客实测中抖音、斗鱼进入播放，B站访客选房及虎牙所选首条线路失败，不代表四平台全面通过。150%/200% 实机缩放、系统高对比度切换及长期性能未重新验收；既有记录继续保留。程序和安装器仍未签名。
+本次发布检查及限制见 [v1.1.3 发布检查](docs/validation/release-1.1.3.md)，更新下载的受控与实网结果见 [加速验证](docs/validation/update-acceleration.md)。测试使用 D 盘隔离访客目录，不读取日常账号。本轮不重复四平台全线路、150%/200% 实机缩放、系统高对比度切换及长期性能验收；既有窗口尺寸、虎牙线路等失败记录继续保留。程序和安装器仍未签名。
 
 ## 来源与许可证
 

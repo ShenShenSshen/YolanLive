@@ -1,0 +1,6 @@
+PASS Release validation
+PASS Download verification and cache
+PASS Version and network states
+PASS Background download and manual install
+PASS GitHub unavailable with free acceleration
+PASS Cancel and resume partial installer

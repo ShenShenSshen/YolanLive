@@ -46,6 +46,7 @@ public partial class App : Application
                 else if (Environment.GetCommandLineArgs().Contains("--browse-preferences-check")) BrowseChecks.VerifyRestart();
                 else if (Environment.GetCommandLineArgs().Contains("--platform-live")) await PlatformChecks.LiveAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--update-download-check")) await UpdateChecks.LiveAsync();
+                else if (Environment.GetCommandLineArgs().Contains("--update-offline-check")) await UpdateChecks.OfflineAsync(window);
                 else await SmokeTests.RunAsync();
             }
             catch (Exception ex)

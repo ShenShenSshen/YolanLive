@@ -1,0 +1,10 @@
+PASS Release validation
+PASS Download verification and cache
+PASS Version and network states
+PASS Background download and manual install
+FAIL GitHub unavailable with free acceleration
+System.Net.Http.HttpRequestException: Direct GitHub download is unreachable
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at YolanLive.WinUI.Helper.UpdateClient.DownloadAsync(UpdateRelease release, Action`1 progress, CancellationToken token) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\Helper\UpdateClient.cs:line 89
+   at YolanLive.WinUI.UpdateChecks.FallbackAsync() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\UpdateChecks.cs:line 172
+   at YolanLive.WinUI.UpdateChecks.OfflineAsync(MainWindow window) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\UpdateChecks.cs:line 185

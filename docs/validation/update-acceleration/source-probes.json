@@ -1,0 +1,35 @@
+[
+  {
+    "source": "https://gh-proxy.org/",
+    "explicit_proxy": false,
+    "status": 206,
+    "type": "application/octet-stream",
+    "range": "bytes 0-65535/92597834",
+    "bytes": 65536,
+    "matches_installer": true,
+    "sha256": "2ac9301583373fcc1277b1bfd4d085d800aa95ec749724b08d4fcef3624b22f8",
+    "seconds": 1.27
+  },
+  {
+    "source": "https://ghfast.top/",
+    "explicit_proxy": false,
+    "status": 206,
+    "type": "application/octet-stream",
+    "range": "bytes 0-65535/92597834",
+    "bytes": 65536,
+    "matches_installer": true,
+    "sha256": "2ac9301583373fcc1277b1bfd4d085d800aa95ec749724b08d4fcef3624b22f8",
+    "seconds": 2.08
+  },
+  {
+    "source": "GitHub",
+    "explicit_proxy": false,
+    "status": 206,
+    "type": "application/octet-stream",
+    "range": "bytes 0-65535/92597834",
+    "bytes": 65536,
+    "matches_installer": true,
+    "sha256": "2ac9301583373fcc1277b1bfd4d085d800aa95ec749724b08d4fcef3624b22f8",
+    "seconds": 3.97
+  }
+]

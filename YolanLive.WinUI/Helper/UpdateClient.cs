@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ internal sealed class UpdateClient
     }
     private static HttpClient CreateClient()
     {
-        var http = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All }) { Timeout = Timeout.InfiniteTimeSpan };
+        var http = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All, UseCookies = false }) { Timeout = Timeout.InfiniteTimeSpan };
         http.DefaultRequestHeaders.UserAgent.ParseAdd("YolanLive/" + typeof(App).Assembly.GetName().Version.ToString(3));
         http.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
         return http;
@@ -76,40 +77,90 @@ internal sealed class UpdateClient
         var hash = Convert.ToHexString(await SHA256.HashDataAsync(file, token));
         return hash.Equals(release.Sha256, StringComparison.OrdinalIgnoreCase);
     }
-    internal async Task<string> DownloadAsync(UpdateRelease release, Action<double> progress, CancellationToken token)
+    internal async Task<string> DownloadAsync(UpdateRelease release, Action<double> progress, CancellationToken token, Action<string> sourceChanged = null)
     {
         Directory.CreateDirectory(directory);
         var target = GetInstallerPath(release);
         if (await VerifyAsync(release, target, token)) { progress(100); return target; }
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
-        timeout.CancelAfter(TimeSpan.FromMinutes(15));
-        var partial = target + ".partial";
-        try
+        if (File.Exists(target)) File.Delete(target);
+        using var operation = CancellationTokenSource.CreateLinkedTokenSource(token);
+        operation.CancelAfter(TimeSpan.FromMinutes(15));
+        // Only relay this project's validated public asset, never account/session requests.
+        var sources = new[] {
+            ("免费加速 1 · gh-proxy.org", new Uri("https://gh-proxy.org/" + release.DownloadUrl.AbsoluteUri)),
+            ("免费加速 2 · ghfast.top", new Uri("https://ghfast.top/" + release.DownloadUrl.AbsoluteUri)),
+            ("GitHub 原站", release.DownloadUrl) };
+        for (var index = 0; index < sources.Length; index++)
         {
-            using var response = await client.GetAsync(release.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
-            response.EnsureSuccessStatusCode();
-            if (response.Content.Headers.ContentLength is long size && size != release.Size) throw new InvalidDataException("安装包大小与发布信息不一致，请重试");
-            await using (var input = await response.Content.ReadAsStreamAsync(timeout.Token))
-            await using (var file = new FileStream(partial, FileMode.Create, FileAccess.Write, FileShare.None, 65536, true))
-            {
-                var buffer = new byte[65536];
-                long received = 0;
-                var lastPercent = -1;
-                int count;
-                while ((count = await input.ReadAsync(buffer, timeout.Token)) != 0)
-                {
-                    received += count;
-                    if (received > release.Size) throw new InvalidDataException("安装包大小与发布信息不一致，请重试");
-                    await file.WriteAsync(buffer.AsMemory(0, count), timeout.Token);
-                    var percent = (int)(received * 100d / release.Size);
-                    if (percent != lastPercent) { lastPercent = percent; progress(percent); }
-                }
-            }
-            if (!await VerifyAsync(release, partial, timeout.Token)) throw new InvalidDataException("安装包校验失败，请重新下载");
-            timeout.Token.ThrowIfCancellationRequested();
-            File.Move(partial, target, true);
-            return target;
+            operation.Token.ThrowIfCancellationRequested();
+            sourceChanged?.Invoke(sources[index].Item1);
+            try { return await DownloadFromAsync(release, sources[index].Item2, progress, operation.Token); }
+            catch (Exception ex) when (!operation.IsCancellationRequested && index + 1 < sources.Length &&
+                ex is HttpRequestException or InvalidDataException or OperationCanceledException) { }
         }
-        finally { if (File.Exists(partial)) File.Delete(partial); }
+        throw new HttpRequestException("所有下载源暂时不可用，请稍后重试");
+    }
+    private async Task<string> DownloadFromAsync(UpdateRelease release, Uri url, Action<double> progress, CancellationToken token)
+    {
+        var target = GetInstallerPath(release);
+        var partial = target + ".partial";
+        var offset = File.Exists(partial) ? new FileInfo(partial).Length : 0;
+        if (offset >= release.Size)
+        {
+            if (await VerifyAsync(release, partial, token))
+            { token.ThrowIfCancellationRequested(); File.Move(partial, target, true); progress(100); return target; }
+            File.Delete(partial);
+            offset = 0;
+        }
+        using var activity = CancellationTokenSource.CreateLinkedTokenSource(token);
+        activity.CancelAfter(TimeSpan.FromSeconds(15));
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Accept.ParseAdd("application/octet-stream");
+        request.Headers.AcceptEncoding.ParseAdd("identity");
+        if (offset > 0) request.Headers.Range = new RangeHeaderValue(offset, null);
+        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, activity.Token);
+        response.EnsureSuccessStatusCode();
+        if (response.StatusCode == HttpStatusCode.PartialContent)
+        {
+            var range = response.Content.Headers.ContentRange;
+            if (range?.Unit != "bytes" || range.From != offset || range.Length != release.Size || range.To != release.Size - 1)
+                throw new InvalidDataException("下载源返回的续传范围无效，正在尝试其他下载源");
+        }
+        else if (response.StatusCode == HttpStatusCode.OK) offset = 0; // A server ignoring Range must restart, never append.
+        else throw new InvalidDataException("下载源未返回安装包文件");
+        if (response.Content.Headers.ContentLength is long size && size != release.Size - offset)
+            throw new InvalidDataException("安装包大小与发布信息不一致，请重试");
+        activity.CancelAfter(TimeSpan.FromSeconds(20));
+        await using (var input = await response.Content.ReadAsStreamAsync(activity.Token))
+        await using (var file = new FileStream(partial, offset > 0 ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None, 65536, true))
+        {
+            var buffer = new byte[65536];
+            var received = offset;
+            var lastPercent = -1;
+            progress((int)(received * 100d / release.Size));
+            int count;
+            while (true)
+            {
+                activity.CancelAfter(TimeSpan.FromSeconds(20));
+                try { count = await input.ReadAsync(buffer, activity.Token); }
+                catch (IOException ex) { throw new HttpRequestException("下载连接中断，已保留进度，可以重试", ex); }
+                if (count == 0) break;
+                received += count;
+                if (received > release.Size) throw new InvalidDataException("安装包大小与发布信息不一致，请重试");
+                await file.WriteAsync(buffer.AsMemory(0, count), activity.Token);
+                var percent = (int)(received * 100d / release.Size);
+                if (percent != lastPercent) { lastPercent = percent; progress(percent); }
+            }
+        }
+        // Network failures/cancellation leave only a non-executable partial file for retry.
+        if (new FileInfo(partial).Length < release.Size) throw new HttpRequestException("下载连接中断，已保留进度，可以重试");
+        if (!await VerifyAsync(release, partial, token))
+        {
+            File.Delete(partial);
+            throw new InvalidDataException("安装包校验失败，请重新下载");
+        }
+        token.ThrowIfCancellationRequested();
+        File.Move(partial, target, true);
+        return target;
     }
 }

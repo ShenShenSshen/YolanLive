@@ -1,0 +1,10 @@
+PASS Release validation
+PASS Download verification and cache
+PASS Version and network states
+PASS Background download and manual install
+PASS GitHub unavailable with free acceleration
+FAIL Cancel and resume partial installer
+System.Exception: Cancel deleted resumable bytes or exposed an unverified installer.
+   at YolanLive.WinUI.UpdateChecks.Check(Boolean condition, String message) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\UpdateChecks.cs:line 20
+   at YolanLive.WinUI.UpdateChecks.ResumeAsync() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\UpdateChecks.cs:line 204
+   at YolanLive.WinUI.UpdateChecks.OfflineAsync(MainWindow window) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\UpdateChecks.cs:line 186
