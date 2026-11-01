@@ -1,0 +1,7 @@
+FAIL Post-publish application live download did not complete within the existing 180-second harness deadline.
+Target=v1.1.3
+Explicit proxy disabled=True
+Installer executed=False
+No success log was produced; the harness stopped the isolated test process.
+Original deadline was not increased and no passing retry replaces this record.
+The earlier v1.1.2 live success remains a separate preview result.
