@@ -30,6 +30,9 @@ namespace YolanLive.WinUI.Views
         {
             historyVM = new HistoryVM();
             this.InitializeComponent();
+            var anchor = new ListViewportAnchor(HistoryList);
+            Loaded += (_, _) => { historyVM.ProjectionChanging += anchor.Capture; historyVM.ProjectionChanged += anchor.Restore; };
+            Unloaded += (_, _) => { historyVM.ProjectionChanging -= anchor.Capture; historyVM.ProjectionChanged -= anchor.Restore; };
         }
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -39,8 +42,9 @@ namespace YolanLive.WinUI.Views
 
         private void ls_ItemClick(object sender, ItemClickEventArgs e)
         {
-            var item = e.ClickedItem as HistoryItem;
+            if (e.ClickedItem is not HistoryItem item) return;
             var site = MainVM.Sites.FirstOrDefault(x => x.Name == item.SiteName);
+            if (site?.LiveSite == null) { Utils.ShowMessageToast("该记录的平台不可用"); return; }
             MessageCenter.OpenLiveRoom(site.LiveSite, new Core.Models.LiveRoomItem()
             {
                 RoomID = item.RoomID

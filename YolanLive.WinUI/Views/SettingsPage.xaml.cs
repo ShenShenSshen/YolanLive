@@ -193,6 +193,22 @@ namespace YolanLive.WinUI.Views
         private async void BtnCheckUpdate_Click(object sender, RoutedEventArgs e) => await updateVM.CheckAsync();
         private async void BtnDownloadUpdate_Click(object sender, RoutedEventArgs e) => await updateVM.DownloadAsync();
         private void BtnCancelUpdate_Click(object sender, RoutedEventArgs e) => updateVM.Cancel();
+        private async void BtnBrowserUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            try { if (!await Launcher.LaunchUriAsync(new Uri(updateVM.RecoveryUrl))) Utils.ShowMessageToast("未能打开浏览器，可复制链接后下载"); }
+            catch { Utils.ShowMessageToast("未能打开浏览器，可复制链接后下载"); }
+        }
+        private void BtnCopyUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+                package.SetText(updateVM.RecoveryUrl);
+                Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+                Utils.ShowMessageToast(updateVM.AvailableVersion != null ? "已复制加速下载链接" : "已复制发布页链接");
+            }
+            catch { Utils.ShowMessageToast("暂时无法写入剪贴板，请重试"); }
+        }
         private async void BtnInstallUpdate_Click(object sender, RoutedEventArgs e)
         {
             if (await updateVM.StartInstallerAsync()) foreach (var window in App.Windows.ToArray()) window.Close();

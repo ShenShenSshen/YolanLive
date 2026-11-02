@@ -94,14 +94,15 @@
             </DataTemplate>
 
             <DataTemplate x:Key="GameItemTemplate">
-                <Border CornerRadius="10" Padding="8" Background="Transparent" BorderBrush="{ThemeResource BrowsingOutlineBrush}" BorderThickness="1" ToolTipService.ToolTip="{Binding Name}">
+                <Border perf:GameCard.Pinning="True" CornerRadius="10" Padding="8" Background="Transparent" BorderBrush="{ThemeResource BrowsingOutlineBrush}" BorderThickness="1" ToolTipService.ToolTip="{Binding Name}">
                     <Grid RowSpacing="8"><Grid.RowDefinitions><RowDefinition/><RowDefinition Height="40"/></Grid.RowDefinitions>
-                        <Border CornerRadius="8" Background="Transparent"><Grid>
+                        <Border CornerRadius="8" Background="{ThemeResource GameArtworkBrush}"><Grid>
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4" IsHitTestVisible="False" Visibility="{Binding ElementName=GameImage, Path=(perf:DecodedImage.HasPicture), Converter={StaticResource displayConvert}}">
-                                <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="28" Glyph="&#xE7FC;" Foreground="{ThemeResource AppSecondaryBrush}"/>
-                                <TextBlock Text="暂无图片" Style="{StaticResource SecondaryTextStyle}"/>
+                                <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="28" Glyph="&#xE7FC;" Foreground="{ThemeResource GameArtworkForegroundBrush}"/>
+                                <TextBlock Text="暂无图片" Style="{StaticResource SecondaryTextStyle}" Foreground="{ThemeResource GameArtworkForegroundBrush}"/>
                             </StackPanel>
-                            <Image x:Name="GameImage" Margin="2" Stretch="Uniform" perf:DecodedImage.Url="{Binding Pic}" AutomationProperties.AccessibilityView="Raw"/>
+                            <Image x:Name="GameImage" Margin="12" Stretch="Uniform" perf:DecodedImage.Url="{Binding Pic}" AutomationProperties.AccessibilityView="Raw"/>
+                            <Button x:Name="PinGame" Width="32" Height="32" MinWidth="0" MinHeight="0" Padding="6" Margin="4" CornerRadius="16" HorizontalAlignment="Right" VerticalAlignment="Top" Background="{ThemeResource LayerFillColorDefaultBrush}" Foreground="{ThemeResource AppAccentBrush}" Opacity="0" IsHitTestVisible="False" UseSystemFocusVisuals="True"><SymbolIcon Symbol="Pin"/></Button>
                         </Grid></Border>
                         <TextBlock Grid.Row="1" Text="{Binding Name}" Style="{StaticResource BodyTextStyle}" LineHeight="20" TextAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
                     </Grid>

@@ -305,8 +305,10 @@ internal static class SmokeTests
             DouyinAccount.Instance.Logout();
             if (DouyinAccount.Instance.Logined) throw new Exception("Logout did not clear login.");
         });
+        // Fixed presets belong to playback; the browser itself is now resizable.
+        window.SetPlaybackViewport(new Grid());
         foreach (var preset in MainWindow.WindowSizeOptions)
-            await CheckWindow("Fixed preset " + preset, () => window.ApplyWindowSize(preset), CheckNormalSize);
+            await CheckWindow("Fixed playback preset " + preset, () => window.ApplyWindowSize(preset), CheckNormalSize);
         await CheckWindow("External resize cannot bypass fixed size", () => window.AppWindow.Resize(new SizeInt32(1100, 650)), CheckNormalSize);
         await CheckWindow("Maximize cannot bypass fixed size", () => ((OverlappedPresenter)window.AppWindow.Presenter).Maximize(), CheckNormalSize);
         await CheckWindow("Full screen uses display bounds", () => window.SetWindowMode(AppWindowPresenterKind.FullScreen), () =>
@@ -631,7 +633,12 @@ internal static class SmokeTests
         {
             if (MainWindow.GetSavedWindowSize() != "1280×720" || window.SelectedWindowSize != "1280×720" || second.SelectedWindowSize != "1280×720")
                 throw new Exception("Selection did not update saved value and both windows.");
-            CheckNormalSize();
+            if (window.IsBrowsing)
+            {
+                var browsing = window.AppWindow.Presenter as OverlappedPresenter;
+                if (browsing == null || !browsing.IsResizable || !browsing.IsMaximizable) throw new Exception("Browsing became locked after selecting a playback preset.");
+            }
+            else CheckNormalSize();
             var expected = MainWindow.FitBounds(MainWindow.GetPresetSize(second.SelectedWindowSize), second.AppWindow.Position,
                 DisplayArea.GetFromWindowId(second.AppWindow.Id, DisplayAreaFallback.Nearest).WorkArea, second.GetWindowChromeSize());
             if (second.AppWindow.Size.Width != expected.Width || second.AppWindow.Size.Height != expected.Height)

@@ -19,6 +19,18 @@ public class CategoryVM : BaseViewModel
     private YolanLive.Core.Interface.ILiveSite loadedSite;
     private List<LiveCategory> loadedCategories;
     private int pictureGeneration = -1;
+    private string filterText = "";
+    public string FilterText
+    {
+        get => filterText;
+        set
+        {
+            if (filterText == value) return;
+            filterText = value;
+            ShowGroup(selectedGroup);
+            DoPropertyChanged(nameof(FilterText));
+        }
+    }
     private LiveCategory selectedGroup;
     public LiveCategory SelectedGroup
     {
@@ -53,6 +65,7 @@ public class CategoryVM : BaseViewModel
         EmptyMessage = "暂无可用游戏分类";
         if (!retain)
         {
+            FilterText = "";
             SelectedGroup = null;
             loadedCategories = null;
             loadedSite = null;
@@ -86,14 +99,19 @@ public class CategoryVM : BaseViewModel
     }
     public void ShowGroup(LiveCategory group)
     {
-        Items.Clear();
-        if (group != null)
-            foreach (var category in GameBrowse.MergeCategories(group.Children.Select(c => new LiveGameSource { Site = loadedSite, Category = c })))
-            {
-                category.Pic = string.IsNullOrWhiteSpace(category.Pic) ? null :
-                    category.Pic.StartsWith("//") ? "https:" + category.Pic : category.Pic;
-                Items.Add(category);
-            }
+        // Filter the loaded platform directory without another request. Clearing
+        // the filter restores the selected group and its original navigation IDs.
+        var filtering = !string.IsNullOrWhiteSpace(FilterText);
+        var children = filtering
+            ? loadedCategories?.SelectMany(c => c.Children) ?? Enumerable.Empty<LiveSubCategory>()
+            : group?.Children ?? Enumerable.Empty<LiveSubCategory>();
+        var games = GameBrowse.MergeCategories(children.Select(c => new LiveGameSource { Site = loadedSite, Category = c }))
+            .Where(c => ListProjection.Matches(FilterText, c.Name)).ToList();
+        foreach (var category in games)
+            category.Pic = string.IsNullOrWhiteSpace(category.Pic) ? null :
+                category.Pic.StartsWith("//") ? "https:" + category.Pic : category.Pic;
+        ListProjection.Sync(Items, games);
+        EmptyMessage = filtering ? "没有找到匹配的游戏，试试其他名称" : "暂无可用游戏分类";
         IsEmpty = Items.Count == 0;
     }
     public async Task CompletePicturesAsync()

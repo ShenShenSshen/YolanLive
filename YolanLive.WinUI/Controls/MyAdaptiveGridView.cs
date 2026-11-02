@@ -45,13 +45,18 @@ public partial class MyAdaptiveGridView : GridView
     {
         if (ItemsPanelRoot is not ItemsWrapGrid panel || ActualWidth <= 0) return;
         var available = Math.Max(1, ActualWidth - Padding.Left - Padding.Right);
-        var columns = Math.Max(1, Math.Floor(available / Math.Max(1, DesiredWidth)));
+        var isRoom = ItemTemplate == (DataTemplate)App.Current.Resources["RoomItemTemplate"];
+        // The nearest count avoids a single oversized cover near a breakpoint.
+        // Game and favorite cards keep their existing density.
+        var columns = Math.Max(1, isRoom
+            ? Math.Round(available / Math.Max(1, DesiredWidth), MidpointRounding.AwayFromZero)
+            : Math.Floor(available / Math.Max(1, DesiredWidth)));
         // Round down to physical pixels so accumulated cell rounding cannot wrap
         // the final card onto the next row and leave an entire column empty.
         var scale = XamlRoot?.RasterizationScale ?? 1;
         panel.ItemWidth = Math.Max(1, Math.Floor(available / columns * scale) / scale);
         // Each cell includes 8 DIP on each side. Text stays at its native size.
-        panel.ItemHeight = ItemTemplate == (DataTemplate)App.Current.Resources["RoomItemTemplate"]
+        panel.ItemHeight = isRoom
             ? Math.Max(1, panel.ItemWidth - 16) * 9 / 16 + 80
             : ItemTemplate == (DataTemplate)App.Current.Resources["GameItemTemplate"]
                 ? Math.Max(1, panel.ItemWidth - 34) * 3 / 4 + 82 : ItemHeight;

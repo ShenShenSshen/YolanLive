@@ -7,7 +7,7 @@
     <Grid x:Name="PageLayoutRoot" design:PageDesign.Insets="True">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
         <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}" Margin="0,0,0,12">
-            <Grid x:Name="BrowseHeader" MinHeight="48"><TextBlock x:Name="PageTitle" Style="{StaticResource PageTitleStyle}" Text="设置"/></Grid>
+            <Grid x:Name="BrowseHeader" MinHeight="72" ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="PageTitle" Style="{StaticResource PageTitleStyle}" Text="设置"/><AutoSuggestBox x:Name="HeaderSearch" Grid.Column="2" design:PageDesign.Search="True" Style="{StaticResource BrowseSearchStyle}" Width="240" PlaceholderText="全平台搜索或粘贴链接" QueryIcon="Find"/><Button x:Name="CompactSearch" Grid.Column="2" Style="{StaticResource ToolbarIconStyle}" Visibility="Collapsed" ToolTipService.ToolTip="全平台搜索" AutomationProperties.Name="全平台搜索" design:PageDesign.CompactSearch="True"><SymbolIcon Symbol="Find"/></Button><StackPanel x:Name="HeaderActions" Grid.Column="3" Orientation="Horizontal"/></Grid>
         </TitleBar>
         <ScrollViewer Grid.Row="1">
             <Grid Margin="0" HorizontalAlignment="Stretch">
@@ -17,8 +17,8 @@
                     <StackPanel>
                     <Grid Padding="16" Background="{ThemeResource SystemControlTransparentBrush}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" CornerRadius="0">
                         <StackPanel VerticalAlignment="Center" Spacing="4">
-                            <TextBlock Style="{StaticResource BodyTextStyle}">播放区域尺寸</TextBlock>
-                            <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="{StaticResource SecondaryTextSize}" TextWrapping="Wrap" Foreground="{ThemeResource ReadableSecondaryTextBrush}">视频区域保持 16:9；窗口另加工具栏高度，屏幕不足时等比例缩小</TextBlock>
+                            <TextBlock Style="{StaticResource BodyTextStyle}">窗口大小</TextBlock>
+                            <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="{StaticResource SecondaryTextSize}" TextWrapping="Wrap" Foreground="{ThemeResource ReadableSecondaryTextBrush}">按 16:9 视频区域调整播放窗口；工具栏高度另计</TextBlock>
                         </StackPanel>
                         <ComboBox x:Name="cbWindowSize" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="10" FontFamily="{StaticResource ContentControlThemeFontFamily}" FontSize="{StaticResource BodyTextSize}"/>
                     </Grid>
@@ -100,10 +100,10 @@
                         </StackPanel>
 
                         <Button x:Name="BtnLoginBili" HorizontalAlignment="Right" Click="BtnLoginBili_Click" Style="{StaticResource PageActionButtonStyle}">
-                            立即登录
+                            登录
                         </Button>
                         <Button x:Name="BtnLogoutBili" HorizontalAlignment="Right" Click="BtnLogoutBili_Click" Visibility="Collapsed" Style="{StaticResource PageActionButtonStyle}">
-                            注销登录
+                            退出登录
                         </Button>
                     </Grid>
 
@@ -115,17 +115,17 @@
                                 <TextBlock Style="{StaticResource SecondaryTextStyle}" x:Name="txtDouyin" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource ReadableSecondaryTextBrush}" Text="未登录，可浏览游戏直播"/>
                             </StackPanel>
                         </StackPanel>
-                        <Button x:Name="BtnLoginDouyin" HorizontalAlignment="Right" Click="BtnLoginDouyin_Click" Style="{StaticResource PageActionButtonStyle}">立即登录</Button>
-                        <Button x:Name="BtnLogoutDouyin" HorizontalAlignment="Right" Click="BtnLogoutDouyin_Click" Visibility="Collapsed" Style="{StaticResource PageActionButtonStyle}">注销登录</Button>
+                        <Button x:Name="BtnLoginDouyin" HorizontalAlignment="Right" Click="BtnLoginDouyin_Click" Style="{StaticResource PageActionButtonStyle}">登录</Button>
+                        <Button x:Name="BtnLogoutDouyin" HorizontalAlignment="Right" Click="BtnLogoutDouyin_Click" Visibility="Collapsed" Style="{StaticResource PageActionButtonStyle}">退出登录</Button>
                     </Grid>
 
                     <Grid x:Name="SettingsHuya" Padding="16">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Image Width="36" Height="36" Margin="0,0,12,0" Source="/Assets/Logo/huya.png"/><StackPanel VerticalAlignment="Center" Spacing="4"><TextBlock Style="{StaticResource BodyTextStyle}" Text="虎牙"/><TextBlock Style="{StaticResource SecondaryTextStyle}" x:Name="txtHuya" Text="未登录，可浏览游戏直播" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource ReadableSecondaryTextBrush}" TextWrapping="Wrap"/></StackPanel></StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><Button x:Name="BtnLoginHuya" Content="登录虎牙" Tag="Huya" Click="BtnLoginWeb_Click" Style="{StaticResource PageActionButtonStyle}"/><Button x:Name="BtnLogoutHuya" Content="注销登录" Tag="Huya" Click="BtnLogoutWeb_Click" Visibility="Collapsed" Style="{StaticResource PageActionButtonStyle}"/></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><Button x:Name="BtnLoginHuya" Content="登录" Tag="Huya" Click="BtnLoginWeb_Click" Style="{StaticResource PageActionButtonStyle}"/><Button x:Name="BtnLogoutHuya" Content="退出登录" Tag="Huya" Click="BtnLogoutWeb_Click" Visibility="Collapsed" Style="{StaticResource PageActionButtonStyle}"/></StackPanel>
                             </Grid>
                     <Grid x:Name="SettingsDouyu" Padding="16">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Image Width="36" Height="36" Margin="0,0,12,0" Source="/Assets/Logo/douyu.png"/><StackPanel VerticalAlignment="Center" Spacing="4"><TextBlock Style="{StaticResource BodyTextStyle}" Text="斗鱼"/><TextBlock Style="{StaticResource SecondaryTextStyle}" x:Name="txtDouyu" Text="未登录，可浏览游戏直播" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource ReadableSecondaryTextBrush}" TextWrapping="Wrap"/></StackPanel></StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><Button x:Name="BtnLoginDouyu" Content="登录斗鱼" Tag="Douyu" Click="BtnLoginWeb_Click" Style="{StaticResource PageActionButtonStyle}"/><Button x:Name="BtnLogoutDouyu" Content="注销登录" Tag="Douyu" Click="BtnLogoutWeb_Click" Visibility="Collapsed" Style="{StaticResource PageActionButtonStyle}"/></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><Button x:Name="BtnLoginDouyu" Content="登录" Tag="Douyu" Click="BtnLoginWeb_Click" Style="{StaticResource PageActionButtonStyle}"/><Button x:Name="BtnLogoutDouyu" Content="退出登录" Tag="Douyu" Click="BtnLogoutWeb_Click" Visibility="Collapsed" Style="{StaticResource PageActionButtonStyle}"/></StackPanel>
                             </Grid>
                     </StackPanel>
                     </Border>
@@ -135,7 +135,7 @@
                     <Grid Padding="16" Background="{ThemeResource SystemControlTransparentBrush}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" CornerRadius="0">
                         <StackPanel VerticalAlignment="Center" Spacing="4">
                             <TextBlock Style="{StaticResource BrandTextStyle}" x:Name="AboutAppName" FontFamily="{StaticResource BrandFontFamily}" FontSize="18" FontWeight="Normal" Text="{StaticResource AppDisplayName}"/>
-                            <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource ReadableSecondaryTextBrush}" Text="圆体标题与导航 · 微软雅黑 UI 正文"/>
+
                             <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource ReadableSecondaryTextBrush}" Text="YolanLive"/>
                             <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource ReadableSecondaryTextBrush}">
                                 版本:<Run x:Name="version"/></TextBlock>
@@ -154,12 +154,12 @@
                             <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource ReadableSecondaryTextBrush}" Text="{x:Bind updateVM.Status, Mode=OneWay}"/>
                             <ProgressBar x:Name="UpdateProgress" Height="4" Maximum="100" Value="{x:Bind updateVM.Progress, Mode=OneWay}" Visibility="{x:Bind updateVM.HideProgress, Mode=OneWay, Converter={StaticResource displayConvert}}" AutomationProperties.Name="安装包下载进度"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <StackPanel Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Right"><StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Right">
                             <Button x:Name="BtnCheckUpdate" Content="检测更新" Click="BtnCheckUpdate_Click" IsEnabled="{x:Bind updateVM.CanCheck, Mode=OneWay}" Style="{StaticResource PageActionButtonStyle}"/>
-                            <Button x:Name="BtnDownloadUpdate" Content="下载安装包" Click="BtnDownloadUpdate_Click" Visibility="{x:Bind updateVM.HideDownload, Mode=OneWay, Converter={StaticResource displayConvert}}" Style="{StaticResource PageActionButtonStyle}"/>
+                            <Button x:Name="BtnDownloadUpdate" Content="{x:Bind updateVM.DownloadButtonText, Mode=OneWay}" Click="BtnDownloadUpdate_Click" Visibility="{x:Bind updateVM.HideDownload, Mode=OneWay, Converter={StaticResource displayConvert}}" Style="{StaticResource PageActionButtonStyle}"/>
                             <Button x:Name="BtnInstallUpdate" Content="启动安装器并退出" Click="BtnInstallUpdate_Click" Visibility="{x:Bind updateVM.HideInstall, Mode=OneWay, Converter={StaticResource displayConvert}}" Style="{StaticResource PageActionButtonStyle}"/>
                             <Button x:Name="BtnCancelUpdate" Content="取消" Click="BtnCancelUpdate_Click" Visibility="{x:Bind updateVM.HideCancel, Mode=OneWay, Converter={StaticResource displayConvert}}" Style="{StaticResource PageActionButtonStyle}"/>
-                        </StackPanel>
+                        </StackPanel><StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind updateVM.HideRecovery, Mode=OneWay, Converter={StaticResource displayConvert}}"><Button x:Name="BtnBrowserUpdate" Content="{x:Bind updateVM.BrowserActionText, Mode=OneWay}" Click="BtnBrowserUpdate_Click" Style="{StaticResource PageActionButtonStyle}"/><Button x:Name="BtnCopyUpdate" Content="{x:Bind updateVM.CopyActionText, Mode=OneWay}" Click="BtnCopyUpdate_Click" Style="{StaticResource PageActionButtonStyle}"/></StackPanel></StackPanel>
                     </Grid>
 
 

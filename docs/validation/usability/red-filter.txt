@@ -1,0 +1,11 @@
+PASS Existing grouped favorite checks
+PASS Local favorite filtering preserves data, references and stable collections
+PASS History dates, platform labels and local filtering
+PASS Browsing resizes and maximizes, playback stays fixed, return restores browsing
+FAIL Fixed top search, local filter and history rows at wide and narrow widths
+System.Exception: Clearing the filter failed to restore local records.
+   at YolanLive.WinUI.UsabilityChecks.Check(Boolean valid, String message) in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\UsabilityChecks.cs:line 19
+   at YolanLive.WinUI.UsabilityChecks.<>c__DisplayClass1_0.<<RunAsync>b__5>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\UsabilityChecks.cs:line 116
+--- End of stack trace from previous location ---
+   at YolanLive.WinUI.UsabilityChecks.<>c__DisplayClass1_0.<<RunAsync>g__Case|0>d.MoveNext() in D:\Program Files (x86)\PlayWin\PlayWin\YolanLive.WinUI\UsabilityChecks.cs:line 28
+PASS Update recovery states and links

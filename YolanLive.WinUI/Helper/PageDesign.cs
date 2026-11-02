@@ -27,6 +27,38 @@ public static class PageDesign
         var shell = GetShell(sender);
         if (shell != null) await shell.SubmitSearchAsync(args.QueryText);
     }
+    public static readonly DependencyProperty CompactSearchProperty = DependencyProperty.RegisterAttached(
+        "CompactSearch", typeof(bool), typeof(PageDesign), new PropertyMetadata(false, OnCompactSearchChanged));
+    public static bool GetCompactSearch(DependencyObject value) => (bool)value.GetValue(CompactSearchProperty);
+    public static void SetCompactSearch(DependencyObject value, bool enabled) => value.SetValue(CompactSearchProperty, enabled);
+    private static void OnCompactSearchChanged(DependencyObject value, DependencyPropertyChangedEventArgs args)
+    {
+        if (value is not Button button) return;
+        button.Click -= CompactSearchClicked;
+        if ((bool)args.NewValue) button.Click += CompactSearchClicked;
+    }
+    private static void CompactSearchClicked(object sender, RoutedEventArgs args) => OpenSearch((Button)sender);
+    internal static void OpenSearch(Button button)
+    {
+        if (button == null) return;
+        var shell = GetShell(button);
+        if (button.Flyout == null)
+        {
+            var input = new AutoSuggestBox { Width = 280, PlaceholderText = "全平台搜索或粘贴链接", QueryIcon = new SymbolIcon(Symbol.Find), Style = (Style)App.Current.Resources["BrowseSearchStyle"] };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(input, "全平台搜索或直播链接");
+            input.QuerySubmitted += async (_, submitted) =>
+            {
+                button.Flyout.Hide();
+                var owner = GetShell(button);
+                if (owner != null) { owner.GlobalSearchText = submitted.QueryText; await owner.SubmitSearchAsync(submitted.QueryText); }
+            };
+            var flyout = new Flyout { Content = input, Placement = Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.BottomEdgeAlignedRight };
+            flyout.Opened += (_, _) => input.Focus(FocusState.Programmatic);
+            button.Flyout = flyout;
+        }
+        ((AutoSuggestBox)((Flyout)button.Flyout).Content).Text = shell?.GlobalSearchText ?? "";
+        button.Flyout.ShowAt(button);
+    }
     public static readonly DependencyProperty InsetsProperty = DependencyProperty.RegisterAttached(
         "Insets", typeof(bool), typeof(PageDesign), new PropertyMetadata(false, OnInsetsChanged));
     public static bool GetInsets(DependencyObject value) => (bool)value.GetValue(InsetsProperty);
@@ -99,7 +131,10 @@ public static class PageDesign
             var show = availableWidth >= 180 && plainShell?.IsTopNavigation != true;
             plainSearch.Width = Math.Clamp(availableWidth, 180, 320);
             plainSearch.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-            if (root.IsLoaded && plainShell?.ActivePage == GetPage(root)) plainShell.SetHeaderSearch(show ? plainSearch : null);
+            var compactSearch = root.FindName("CompactSearch") as Button;
+            if (compactSearch != null) compactSearch.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+            if (root.FindName("PageTitle") is TextBlock title) title.MaxWidth = show ? 112 : Math.Max(32, innerWidth - actionWidth - 36 - 3 * plainHeader.ColumnSpacing);
+            if (root.IsLoaded && plainShell?.ActivePage == GetPage(root)) plainShell.SetHeaderSearch(plainSearch, compactSearch);
             return;
         }
         if (root.FindName("PlatformSurface") is not Border surface ||
@@ -114,12 +149,14 @@ public static class PageDesign
         var search = root.FindName("HeaderSearch") as AutoSuggestBox;
         var shell = GetShell(root);
         var showSearch = search != null && available >= 80 + 180 && shell?.IsTopNavigation != true;
-        var compact = available < (showSearch ? 392 + 180 : 392);
+        var compact = available < (showSearch ? 392 + 180 : 392 + 36);
         if (search != null)
         {
             search.Visibility = showSearch ? Visibility.Visible : Visibility.Collapsed;
             search.Width = Math.Clamp(available - (compact ? 80 : 392), 180, 320);
-            if (root.IsLoaded && shell != null && shell.ActivePage == GetPage(root)) shell.SetHeaderSearch(showSearch ? search : null);
+            var compactSearch = root.FindName("CompactSearch") as Button;
+            if (compactSearch != null) compactSearch.Visibility = showSearch ? Visibility.Collapsed : Visibility.Visible;
+            if (root.IsLoaded && shell != null && shell.ActivePage == GetPage(root)) shell.SetHeaderSearch(search, compactSearch);
         }
         if (compact && surface.Parent == header)
         {
@@ -170,6 +207,8 @@ public static class PageDesign
         if (page?.Frame?.CanGoBack == true) page.Frame.GoBack();
     }
     private static void SizeChanged(object sender, SizeChangedEventArgs args) => ApplyInset((Grid)sender);
+    private static readonly DependencyProperty HasEnteredProperty = DependencyProperty.RegisterAttached(
+        "HasEntered", typeof(bool), typeof(PageDesign), new PropertyMetadata(false));
     private static void Loaded(object sender, RoutedEventArgs args)
     {
         var root = (Grid)sender; ApplyInset(root);
@@ -178,6 +217,9 @@ public static class PageDesign
             bar.SizeChanged -= HeaderSizeChanged; bar.SizeChanged += HeaderSizeChanged;
         }
         ActivateHeader(GetPage(root));
+        // Cached navigation restores content directly instead of replaying entry.
+        if ((bool)root.GetValue(HasEnteredProperty)) return;
+        root.SetValue(HasEnteredProperty, true);
         // Keep native header/search stable while page content enters.
         foreach (var child in root.Children)
             if (child is FrameworkElement content && Grid.GetRow(content) > 0)

@@ -14,6 +14,12 @@ namespace YolanLive.WinUI.ViewModels
     public class LiveRoomVM : BaseViewModel
     {
         public event EventHandler<string> ChangedPlayUrl;
+        private string loadingStage = "";
+        public string LoadingStage
+        {
+            get => loadingStage;
+            private set { if (loadingStage == value) return; loadingStage = value; DoPropertyChanged(nameof(LoadingStage)); }
+        }
         public LiveRoomVM()
         {
             AddFavoriteCommand = new RelayCommand(AddFavorite);
@@ -178,6 +184,7 @@ namespace YolanLive.WinUI.ViewModels
                 Photo = "";
 
                 RoomId = roomId;
+                LoadingStage = "正在获取直播间…";
                 var result = prepared?.GetFreshDetail(site, roomId) ?? await site.GetRoomDetail(roomId, operation.Token).WaitAsync(operation.Token);
                 if (generation != loadGeneration) return;
                 operation.Token.ThrowIfCancellationRequested();
@@ -201,6 +208,7 @@ namespace YolanLive.WinUI.ViewModels
 
                 if (detail.Status)
                 {
+                    LoadingStage = "正在读取画质…";
                     var qualities = await site.GetPlayQuality(result, operation.Token).WaitAsync(operation.Token);
                     if (generation != loadGeneration) return;
                     operation.Token.ThrowIfCancellationRequested();
@@ -234,7 +242,7 @@ namespace YolanLive.WinUI.ViewModels
             }
             finally
             {
-                if (generation == loadGeneration) Loading = false;
+                if (generation == loadGeneration) { Loading = false; LoadingStage = ""; }
                 if (loadCancellation == operation) loadCancellation = null;
                 operation.Dispose();
             }
@@ -287,6 +295,7 @@ namespace YolanLive.WinUI.ViewModels
             var generation = ++urlGeneration;
             try
             {
+                LoadingStage = "正在获取播放线路…";
                 var data = await Site.GetPlayUrls(detail, CurrentQuality, operation.Token).WaitAsync(operation.Token);
                 operation.Token.ThrowIfCancellationRequested();
                 if (generation != urlGeneration) return;
@@ -314,13 +323,18 @@ namespace YolanLive.WinUI.ViewModels
             {
                 if (generation == urlGeneration) Utils.ShowMessageToast(RequestErrorMessage.Report(ex, Site.Name));
             }
-            finally { if (urlCancellation == operation) urlCancellation = null; operation.Dispose(); }
+            finally
+            {
+                if (generation == urlGeneration) LoadingStage = "";
+                if (urlCancellation == operation) urlCancellation = null;
+                operation.Dispose();
+            }
 
 
 
 
         }
-        internal void CancelPendingPlayback() { loadGeneration++; urlGeneration++; loadCancellation?.Cancel(); urlCancellation?.Cancel(); Loading = false; }
+        internal void CancelPendingPlayback() { loadGeneration++; urlGeneration++; loadCancellation?.Cancel(); urlCancellation?.Cancel(); Loading = false; LoadingStage = ""; }
         internal async Task<string> RefreshStreamAsync(CancellationToken cancellation)
         {
             if (Site == null || RoomId == null) throw new InvalidOperationException("没有正在播放的直播间");

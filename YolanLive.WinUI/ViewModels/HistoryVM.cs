@@ -20,8 +20,25 @@ namespace YolanLive.WinUI.ViewModels
         public ICommand CleanCommand { get; set; }
 
         public ObservableCollection<HistoryItem> Items { get; set; }
+        public IReadOnlyList<HistoryGroup> Groups { get; } = new[] { new HistoryGroup("今天"), new HistoryGroup("昨天"), new HistoryGroup("更早") };
+        public event Action ProjectionChanging;
+        public event Action ProjectionChanged;
+        private string filterText = "";
+        public string FilterText { get => filterText; set { if (filterText == value) return; filterText = value ?? ""; DoPropertyChanged(nameof(FilterText)); UpdateGroups(); } }
+        private void UpdateGroups()
+        {
+            ProjectionChanging?.Invoke();
+            var matches = Items.Where(item => ListProjection.Matches(FilterText, item.UserName, item.SiteName, item.RoomID)).ToArray();
+            for (var index = 0; index < Groups.Count; index++)
+            {
+                var dateGroup = index;
+                ListProjection.Sync(Groups[index], matches.Where(item => (item.WatchTime.Date == DateTime.Today ? 0 : item.WatchTime.Date == DateTime.Today.AddDays(-1) ? 1 : 2) == dateGroup));
+            }
+            IsEmpty = matches.Length == 0; DoPropertyChanged(nameof(EmptyMessage));
+            ProjectionChanged?.Invoke();
+        }
         private string emptyMessage = "还没有观看记录";
-        public string EmptyMessage { get => emptyMessage; private set { emptyMessage = value; DoPropertyChanged(nameof(EmptyMessage)); } }
+        public string EmptyMessage { get => !string.IsNullOrWhiteSpace(FilterText) && Items.Count > 0 && IsEmpty ? "没有匹配的观看记录，可清除筛选条件" : emptyMessage; private set { emptyMessage = value; DoPropertyChanged(nameof(EmptyMessage)); } }
 
         public async void LoadData() => await LoadAsync();
         public async Task LoadAsync()
@@ -33,12 +50,19 @@ namespace YolanLive.WinUI.ViewModels
             {
                 Loading = true;
                 var history = await DatabaseHelper.GetHistory();
-                Items.Clear();
+                var retained = Items.ToDictionary(item => item.ID);
+                var updated = new List<HistoryItem>();
                 foreach (var item in history)
                 {
-                    Items.Add(item);
+                    if (retained.TryGetValue(item.ID, out var previous))
+                    {
+                        previous.UserName = item.UserName; previous.Photo = item.Photo; previous.SiteName = item.SiteName; previous.WatchTime = item.WatchTime;
+                        updated.Add(previous);
+                    }
+                    else updated.Add(item);
                 }
-                IsEmpty = Items.Count == 0;
+                ListProjection.Sync(Items, updated);
+                UpdateGroups();
                 EmptyMessage = "还没有观看记录";
             }
             catch (Exception ex)
@@ -66,7 +90,7 @@ namespace YolanLive.WinUI.ViewModels
             {
                 DatabaseHelper.DeleteHistory(item.ID);
                 Items.Remove(item);
-                IsEmpty = Items.Count == 0;
+                UpdateGroups();
             }
             catch (Exception ex)
             {
@@ -87,7 +111,7 @@ namespace YolanLive.WinUI.ViewModels
 
                 DatabaseHelper.DeleteHistory();
                 Items.Clear();
-                IsEmpty = true;
+                UpdateGroups();
             }
             catch (Exception ex)
             {

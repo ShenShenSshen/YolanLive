@@ -1,0 +1,5 @@
+PASS Existing browsing, favorite grouping and quality preferences
+PASS First visit retains live, offline and failed-status follows
+PASS Native grouped cards in light, dark, wide and narrow windows
+PASS Refresh moves follows between groups and cancellation rejects late results
+PASS Removing an offline follow updates its group and database

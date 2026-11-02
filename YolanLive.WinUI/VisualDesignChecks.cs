@@ -92,6 +92,9 @@ internal static class VisualDesignChecks
             }
             var groups = (ListView)category.FindName("GroupPicker");
             var sampleGroups = new[] { new LiveCategory { Name = "网游" }, new LiveCategory { Name = "手游" }, new LiveCategory { Name = "单机游戏" }, new LiveCategory { Name = "游戏赛事" } };
+            // This fixture supplies a complete local directory. An empty Groups
+            // collection correctly means "not loaded" to the real category page.
+            foreach (var group in sampleGroups) vm.Groups.Add(group);
             inner.Content = category; outer.Content = shell;
             chrome.RequestedTheme = theme;
             await Show(chrome);
@@ -122,7 +125,7 @@ internal static class VisualDesignChecks
                     var refreshLeft = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).X;
                     Check(searchRight + 11 <= refreshLeft, "Search and refresh overlap or lose their group spacing");
                 }
-                else Check(ReferenceEquals(navigation.AutoSuggestBox, shell.FindName("searchBox")), "Narrow layout lost its sidebar search fallback");
+                else Check(navigation.AutoSuggestBox == null && ((Button)category.FindName("CompactSearch")).Visibility == Visibility.Visible, "Narrow layout lost the fixed top search entry");
                 var nativeHeader = Children(bar).OfType<Grid>().FirstOrDefault(g => g.Name == "PART_LayoutRoot");
                 Check(nativeHeader != null && nativeHeader.ActualHeight >= header.ActualHeight,
                     "Native titlebar clips the taller browser header");
@@ -209,7 +212,7 @@ internal static class VisualDesignChecks
                         "Top search overlaps actions or duplicates sidebar input: " + preset);
                     Check(search.Focus(FocusState.Keyboard), "Unified search cannot receive keyboard focus");
                 }
-                else Check(ReferenceEquals(navigation.AutoSuggestBox, shell.FindName("searchBox")), "Narrow page lost its search fallback");
+                else Check(navigation.AutoSuggestBox == null && ((Button)page.FindName("CompactSearch")).Visibility == Visibility.Visible, "Narrow page lost the fixed top search entry");
                 if (page.FindName("ManageFavorites") is Button manage)
                     Check((manage.Visibility == Visibility.Visible) != (((MenuFlyoutItem)page.FindName("ManageFavoritesOverflow")).Visibility == Visibility.Visible),
                         "Favorite management must have one available entrance");
@@ -266,7 +269,9 @@ internal static class VisualDesignChecks
                 var gamePresenter = Children(card).OfType<ListViewItemPresenter>().First();
                 Check(((SolidColorBrush)gamePresenter.PointerOverBackground).Color.A > 0 && card.UseSystemFocusVisuals && card.FocusVisualPrimaryThickness.Left == 2,
                     "Category pointer and keyboard feedback is missing");
-                Check(((SolidColorBrush)art.Background).Color.A == 0, "Game artwork still has a tinted nested frame");
+                Check(((SolidColorBrush)art.Background).Color.A > 0 && image.Margin == new Thickness(12), "Artwork lacks its readable backing and shared safe area");
+                var missing = Children(art).OfType<TextBlock>().Single(t => t.Text == "暂无图片");
+                Check(Contrast(((SolidColorBrush)missing.Foreground).Color, ((SolidColorBrush)art.Background).Color) >= 4.5, "Missing-art label contrast is too low.");
                 Check(card.Focus(FocusState.Keyboard) && card.FocusState == FocusState.Keyboard, "Keyboard focus feedback is missing");
                 if (!new Windows.UI.ViewManagement.AccessibilitySettings().HighContrast)
                     Check(((SolidColorBrush)surface.BorderBrush).Color.A == 0, "Persistent category outline remains");

@@ -16,6 +16,13 @@ public sealed class UpdateVM : BaseNotifyPropertyChanged
     private CancellationTokenSource operation;
     private UpdateRelease release;
     private string installerPath;
+    private bool downloadAttempted, downloadFailed;
+    public bool HasFailure { get; private set; }
+    public bool HideRecovery => Busy || !HasFailure;
+    public string DownloadButtonText => downloadFailed ? "重试下载" : downloadAttempted ? "继续下载" : "下载安装包";
+    public string BrowserActionText => AvailableVersion != null ? "浏览器下载" : "前往发布页";
+    public string CopyActionText => AvailableVersion != null ? "复制下载链接" : "复制发布页链接";
+    public string RecoveryUrl => AvailableVersion != null ? "https://gh-proxy.org/" + release.DownloadUrl.AbsoluteUri : UpdateClient.Repository + "/releases/latest";
     public string Status { get; private set; } = "手动检测新版本；下载安装包后可手动启动安装器";
     public double Progress { get; private set; }
     public bool Busy { get; private set; }
@@ -30,17 +37,21 @@ public sealed class UpdateVM : BaseNotifyPropertyChanged
     internal UpdateVM(UpdateClient client, Version currentVersion) { this.client = client; this.currentVersion = currentVersion; }
     private void Notify()
     {
-        foreach (var name in new[] { nameof(Status), nameof(Progress), nameof(CanCheck), nameof(HideProgress), nameof(HideDownload), nameof(HideInstall), nameof(HideCancel) }) DoPropertyChanged(name);
+        foreach (var name in new[] { nameof(Status), nameof(Progress), nameof(CanCheck), nameof(HideProgress), nameof(HideDownload), nameof(HideInstall), nameof(HideCancel), nameof(HideRecovery), nameof(HasFailure), nameof(DownloadButtonText), nameof(BrowserActionText), nameof(CopyActionText), nameof(RecoveryUrl) }) DoPropertyChanged(name);
     }
     private void Begin(bool downloading)
     {
         operation = new CancellationTokenSource(); Busy = true; Downloading = downloading; Progress = 0;
+        HasFailure = false;
+        if (downloading) { downloadAttempted = true; downloadFailed = false; }
         Status = downloading ? "正在下载安装包，切换页面后继续；下载完成后需手动启动安装器" : "正在检测新版本…";
         Notify();
     }
     private void Finish() { Busy = Downloading = false; operation.Dispose(); operation = null; Notify(); }
     private void Failed(Exception ex)
     {
+        HasFailure = !operation.IsCancellationRequested;
+        downloadFailed = Downloading && HasFailure;
         Status = ex is OperationCanceledException ? operation.IsCancellationRequested ?
             Downloading ? "已取消下载，重新下载时会尝试续传" : "已取消，可以重新尝试" :
             Downloading ? "连接超时，重新下载时会尝试续传" : "请求超时，请稍后重试" :
@@ -54,6 +65,7 @@ public sealed class UpdateVM : BaseNotifyPropertyChanged
     {
         if (Busy) return;
         Begin(false); release = null; installerPath = null;
+        downloadAttempted = downloadFailed = false;
         try
         {
             release = await client.CheckAsync(operation.Token);

@@ -66,6 +66,7 @@ namespace YolanLive.WinUI.Views
         private readonly PlaybackRecovery recovery = new();
         private int playGeneration;
         private bool switchingLine;
+        private bool showingRequestStage;
         private DateTime healthySince;
         private bool floatingToolbar;
         private int toolbarPopupCount;
@@ -108,6 +109,7 @@ namespace YolanLive.WinUI.Views
             KeyDown += Page_KeyDown;
           
             liveRoomVM.ChangedPlayUrl += LiveRoomVM_ChangedPlayUrl;
+            liveRoomVM.PropertyChanged += RoomLoadingStageChanged;
             controlTimer = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
             controlTimer.Tick += ControlTimer_Tick;
             miniHoverTimer.Tick += MiniHoverTimer_Tick;
@@ -194,6 +196,7 @@ namespace YolanLive.WinUI.Views
             mediaPlayer.MediaFailed -= MediaPlayer_MediaFailed;
             player.SetMediaPlayer(null); mediaPlayer.Dispose(); mediaPlayer = null;
             liveRoomVM.ChangedPlayUrl -= LiveRoomVM_ChangedPlayUrl;
+            liveRoomVM.PropertyChanged -= RoomLoadingStageChanged;
         }
         private void SetPointerVisible(bool visible)
         {
@@ -285,6 +288,7 @@ namespace YolanLive.WinUI.Views
         {
             this.DispatcherQueue.TryEnqueue(() =>
             {
+                if (!IsLoaded || closingWindow || mediaPlayer?.Source == null || showingRequestStage) return;
                 PlayerLoading.Visibility = Visibility.Collapsed;
             });
 
@@ -294,7 +298,8 @@ namespace YolanLive.WinUI.Views
         {
             this.DispatcherQueue.TryEnqueue(() =>
             {
-                PlayerLoadText.Text = sender.BufferingProgress.ToString("p");
+                if (!IsLoaded || closingWindow || mediaPlayer?.Source == null || showingRequestStage) return;
+                PlayerLoadText.Text = "正在缓冲直播…";
             });
         }
 
@@ -302,8 +307,9 @@ namespace YolanLive.WinUI.Views
         {
             this.DispatcherQueue.TryEnqueue(() =>
             {
+                if (!IsLoaded || closingWindow || mediaPlayer?.Source == null || showingRequestStage) return;
                 PlayerLoading.Visibility = Visibility.Visible;
-                PlayerLoadText.Text = "缓冲中";
+                PlayerLoadText.Text = "正在缓冲直播…";
             });
         }
 
@@ -321,7 +327,7 @@ namespace YolanLive.WinUI.Views
         {
             this.DispatcherQueue.TryEnqueue(() =>
             {
-                if (!IsLoaded || closingWindow || mediaPlayer.Source == null) return;
+                if (!IsLoaded || closingWindow || mediaPlayer?.Source == null || showingRequestStage) return;
                 //保持屏幕常亮
                 SetKeepAwake(mediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing);
                 PlayerLoading.Visibility = Visibility.Collapsed;
@@ -332,18 +338,18 @@ namespace YolanLive.WinUI.Views
         {
             this.DispatcherQueue.TryEnqueue(() =>
             {
-                if (!IsLoaded || closingWindow || mediaPlayer.Source == null) return;
+                if (!IsLoaded || closingWindow || mediaPlayer?.Source == null || showingRequestStage) return;
                 switch (sender.PlaybackState)
                 {
                     case MediaPlaybackState.None:
                         break;
                     case MediaPlaybackState.Opening:
                         PlayerLoading.Visibility = Visibility.Visible;
-                        PlayerLoadText.Text = "加载中";
+                        if (!showingRequestStage) PlayerLoadText.Text = "正在打开直播…";
                         break;
                     case MediaPlaybackState.Buffering:
                         PlayerLoading.Visibility = Visibility.Visible;
-                        PlayerLoadText.Text = "缓冲中";
+                        if (!showingRequestStage) PlayerLoadText.Text = "正在缓冲直播…";
                         break;
                     case MediaPlaybackState.Playing:
                         healthySince = DateTime.UtcNow;
@@ -486,14 +492,30 @@ namespace YolanLive.WinUI.Views
             else recovery.Cancel();
             _ = SetPlayer(e);
         }
+        private void RoomLoadingStageChanged(object sender, System.ComponentModel.PropertyChangedEventArgs args)
+        {
+            if (args.PropertyName != nameof(LiveRoomVM.LoadingStage) || closingWindow) return;
+            if (!string.IsNullOrEmpty(liveRoomVM.LoadingStage))
+            {
+                showingRequestStage = true;
+                PlayerLoadText.Text = liveRoomVM.LoadingStage;
+                PlayerLoading.Visibility = Visibility.Visible;
+            }
+            else if (showingRequestStage)
+            {
+                showingRequestStage = false;
+                PlayerLoading.Visibility = Visibility.Collapsed;
+            }
+        }
         private async Task<bool> SetPlayer(string url, bool recovering = false)
         {
             var generation = ++playGeneration;
             try
             {
                 PlaybackFailure.Visibility = Visibility.Collapsed;
+                showingRequestStage = false;
                 PlayerLoading.Visibility = Visibility.Visible;
-                PlayerLoadText.Text = "加载中";
+                PlayerLoadText.Text = "正在连接直播…";
                 if (mediaPlayer != null)
                 {
                     mediaPlayer.Pause();
@@ -760,7 +782,7 @@ namespace YolanLive.WinUI.Views
                 liveRoomVM.SiteName = site.Name;
                 MessageCenter.ChangeTitle("", site.LiveSite);
                 PlayerLoading.Visibility = Visibility.Visible;
-                PlayerLoadText.Text = "加载中";
+                PlayerLoadText.Text = "正在获取直播间…";
                 ShowControl(true);
                 await liveRoomVM.LoadDataAsync(site.LiveSite, choice.Room.RoomID, operation.Token, choice.Prepared);
             }
@@ -925,7 +947,7 @@ namespace YolanLive.WinUI.Views
             var random = RandomNext.Visibility == Visibility.Visible;
             var playWidth = random ? 132 : 40;
             var soundWidth = 2 * volumeWidth + 12;
-            var rightWidth = overflow ? 184 + 2 * spacing : 264 + 4 * spacing;
+            var rightWidth = WindowSizeButton.Width + DirectFullscreenButton.Width + (overflow ? 40 + 2 * spacing : 120 + 4 * spacing);
             var optionGap = availableWidth >= 1100 ? 16 : 12;
             var middleWidth = availableWidth - 2 * padding - 72 - playWidth - soundWidth - rightWidth;
             var compact = isMini || middleWidth < 256 + optionGap;
@@ -1012,7 +1034,7 @@ namespace YolanLive.WinUI.Views
             MiniModeMenu.Items.Add(fullItem);
             if (!isMini)
             {
-                var windowItem = new MenuFlyoutItem { Text = isFullWindow ? "退出窗口内全屏" : "窗口内全屏" };
+                var windowItem = new MenuFlyoutItem { Text = isFullWindow ? "退出无边框播放" : "无边框播放" };
                 windowItem.Click += (_, _) => SetFullWindow(!isFullWindow);
                 MiniModeMenu.Items.Add(windowItem);
             }

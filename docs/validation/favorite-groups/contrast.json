@@ -1,0 +1,22 @@
+[
+  {
+    "theme": "Light",
+    "state": "Offline",
+    "contrast": 6.34
+  },
+  {
+    "theme": "Light",
+    "state": "Unknown",
+    "contrast": 5.23
+  },
+  {
+    "theme": "Dark",
+    "state": "Offline",
+    "contrast": 7.67
+  },
+  {
+    "theme": "Dark",
+    "state": "Unknown",
+    "contrast": 7.97
+  }
+]

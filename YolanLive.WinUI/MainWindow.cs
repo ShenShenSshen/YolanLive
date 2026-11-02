@@ -46,8 +46,13 @@ public sealed partial class MainWindow : Window
     private bool closed;
     private readonly string placementKey;
     private bool restoringPlacement = true;
+    private readonly bool dedicatedPlayback;
+    private RectInt32? browseBounds;
+    private bool browseMaximized, restoreBrowseBounds;
+    internal bool IsBrowsing => !dedicatedPlayback && playbackViewport == null && !IsMiniMode && !expandedWindowSize.HasValue;
     public MainWindow(bool playback = false)
     {
+        dedicatedPlayback = playback;
         placementKey = playback ? "PlaybackWindowPlacement" : "MainWindowPlacement";
         InitializeComponent();
         windowSubclass = WindowMessage;
@@ -82,9 +87,14 @@ public sealed partial class MainWindow : Window
         AppWindow.Changed += (_, args) =>
         {
             if (updatingBounds) return;
+            if (!restoringPlacement && IsBrowsing && AppWindow.Presenter is OverlappedPresenter browsing)
+            {
+                browseMaximized = browsing.State == OverlappedPresenterState.Maximized;
+                if (browsing.State == OverlappedPresenterState.Restored) browseBounds = new RectInt32(AppWindow.Position.X, AppWindow.Position.Y, AppWindow.Size.Width, AppWindow.Size.Height);
+            }
             if (args.DidSizeChange || args.DidPositionChange || args.DidPresenterChange) ApplyWindowBounds();
             if (args.DidPresenterChange) WindowModeChanged?.Invoke(this, EventArgs.Empty);
-            if (args.DidPositionChange) SavePlacement();
+            if (args.DidPositionChange || args.DidSizeChange) SavePlacement();
         };
         ExtendsContentIntoTitleBar = true;
         RestorePlacement();
@@ -130,6 +140,12 @@ public sealed partial class MainWindow : Window
     internal void SetPlaybackViewport(FrameworkElement viewport)
     {
         if (closed) return;
+        var wasPlaying = playbackViewport != null;
+        if (viewport != null && IsBrowsing && AppWindow.Presenter is OverlappedPresenter browsing)
+        {
+            browseMaximized = browsing.State == OverlappedPresenterState.Maximized;
+            if (!browseMaximized) browseBounds = new RectInt32(AppWindow.Position.X, AppWindow.Position.Y, AppWindow.Size.Width, AppWindow.Size.Height);
+        }
         if (viewport == null)
         {
             SetMiniToolbarVisible(false);
@@ -137,6 +153,7 @@ public sealed partial class MainWindow : Window
         }
         if (playbackViewport != null) playbackViewport.SizeChanged -= PlaybackViewport_SizeChanged;
         playbackViewport = viewport;
+        if (viewport == null && wasPlaying && !dedicatedPlayback) restoreBrowseBounds = true;
         if (playbackViewport != null) playbackViewport.SizeChanged += PlaybackViewport_SizeChanged;
         if (viewport == null) SetVideoDragExclusion(null);
         RefreshVideoDragRegions();
@@ -189,6 +206,12 @@ public sealed partial class MainWindow : Window
     public void ApplyWindowSize(string value)
     {
         SelectedWindowSize = ValidateWindowSize(value);
+        if (IsBrowsing && AppWindow.Presenter is OverlappedPresenter browsing && browsing.State == OverlappedPresenterState.Restored)
+        {
+            var work = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest).WorkArea;
+            AppWindow.MoveAndResize(FitBounds(GetPresetSize(SelectedWindowSize), AppWindow.Position, work, GetWindowChromeSize()));
+            return;
+        }
         if (expandedWindowSize.HasValue && !IsMiniMode && AppWindow.Presenter.Kind == AppWindowPresenterKind.Overlapped)
             expandedWindowSize = GetPresetSize(SelectedWindowSize);
         if (AppWindow.Presenter.Kind == AppWindowPresenterKind.Overlapped) ApplyWindowBounds();
@@ -214,9 +237,10 @@ public sealed partial class MainWindow : Window
     }
     private void SavePlacement()
     {
-        if (restoringPlacement || closed || IsWindowDragging || IsMiniMode || AppWindow.Presenter is not OverlappedPresenter presenter || presenter.State != OverlappedPresenterState.Restored) return;
+        if (restoringPlacement || closed || IsWindowDragging || IsMiniMode || (!dedicatedPlayback && !IsBrowsing) || AppWindow.Presenter is not OverlappedPresenter presenter || (!IsBrowsing && presenter.State != OverlappedPresenterState.Restored)) return;
         var display = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest);
         var position = AppWindow.Position;
+        if (IsBrowsing && browseBounds is RectInt32 normal) position = new PointInt32(normal.X, normal.Y);
         if (expandedWindowSize.HasValue)
         {
             var origin = new PointInt32(); ClientToScreen(Handle, ref origin);
@@ -225,7 +249,10 @@ public sealed partial class MainWindow : Window
         SettingHelper.SetValue(placementKey, new WindowPlacement
         {
             DisplayId = display.DisplayId.Value, WorkX = display.WorkArea.X, WorkY = display.WorkArea.Y,
-            OffsetX = position.X - display.WorkArea.X, OffsetY = position.Y - display.WorkArea.Y
+            OffsetX = position.X - display.WorkArea.X, OffsetY = position.Y - display.WorkArea.Y,
+            Width = IsBrowsing ? browseBounds?.Width ?? AppWindow.Size.Width : 0,
+            Height = IsBrowsing ? browseBounds?.Height ?? AppWindow.Size.Height : 0,
+            Maximized = IsBrowsing && presenter.State == OverlappedPresenterState.Maximized
         }, defer: true);
     }
     private void RestorePlacement()
@@ -245,7 +272,14 @@ public sealed partial class MainWindow : Window
             target ??= previousArea ?? DisplayArea.GetFromPoint(new PointInt32(saved.WorkX, saved.WorkY), DisplayAreaFallback.Nearest);
             var position = new PointInt32((int)Math.Clamp((long)target.WorkArea.X + saved.OffsetX, int.MinValue, int.MaxValue),
                 (int)Math.Clamp((long)target.WorkArea.Y + saved.OffsetY, int.MinValue, int.MaxValue));
-            AppWindow.MoveAndResize(FitBounds(GetPresetSize(SelectedWindowSize), position, target.WorkArea, GetWindowChromeSize()));
+            if (IsBrowsing && saved.Width > 0 && saved.Height > 0)
+            {
+                var width = Math.Min(saved.Width, target.WorkArea.Width); var height = Math.Min(saved.Height, target.WorkArea.Height);
+                browseBounds = new RectInt32(Math.Clamp(position.X, target.WorkArea.X, target.WorkArea.X + target.WorkArea.Width - width), Math.Clamp(position.Y, target.WorkArea.Y, target.WorkArea.Y + target.WorkArea.Height - height), width, height);
+                browseMaximized = saved.Maximized; restoreBrowseBounds = true;
+                AppWindow.MoveAndResize(browseBounds.Value);
+            }
+            else AppWindow.MoveAndResize(FitBounds(GetPresetSize(SelectedWindowSize), position, target.WorkArea, GetWindowChromeSize()));
             normalPosition = AppWindow.Position;
         }
         catch (Newtonsoft.Json.JsonException) { }
@@ -257,6 +291,9 @@ public sealed partial class MainWindow : Window
         public int WorkY { get; set; }
         public int OffsetX { get; set; }
         public int OffsetY { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public bool Maximized { get; set; }
     }
     private void ApplyWindowBounds()
     {
@@ -272,9 +309,20 @@ public sealed partial class MainWindow : Window
                 var decorated = !borderless;
                 if (presenter.HasBorder != decorated || presenter.HasTitleBar != decorated)
                     presenter.SetBorderAndTitleBar(decorated, decorated);
-                if (presenter.IsResizable) presenter.IsResizable = false;
-                if (presenter.IsMaximizable) presenter.IsMaximizable = false;
+                if (presenter.IsResizable != IsBrowsing) presenter.IsResizable = IsBrowsing;
+                if (presenter.IsMaximizable != IsBrowsing) presenter.IsMaximizable = IsBrowsing;
                 if (presenter.IsAlwaysOnTop != IsMiniMode) presenter.IsAlwaysOnTop = IsMiniMode;
+                if (IsBrowsing)
+                {
+                    ApplyNativeFrame(false);
+                    if (restoreBrowseBounds && browseBounds is RectInt32 previous)
+                    {
+                        restoreBrowseBounds = false;
+                        AppWindow.MoveAndResize(previous);
+                        if (browseMaximized) presenter.Maximize();
+                    }
+                    return;
+                }
                 if (presenter.State == OverlappedPresenterState.Maximized) presenter.Restore();
             }
             ApplyNativeFrame(borderless);
@@ -331,7 +379,7 @@ public sealed partial class MainWindow : Window
         {
             // Remove the actual non-client frame, not only its DWM outline color.
             var style = GetWindowLongPtr(Handle, -16).ToInt64();
-            var desired = (style & ~0x00C40000L) | (borderless ? 0 : normalFrameBits.Value); // WS_CAPTION | WS_THICKFRAME
+            var desired = (style & ~0x00C40000L) | (borderless ? 0 : normalFrameBits.Value & (IsBrowsing ? ~0L : ~0x00040000L)); // Preserve resize frame only while browsing.
             if (style != desired)
             {
                 SetWindowLongPtr(Handle, -16, new nint(desired));
@@ -446,6 +494,15 @@ public sealed partial class MainWindow : Window
     }
     private nint WindowMessage(nint window, uint message, nint wParam, nint lParam, nuint id, nuint data)
     {
+        if (message == 0x0024 && IsBrowsing && lParam != 0) // Native interactive sizing minimum.
+        {
+            var nativeResult = DefSubclassProc(window, message, wParam, lParam);
+            var info = Marshal.PtrToStructure<MinMaxInfo>(lParam);
+            var scale = Root.XamlRoot?.RasterizationScale ?? 1;
+            info.MinTrackSize = new PointInt32((int)(640 * scale), (int)(360 * scale));
+            Marshal.StructureToPtr(info, lParam, false);
+            return nativeResult;
+        }
         if (CanDragVideo && nativeVideoCaption.HasValue)
         {
             if (message == 0x00A3 /* WM_NCLBUTTONDBLCLK */ && wParam == 2 /* HTCAPTION */)
@@ -463,6 +520,8 @@ public sealed partial class MainWindow : Window
     }
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     private delegate nint WindowSubclassProc(nint window, uint message, nint wParam, nint lParam, nuint id, nuint data);
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MinMaxInfo { public PointInt32 Reserved, MaxSize, MaxPosition, MinTrackSize, MaxTrackSize; }
     [DllImport("comctl32.dll")]
     private static extern bool SetWindowSubclass(nint window, WindowSubclassProc callback, nuint id, nuint data);
     [DllImport("comctl32.dll")]

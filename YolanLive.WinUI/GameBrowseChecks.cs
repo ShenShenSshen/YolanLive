@@ -105,14 +105,14 @@ internal static class GameBrowseChecks
             DatabaseHelper.AddFavorite(new FavoriteItem { SiteName = "B", RoomID = "same", UserName = "live", Photo = "" });
             var favorites = new FavoriteVM();
             await favorites.LoadAsync();
-            Check(favorites.Items.Count == 1 && favorites.Items[0].SiteName == "B", "Stopped favorite was not hidden.");
-            Check((await DatabaseHelper.GetFavorites()).Count == 2, "Hidden favorite was deleted.");
+            Check(favorites.Items.Count == 2 && favorites.Groups[0].Single().SiteName == "B" && favorites.Groups[1].Single().SiteName == "A", "Live and offline favorites were not both shown in their groups.");
+            Check((await DatabaseHelper.GetFavorites()).Count == 2, "Grouping changed saved favorites.");
             a.Live = true;
             await favorites.LoadAsync();
             Check(favorites.Items.Count == 2, "Favorite did not reappear when live again.");
             a.StatusFail = b.StatusFail = true;
             await favorites.LoadAsync();
-            Check(favorites.Items.Count == 2 && favorites.Items.All(item => !item.LiveStatus) && favorites.CanRetry && favorites.EmptyMessage.Contains("失败") && (await DatabaseHelper.GetFavorites()).Count == 2, "Failed favorite queries lost retained items, guessed live status, or changed saved records.");
+            Check(favorites.Items.Count == 2 && favorites.Groups[2].Count == 2 && favorites.Items.All(item => item.IsStatusUnknown && !item.IsOffline) && favorites.CanRetry && favorites.EmptyMessage.Contains("失败") && (await DatabaseHelper.GetFavorites()).Count == 2, "Failed favorite queries lost retained items, guessed live status, or changed saved records.");
             await CheckQualityPreferencesAsync();
         }
         finally { MainVM.Sites = original; }
@@ -160,13 +160,14 @@ internal static class GameBrowseChecks
             ? Task.FromException<List<LiveCategory>>(new InvalidOperationException("Test category unavailable"))
             : Task.FromResult(new List<LiveCategory> { new() { ID = "2", Name = "网游", Children = new() { new() { ID = "game", Name = "Test game" } } } });
     }
-    private class TestSite : ILiveSite
+    internal class TestSite : ILiveSite
     {
         public string Name { get; }
         public bool Live = true;
         public bool Fail;
         public bool Empty;
         public bool StatusFail;
+        public Task<bool> PendingStatus;
         public Task<LiveCategoryResult> Pending;
         public int Calls;
         public List<LivePlayQuality> QualityOptions { get; } = new() { new() { Quality = "原画" }, new() { Quality = "高清" } };
@@ -184,7 +185,7 @@ internal static class GameBrowseChecks
             return Task.FromResult(new LiveCategoryResult { HasMore = page < 2, Rooms = new() { room, room, new() { RoomID = "offline", IsLive = false }, new() { RoomID = "unknown" } } });
         }
         public Task<bool> GetLiveStatus(object roomId, System.Threading.CancellationToken cancellationToken) => GetLiveStatus(roomId).WaitAsync(cancellationToken);
-        public Task<bool> GetLiveStatus(object roomId) => StatusFail ? Task.FromException<bool>(new Exception("Test status unavailable")) : Task.FromResult(Live);
+        public Task<bool> GetLiveStatus(object roomId) => PendingStatus ?? (StatusFail ? Task.FromException<bool>(new Exception("Test status unavailable")) : Task.FromResult(Live));
         public Task<List<LiveCategory>> GetCategores(System.Threading.CancellationToken cancellationToken) => GetCategores().WaitAsync(cancellationToken);
         public Task<List<LiveCategory>> GetCategores() => throw new NotSupportedException();
         public Task<LiveSearchResult> Search(string keyword, int page, System.Threading.CancellationToken cancellationToken) => Search(keyword, page).WaitAsync(cancellationToken);

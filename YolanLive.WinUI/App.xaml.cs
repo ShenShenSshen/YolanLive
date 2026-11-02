@@ -42,6 +42,9 @@ public partial class App : Application
                 else if (Environment.GetCommandLineArgs().Contains("--performance-playback")) await PerformanceRegressionChecks.PlaybackAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--performance-checks")) await PerformanceRegressionChecks.RunAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--favorite-check")) await PerformanceChecks.FavoriteAsync();
+                else if (Environment.GetCommandLineArgs().Contains("--favorite-groups-check")) await FavoriteGroupChecks.RunAsync(window);
+                else if (Environment.GetCommandLineArgs().Contains("--usability-checks")) await UsabilityChecks.RunAsync(window);
+                else if (Environment.GetCommandLineArgs().Contains("--browsing-polish-checks")) await BrowsingPolishChecks.RunAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--performance")) await PerformanceChecks.RunAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--browse-preferences-check")) BrowseChecks.VerifyRestart();
                 else if (Environment.GetCommandLineArgs().Contains("--platform-live")) await PlatformChecks.LiveAsync(window);

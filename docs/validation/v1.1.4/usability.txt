@@ -1,0 +1,7 @@
+PASS Existing grouped favorite checks
+PASS Local favorite filtering preserves data, references and stable collections
+PASS History dates, platform labels and local filtering
+PASS Browsing resizes and maximizes, playback stays fixed, return restores browsing
+PASS Fixed top search, local filter and history rows at wide and narrow widths
+PASS Favorite regrouping preserves the visible anchor and keyboard focus
+PASS Update recovery states and links

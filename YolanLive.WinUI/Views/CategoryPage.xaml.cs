@@ -12,19 +12,31 @@ public sealed partial class CategoryPage : Page
     public CategoryPage()
     {
         InitializeComponent(); Unloaded += (_, _) => categoryVM.CancelPending(); NavigationCacheMode = NavigationCacheMode.Enabled;
-        GroupPicker.SelectionChanged += (_, change) => PlatformTabAnimation.Play(GroupPicker, change);
+        GroupPicker.SelectionChanged += (_, change) =>
+        {
+            PlatformTabAnimation.Play(GroupPicker, change);
+            if (!categoryVM.Loading && change.AddedItems.Count > 0) categoryVM.FilterText = "";
+        };
         PlatformPicker.ItemsSource = MainVM.Sites;
         PlatformPicker.SelectedItem = MainVM.BrowseSite;
         Loaded += (_, _) =>
         {
             if (PlatformPicker.SelectedItem != MainVM.BrowseSite) PlatformPicker.SelectedItem = MainVM.BrowseSite;
-            else if (categoryVM.Items.Count == 0) _ = LoadCategoriesAsync();
+            else if (categoryVM.Groups.Count == 0) _ = LoadCategoriesAsync();
             else _ = categoryVM.CompletePicturesAsync();
         };
     }
     private async System.Threading.Tasks.Task LoadCategoriesAsync()
     {
         await categoryVM.LoadAsync();
+    }
+    private void CategoryTools_SizeChanged(object sender, SizeChangedEventArgs args)
+    {
+        var narrow = args.NewSize.Width < 760;
+        Grid.SetRow(GameFilter, narrow ? 1 : 0);
+        Grid.SetColumn(GameFilter, narrow ? 0 : 1);
+        Grid.SetColumnSpan(GameFilter, narrow ? 2 : 1);
+        GameFilter.Width = narrow ? System.Math.Min(320, args.NewSize.Width) : 240;
     }
     private async void PlatformPicker_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -48,6 +60,7 @@ public sealed partial class CategoryPage : Page
         action.Click += (_, _) =>
         {
             if (!BrowsePreferences.TogglePin(site, game)) Utils.ShowMessageToast("每个平台最多固定 6 个游戏，请先移除已有入口");
+            if (args.ItemContainer.ContentTemplateRoot is FrameworkElement root) GameCard.Refresh(root);
         };
         args.ItemContainer.ContextFlyout = menu;
     }

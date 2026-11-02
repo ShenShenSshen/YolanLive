@@ -1,0 +1,5 @@
+PASS user may decline the desktop shortcut
+PASS current-user install, version and default desktop shortcut with YolanLive D1 sail icon
+PASS upgrade replaces legacy shortcut icon paths with the current version icon
+PASS reinstall restores program files without duplicate installation
+FAIL installed application smoke: 117/118 passed; historical fullscreen viewport expected=1280x719, actual=1280x779, scale=1. See smoke-test.txt. Installer harness exits 1; finally cleanup ran.

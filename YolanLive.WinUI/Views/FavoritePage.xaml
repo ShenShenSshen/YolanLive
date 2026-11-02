@@ -1,17 +1,42 @@
 <?xml version="1.0" ?><Page xmlns:design="using:YolanLive.WinUI.Helper" x:Class="YolanLive.WinUI.Views.FavoritePage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:Windows10version1809="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract, 7)" xmlns:controls="using:YolanLive.WinUI.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="using:YolanLive.WinUI.Views" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:models="using:YolanLive.WinUI.Models" mc:Ignorable="d" FontFamily="{StaticResource ContentControlThemeFontFamily}" FontSize="{StaticResource BodyTextSize}" Foreground="{ThemeResource AppTextBrush}" xmlns:perf="using:YolanLive.WinUI.Helper">
 
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="FavoriteOfflineSurfaceBrush" Color="#E3E8EF"/>
+                    <SolidColorBrush x:Key="FavoriteOfflineTextBrush" Color="#455368"/>
+                    <SolidColorBrush x:Key="FavoriteUnknownSurfaceBrush" Color="#F1EADB"/>
+                    <SolidColorBrush x:Key="FavoriteUnknownTextBrush" Color="#715E35"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="FavoriteOfflineSurfaceBrush" Color="#313947"/>
+                    <SolidColorBrush x:Key="FavoriteOfflineTextBrush" Color="#CCD2DF"/>
+                    <SolidColorBrush x:Key="FavoriteUnknownSurfaceBrush" Color="#403B30"/>
+                    <SolidColorBrush x:Key="FavoriteUnknownTextBrush" Color="#E9D9B2"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="FavoriteOfflineSurfaceBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="FavoriteOfflineTextBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+                    <SolidColorBrush x:Key="FavoriteUnknownSurfaceBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="FavoriteUnknownTextBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <CollectionViewSource x:Name="FavoriteGroups" IsSourceGrouped="True" Source="{x:Bind favoriteVM.Groups, Mode=OneWay}"/>
+        </ResourceDictionary>
+    </Page.Resources>
     <Grid x:Name="PageLayoutRoot" design:PageDesign.Insets="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition/>
+            <RowDefinition Height="Auto"/><RowDefinition/>
         </Grid.RowDefinitions>
         <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" Margin="0" MinHeight="72" ColumnSpacing="12">
             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <TextBlock x:Name="PageTitle" Margin="0,0,8,0" Style="{StaticResource PageTitleStyle}" Text="我的关注"/>
-            <AutoSuggestBox x:Name="HeaderSearch" Grid.Column="2" design:PageDesign.Search="True" Style="{StaticResource BrowseSearchStyle}" Width="240" PlaceholderText="搜索主播或粘贴链接" QueryIcon="Find" AutomationProperties.Name="搜索主播或直播链接"/>
+            <AutoSuggestBox x:Name="HeaderSearch" Grid.Column="2" design:PageDesign.Search="True" Style="{StaticResource BrowseSearchStyle}" Width="240" PlaceholderText="全平台搜索或粘贴链接" QueryIcon="Find" AutomationProperties.Name="全平台搜索或直播链接"/><Button x:Name="CompactSearch" Grid.Column="2" Style="{StaticResource ToolbarIconStyle}" Visibility="Collapsed" ToolTipService.ToolTip="全平台搜索" AutomationProperties.Name="全平台搜索" design:PageDesign.CompactSearch="True"><SymbolIcon Symbol="Find"/></Button>
             <StackPanel x:Name="HeaderActions" Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button x:Name="ManageFavorites" Width="112" Click="ManageFavorites_Click" Style="{StaticResource PageActionButtonStyle}">管理全部关注</Button>
+                <Button x:Name="ManageFavorites" Width="112" Click="ManageFavorites_Click" Style="{StaticResource PageActionButtonStyle}">管理关注</Button>
                 <Grid Width="36" Height="36">
                     <Button x:Name="HeaderRefresh" IsEnabled="{x:Bind favoriteVM.CanRefresh, Mode=OneWay}" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind favoriteVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新" Visibility="{x:Bind favoriteVM.LoaddingLiveStatus, Mode=OneWay, Converter={StaticResource displayConvert}}"><FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/></Button>
                     <ProgressRing Width="20" Height="20" IsActive="True" Visibility="{x:Bind favoriteVM.LoaddingLiveStatus, Mode=OneWay}"/>
@@ -19,7 +44,7 @@
                 <Button x:Name="FavoriteMore" Style="{StaticResource ToolbarIconStyle}" ToolTipService.ToolTip="更多关注操作" AutomationProperties.Name="更多关注操作">
                     <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/>
                     <Button.Flyout><MenuFlyout>
-                        <MenuFlyoutItem x:Name="ManageFavoritesOverflow" Visibility="Collapsed" Text="管理全部关注" Click="ManageFavorites_Click"/>
+                        <MenuFlyoutItem x:Name="ManageFavoritesOverflow" Visibility="Collapsed" Text="管理关注" Click="ManageFavorites_Click"/>
                         <MenuFlyoutItem x:Name="ImportFavorites" Text="导入列表" Command="{x:Bind favoriteVM.InputCommand}"/>
                         <MenuFlyoutItem x:Name="ExportFavorites" Text="导出列表" Command="{x:Bind favoriteVM.OutputCommand}"/>
                         <MenuFlyoutSeparator/>
@@ -28,8 +53,21 @@
                 </Button>
             </StackPanel>
         </Grid></TitleBar>
-        <Grid Grid.Row="2">
-            <controls:MyAdaptiveGridView Padding="0" Margin="-8,0,-8,-8" CanLoadMore="False" DesiredWidth="400" IsItemClickEnabled="True" ItemClick="ls_ItemClick" ItemHeight="96" ItemsSource="{x:Bind Path=favoriteVM.Items, Mode=OneWay}" SelectionMode="None">
+        <AutoSuggestBox x:Name="LocalFilter" Grid.Row="1" Margin="0,0,0,12" HorizontalAlignment="Left" Width="240" PlaceholderText="筛选关注：主播或平台" QueryIcon="Find" Text="{x:Bind favoriteVM.FilterText, Mode=TwoWay}" AutomationProperties.Name="筛选当前关注列表" Style="{StaticResource BrowseSearchStyle}"/>
+        <Grid Grid.Row="3">
+            <controls:MyAdaptiveGridView x:Name="FavoriteList" Padding="0" Margin="-8,0,-8,-8" CanLoadMore="False" DesiredWidth="400" IsItemClickEnabled="True" ItemClick="ls_ItemClick" ItemHeight="96" ItemsSource="{Binding Source={StaticResource FavoriteGroups}}" SelectionMode="None">
+                <controls:MyAdaptiveGridView.ItemsPanel>
+                    <ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" GroupHeaderPlacement="Top" GroupPadding="0,0,0,16"/></ItemsPanelTemplate>
+                </controls:MyAdaptiveGridView.ItemsPanel>
+                <controls:MyAdaptiveGridView.GroupStyle>
+                    <GroupStyle HidesIfEmpty="True">
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate x:DataType="models:FavoriteGroup">
+                                <TextBlock Text="{x:Bind Header, Mode=OneWay}" Style="{StaticResource SectionTitleStyle}" Margin="8,12,8,8"/>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </controls:MyAdaptiveGridView.GroupStyle>
                 <controls:MyAdaptiveGridView.ItemContainerStyle>
                     <Style BasedOn="{StaticResource GridViewItemCornerRadiusStyle}" TargetType="GridViewItem">
                         <Setter Property="Margin" Value="{StaticResource ContentItemMargin}"/>
@@ -53,15 +91,25 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition/>
                             <ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <PersonPicture Width="48" Height="48" Background="{ThemeResource AppAvatarBrush}" BorderThickness="0" Foreground="{ThemeResource AppSelectionTextBrush}" perf:DecodedImage.Url="{x:Bind Path=Photo}"/>
+                            <PersonPicture Width="48" Height="48" Background="{ThemeResource AppAvatarBrush}" BorderThickness="0" Foreground="{ThemeResource AppSelectionTextBrush}" perf:DecodedImage.Url="{x:Bind Path=Photo, Mode=OneWay}"/>
                             <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource BodyTextStyle}" Text="{x:Bind Path=UserName}" FontSize="{StaticResource BodyTextSize}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Path=UserName}"/>
-                                <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource ReadableSecondaryTextBrush}" Text="{x:Bind Path=SiteName}"/>
+                                <TextBlock Style="{StaticResource BodyTextStyle}" Text="{x:Bind Path=UserName, Mode=OneWay}" FontSize="{StaticResource BodyTextSize}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Path=UserName, Mode=OneWay}"/>
+                                <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource ReadableSecondaryTextBrush}" Text="{x:Bind Path=SiteName, Mode=OneWay}"/>
                             </StackPanel>
-                            <StackPanel Margin="12,0,4,0" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal" Visibility="{x:Bind Path=LiveStatus, Mode=OneWay}" Grid.Column="2">
-                                <Ellipse Width="8" Height="8" Margin="0,0,4,0" VerticalAlignment="Center" Fill="{ThemeResource AppAccentBrush}"/>
-                                <TextBlock Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" FontSize="{StaticResource SecondaryTextSize}" Foreground="{ThemeResource AppAccentBrush}" Text="直播中" Visibility="{x:Bind Path=LiveStatus, Mode=OneWay}"/>
-                            </StackPanel>
+                            <Grid Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <Border Padding="10,5" CornerRadius="8" Background="{ThemeResource AppSelectionBrush}" Visibility="{x:Bind LiveStatus, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{ThemeResource AppSelectionTextBrush}"/>
+                                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Foreground="{ThemeResource AppSelectionTextBrush}" Text="直播中"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Padding="10,5" CornerRadius="8" Background="{ThemeResource FavoriteOfflineSurfaceBrush}" Visibility="{x:Bind IsOffline, Mode=OneWay}">
+                                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Foreground="{ThemeResource FavoriteOfflineTextBrush}" Text="未开播"/>
+                                </Border>
+                                <Border Padding="10,5" CornerRadius="8" Background="{ThemeResource FavoriteUnknownSurfaceBrush}" Visibility="{x:Bind IsStatusUnknown, Mode=OneWay}">
+                                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Foreground="{ThemeResource FavoriteUnknownTextBrush}" Text="状态待确认"/>
+                                </Border>
+                            </Grid>
 
                         </Grid>
                     </DataTemplate>
@@ -74,12 +122,12 @@
 
 
         </Grid>
-    <Border x:Name="LoadStatus" Grid.Row="1" Margin="0,0,0,12" Padding="12,8" CornerRadius="10" Background="{ThemeResource AppHoverBrush}" Visibility="{x:Bind favoriteVM.ShowInlineStatus, Mode=OneWay}">
+    <Border x:Name="LoadStatus" Grid.Row="2" Margin="0,0,0,12" Padding="12,8" CornerRadius="10" Background="{ThemeResource AppHoverBrush}" Visibility="{x:Bind favoriteVM.ShowInlineStatus, Mode=OneWay}">
  <Grid ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
  <TextBlock Text="{x:Bind favoriteVM.StatusMessage, Mode=OneWay}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" VerticalAlignment="Center"/>
  <Button x:Name="InlineRetry" Grid.Column="1" Content="重试" Style="{StaticResource PageActionButtonStyle}" Command="{x:Bind favoriteVM.RefreshCommand}" IsEnabled="{x:Bind favoriteVM.CanRefresh, Mode=OneWay}" Visibility="{x:Bind favoriteVM.CanRetry, Mode=OneWay}"/>
  </Grid></Border>
- <Border x:Name="LoadingPlaceholder" Grid.Row="2" Padding="24" CornerRadius="10" Background="{ThemeResource AppHoverBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind favoriteVM.ShowLoadingPlaceholder, Mode=OneWay}">
+ <Border x:Name="LoadingPlaceholder" Grid.Row="3" Padding="24" CornerRadius="10" Background="{ThemeResource AppHoverBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind favoriteVM.ShowLoadingPlaceholder, Mode=OneWay}">
  <TextBlock Text="正在加载当前页面…" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" TextAlignment="Center"/>
  </Border>
 </Grid>

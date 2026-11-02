@@ -1,0 +1,1 @@
+PASS isolated installer cleanup: registry, shortcuts, program files and fake user data removed; daily installation untouched

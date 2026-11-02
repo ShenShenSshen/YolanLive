@@ -38,14 +38,17 @@ namespace YolanLive.WinUI
         internal bool IsTopNavigation => navigationView.PaneDisplayMode == NavigationViewPaneDisplayMode.Top;
 
         private AutoSuggestBox headerSearch;
+        private Button compactSearch;
+        internal string GlobalSearchText { get => headerSearch?.Text ?? searchBox.Text; set { searchBox.Text = value; if (headerSearch != null) headerSearch.Text = value; } }
 
-        internal void SetHeaderSearch(AutoSuggestBox search)
+        internal void SetHeaderSearch(AutoSuggestBox search, Button compact = null)
         {
-            if (headerSearch == search) return;
+            if (headerSearch == search && compactSearch == compact) return;
             if (search != null) search.Text = headerSearch?.Text ?? searchBox.Text;
             else if (headerSearch != null) searchBox.Text = headerSearch.Text;
             headerSearch = search;
-            navigationView.AutoSuggestBox = search == null ? searchBox : null;
+            compactSearch = compact;
+            navigationView.AutoSuggestBox = null;
         }
 
         internal void ClearHeaderSearch(AutoSuggestBox search)
@@ -62,6 +65,7 @@ namespace YolanLive.WinUI
 
             this.NavigationCacheMode = NavigationCacheMode.Enabled;
             this.InitializeComponent();
+            navigationView.AutoSuggestBox = null;
             Loaded += (_, _) => { MessageCenter.UpdatePanelDisplayModeEvent -= MessageCenter_UpdatePanelDisplayModeEvent; MessageCenter.UpdatePanelDisplayModeEvent += MessageCenter_UpdatePanelDisplayModeEvent; };
             this.KeyDown += MainPage_KeyDown;
             SetPaneMode();
@@ -108,7 +112,8 @@ namespace YolanLive.WinUI
             else if (e.Key == Windows.System.VirtualKey.GamepadY)
             {
                 e.Handled = true;
-                (headerSearch ?? searchBox).Focus(FocusState.Programmatic);
+                if (compactSearch?.Visibility == Visibility.Visible) PageDesign.OpenSearch(compactSearch);
+                else (headerSearch ?? searchBox).Focus(FocusState.Programmatic);
             }
         }
 

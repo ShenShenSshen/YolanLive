@@ -96,6 +96,22 @@ internal static class UpdateChecks
         await offline.CheckAsync();
         Check(offline.Status.Contains("网络") && !offline.Status.Contains("最新版本") && offline.HideDownload, "Network failure looked like an up-to-date result.");
     }
+    internal static async Task RecoveryAsync()
+    {
+        using var failedDownload = new HttpClient(new Handler((request, _) => request.RequestUri.AbsoluteUri == UpdateClient.LatestUrl ?
+            Task.FromResult(JsonResponse(Metadata())) : Task.FromException<HttpResponseMessage>(new HttpRequestException("Controlled download outage"))));
+        var vm = new UpdateVM(new UpdateClient(failedDownload, TestDirectory()), UpdateClient.ParseVersion("1.0.3"));
+        await vm.CheckAsync();
+        Check(!vm.HasFailure && vm.HideRecovery && vm.DownloadButtonText == "下载安装包", "Normal update shows failure actions.");
+        await vm.DownloadAsync();
+        Check(vm.HasFailure && !vm.HideRecovery && vm.DownloadButtonText == "重试下载" && vm.BrowserActionText == "浏览器下载" &&
+            vm.RecoveryUrl == "https://gh-proxy.org/" + UpdateClient.Repository + "/releases/download/v1.0.4/YolanLive-1.0.4-x64-Setup.exe", "Download failure has no trusted browser fallback or retry label.");
+        using var offline = new HttpClient(new Handler((_, _) => Task.FromException<HttpResponseMessage>(new HttpRequestException("Controlled metadata outage"))));
+        var check = new UpdateVM(new UpdateClient(offline, TestDirectory()), UpdateClient.ParseVersion("1.0.3"));
+        await check.CheckAsync();
+        Check(check.HasFailure && !check.HideRecovery && check.BrowserActionText == "前往发布页" && check.CopyActionText == "复制发布页链接" &&
+            check.RecoveryUrl == UpdateClient.Repository + "/releases/latest", "Metadata failure manufactured an installer URL instead of offering the official release page.");
+    }
     internal static async Task BackgroundAsync(MainWindow window)
     {
         using var blocked = new PausedStream(Package);

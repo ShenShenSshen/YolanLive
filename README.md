@@ -6,18 +6,18 @@ A focused Windows game livestream viewer for Bilibili, Douyin, Huya and Douyu, b
 
 简洁的 Windows 游戏直播客户端。支持哔哩哔哩、抖音、虎牙和斗鱼，仅展示游戏分类，不显示弹幕。使用 WinUI 3，栏位采用磨砂材质，内容保持清晰。
 
-**已发布版本：v1.1.3 · Windows x64 · MIT**
+**已发布版本：v1.1.4 · Windows x64 · MIT**
 
-v1.1.3 增加免费安装包加速、自动换源与断点续传，下载后继续核对 GitHub 的大小和 SHA-256；保持当前界面与播放行为。公共加速源的可用性不受本项目控制，版本检测仍需访问 GitHub。详见 [更新说明](RELEASE_NOTES.md) 和 [发布检查](docs/validation/release-1.1.3.md)。
+v1.1.4 整理关注与历史分组、本地筛选和窄窗口搜索；浏览窗口支持调整大小与最大化，分类增加找游戏和直接固定入口，优化图片展示及加载阶段提示，并补齐更新失败后的恢复操作。详见 [更新说明](RELEASE_NOTES.md) 和 [发布检查](docs/validation/release-1.1.4.md)。
 
 ## 下载
 
-- [安装版 YolanLive-1.1.3-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/YolanLive-1.1.3-x64-Setup.exe)
-- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/YolanLive-x64.zip)
-- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/SHA256SUMS.txt)
+- [安装版 YolanLive-1.1.4-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/YolanLive-1.1.4-x64-Setup.exe)
+- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/YolanLive-x64.zip)
+- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/SHA256SUMS.txt)
 - [所有发布版本](https://github.com/ShenShenSshen/YolanLive/releases)
 
-GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh-proxy.org/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/YolanLive-1.1.3-x64-Setup.exe) / [线路二](https://ghfast.top/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.3/YolanLive-1.1.3-x64-Setup.exe)。两者是第三方服务，请与正式发布的 SHA-256 核对。旧客户端先安装一次 v1.1.3 后，后续更新才会自动使用加速。
+GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh-proxy.org/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/YolanLive-1.1.4-x64-Setup.exe) / [线路二](https://ghfast.top/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/YolanLive-1.1.4-x64-Setup.exe)。两者是第三方服务，请与正式发布的 SHA-256 核对。旧客户端先安装 v1.1.3 及以上版本，后续更新才会自动使用加速；公共源及 GitHub API 的可用性仍取决于网络。
 
 安装版默认安装到当前用户目录，创建开始菜单入口，默认创建桌面快捷方式，可取消。便携版解压后运行 `YolanLive.exe`，请保留整个目录。
 
@@ -42,13 +42,13 @@ GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh
 ## 功能
 
 - **四个平台，游戏优先**：按哔哩哔哩 / 抖音 / 虎牙 / 斗鱼切换首页和游戏分类；搜索、关注及历史统一管理。
-- **浏览记忆**：恢复最后的平台和各平台游戏大类；每个平台可手动固定最多 6 个常看游戏到首页。
+- **浏览记忆与找游戏**：恢复最后的平台和各平台游戏大类；分类本地筛选当前平台游戏，卡片可直接固定最多 6 个常看游戏到首页。
 - **清晰的搜索结果**：显示平台标识和接口已提供的开播状态，直播标题可悬停查看全文。
 - **随便逛逛**：从四个平台游戏首页随机选择已开播房间，提供本轮上一个／下一个，记录末尾继续随机，切换保持当前播放器和窗口模式。
 - **轻量播放器**：清晰度与线路切换、截图、全屏、置顶小窗、独立窗口播放；双击全屏、空格暂停，底栏调节音量与视频亮度；无边框模式支持按住视频拖动，控件自动隐藏。
 - **有限断流恢复**：最多重试 3 次，重新检查房间及播放地址；确认停播时停止，离开房间取消。
-- **固定比例与位置记忆**：16:9 播放区域尺寸预设，适配显示器工作区；主窗口和独立窗口分别记住位置。
-- **关注与历史**：日常关注页只显示确认开播的房间，管理入口可查看和移除停播主播；观看历史保留。支持 JSON 导入导出。
+- **浏览与播放窗口**：浏览时自由调整大小或最大化，返回恢复原窗口状态；播放保留 16:9 区域尺寸预设，主窗口和独立窗口分别记住位置。
+- **关注与历史**：关注按直播中、未开播、状态待确认分组，历史按今天、昨天、更早分组，均支持本地筛选；刷新保留可见位置和键盘焦点。支持 JSON 导入导出。
 - **账号登录**：哔哩哔哩扫码登录，抖音、虎牙、斗鱼使用各自官方网页登录，浏览器与加密会话分别保存；区分登录失效、网络失败与平台接口异常。
 - **外观与更新**：浅色影音 / 深色主题、磨砂栏位，圆体标题与导航搭配微软雅黑 UI 正文；每次启动检测正式更新，设置支持后台下载、免费加速、失败换源及断点续传，校验后由用户启动安装器。
 - **资源使用**：窗口位置及音量延迟 500 毫秒合并保存；日志按天或 10 MB 滚动、最多保留 7 份归档和 7 天；首页、分类详情和搜索每页最多保留 300 个直播条目。

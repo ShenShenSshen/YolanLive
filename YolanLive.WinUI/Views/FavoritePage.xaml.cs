@@ -33,6 +33,9 @@ namespace YolanLive.WinUI.Views
             Loaded += (_, _) => { MessageCenter.UpdateFavoriteEvent -= MessageCenter_UpdateFavoriteEvent; MessageCenter.UpdateFavoriteEvent += MessageCenter_UpdateFavoriteEvent; };
             Unloaded += (_, _) => MessageCenter.UpdateFavoriteEvent -= MessageCenter_UpdateFavoriteEvent;
             this.InitializeComponent();
+            var anchor = new ListViewportAnchor(FavoriteList);
+            Loaded += (_, _) => { favoriteVM.ProjectionChanging += anchor.Capture; favoriteVM.ProjectionChanged += anchor.Restore; };
+            Unloaded += (_, _) => { favoriteVM.ProjectionChanging -= anchor.Capture; favoriteVM.ProjectionChanged -= anchor.Restore; };
             Loaded += async (_, _) => { await favoriteVM.LoadAsync();  };
             Unloaded += (_, _) => {  favoriteVM.CancelPending(); };
             _ = new PageStatusRefresh(this, () => favoriteVM.LoadAsync(), favoriteVM.CancelPending);
@@ -53,8 +56,13 @@ namespace YolanLive.WinUI.Views
 
         private void ls_ItemClick(object sender, ItemClickEventArgs e)
         {
-            var item = e.ClickedItem as FavoriteItem;
+            if (e.ClickedItem is not FavoriteItem item) return;
             var site = MainVM.Sites.FirstOrDefault(x => x.Name == item.SiteName);
+            if (site?.LiveSite == null)
+            {
+                Utils.ShowMessageToast("该关注的平台不可用，请移除后重新添加");
+                return;
+            }
             MessageCenter.OpenLiveRoom(site.LiveSite, new Core.Models.LiveRoomItem()
             {
                 RoomID = item.RoomID
