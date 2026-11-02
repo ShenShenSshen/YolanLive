@@ -109,10 +109,10 @@ internal static class SmokeTests
             var navigation = (NavigationView)new MainPage().FindName("navigationView");
             if (titleGrid.ColumnDefinitions[0].Width.Value != navigation.CompactPaneLength ||
                 appIcon.HorizontalAlignment != HorizontalAlignment.Center || appIcon.Margin != new Thickness(0) ||
-                !title.FontFamily.Source.EndsWith("ChillRound.ttf#寒蝉全圆体") || title.CharacterSpacing != 35 ||
+                !title.FontFamily.Source.EndsWith("ResourceHanRoundedCN-Regular.ttf#Resource Han Rounded CN") || title.CharacterSpacing != 35 ||
                 (double)new MainPage().Resources["NavigationViewItemOnLeftIconBoxHeight"] != 20 ||
-                !File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/Fonts/ChillRound.ttf")) ||
-                !File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/Fonts/ChillRound-LICENSE.txt")))
+                !File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/Fonts/ResourceHanRoundedCN-Regular.ttf")) ||
+                !File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/Fonts/ResourceHanRounded-LICENSE.md")))
                 throw new Exception("Rounded wordmark, vector icon or navigation alignment was not preserved.");
         });
         await CheckAsync("Room title stays visible and home branding stays hidden", async () =>
@@ -420,10 +420,10 @@ internal static class SmokeTests
             typography.Children.Add(sampleText);
             typography.Children.Add(sampleButton);
             typography.Children.Add(sampleInput);
-            await CheckWindow("Native YaHei UI controls in " + theme, () => window.Root.Content = typography, () =>
+            await CheckWindow("Bundled Sarasa UI controls in " + theme, () => window.Root.Content = typography, () =>
             {
                 foreach (var font in new[] { sampleText.FontFamily, sampleButton.FontFamily, sampleInput.FontFamily })
-                    if (font.Source != "Microsoft YaHei UI") throw new Exception("A control did not use the native interface font.");
+                    if (!font.Source.EndsWith("SarasaUiSC-Regular.ttf#Sarasa UI SC")) throw new Exception("A control did not use the selected Sarasa interface font.");
                 if (!File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/Fonts/ResourceHanRoundedCN-Regular.ttf")) ||
                     !File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/Fonts/ResourceHanRounded-LICENSE.md")))
                     throw new Exception("Resource Han Rounded font or license was missing.");

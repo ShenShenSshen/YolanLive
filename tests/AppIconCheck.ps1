@@ -37,6 +37,6 @@ function Get-IconPixels([string]$path) {
 }
 $expected = Get-IconPixels ([IO.Path]::GetFullPath($iconPath))
 foreach ($exe in $Executables) {
-    if ((Get-IconPixels ([IO.Path]::GetFullPath($exe))) -ne $expected) { throw "Executable does not embed the YolanLive D1 sail icon: $exe" }
-    'PASS embedded YolanLive D1 sail icon: ' + [IO.Path]::GetFileName($exe)
+    if ((Get-IconPixels ([IO.Path]::GetFullPath($exe))) -ne $expected) { throw "Executable does not embed the YolanLive D4 blue/cyan wing icon: $exe" }
+    'PASS embedded YolanLive D4 blue/cyan wing icon: ' + [IO.Path]::GetFileName($exe)
 }

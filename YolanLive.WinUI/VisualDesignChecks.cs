@@ -70,8 +70,16 @@ internal static class VisualDesignChecks
             {
                 var text = new TextBlock { Style = (Style)App.Current.Resources[spec.Item1], Text = "游岚 游戏直播 YolanLive" };
                 Check(text.FontSize == spec.Item2 && text.LineHeight == spec.Item3 && text.FontWeight.Weight == 400, "Incorrect text role " + spec.Item1);
+                var font = (FontFamily)App.Current.Resources[spec.Item1 == "PageTitleStyle" ? "HeadingFontFamily" : "ContentControlThemeFontFamily"];
+                Check(text.FontFamily.Source == font.Source, "Incorrect font family for " + spec.Item1);
                 Check(text.RenderTransform is not ScaleTransform, "Text must not be scaled");
             }
+            var uiFont = ((FontFamily)App.Current.Resources["ContentControlThemeFontFamily"]).Source;
+            Check(uiFont.EndsWith("SarasaUiSC-Regular.ttf#Sarasa UI SC") &&
+                ((FontFamily)App.Current.Resources["NavigationFontFamily"]).Source == uiFont &&
+                ((FontFamily)App.Current.Resources["LatinNumberFontFamily"]).Source == uiFont &&
+                File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/Fonts/SarasaUiSC-Regular.ttf")) &&
+                File.Exists(Path.Combine(AppContext.BaseDirectory, "Assets/Fonts/Sarasa-OFL.txt")), "UI fonts or redistributed license are incomplete.");
             await Task.CompletedTask;
         });
         foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })

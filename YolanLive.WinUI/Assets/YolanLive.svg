@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-  <title>游岚 YolanLive — 风中的帆 D1</title>
-  <rect x="12" y="12" width="232" height="232" rx="52" fill="#476C92"/>
-  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M151 48 C121 85 81 132 47 172 C80 167 110 186 143 190 C169 196 168 105 151 48 Z" stroke-width="10"/>
-    <path d="M182 90 C193 128 195 166 186 193" stroke-width="8"/>
-    <path d="M48 204 C94 190 144 232 211 208" stroke-width="7"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="512" height="512"><title>游岚 YolanLive — D4 蓝青风翼</title><rect x="3" y="3" width="114" height="114" rx="27" fill="#EFF8FC" /><path d="M25 44 C49 40 72 23 100 25 C83 33 72 51 49 56 C36 59 27 54 25 44 Z" fill="#5F91C9" stroke="none" stroke-width="0" stroke-linecap="round" stroke-linejoin="round" /><path d="M23 72 C44 68 62 52 87 52 C74 61 60 80 39 83 C30 85 24 80 23 72 Z" fill="#60B8BC" stroke="none" stroke-width="0" stroke-linecap="round" stroke-linejoin="round" /></svg>

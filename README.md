@@ -1,23 +1,23 @@
 # YolanLive（游岚）
 
-<img src="YolanLive.WinUI/Assets/YolanLive.png" width="80" alt="YolanLive 图标" />
+<img src="docs/branding/yolanlive-d4.png" width="80" height="80" alt="游岚 YolanLive 蓝青双色风翼图标" />
 
 A focused Windows game livestream viewer for Bilibili, Douyin, Huya and Douyu, built with WinUI 3.
 
 简洁的 Windows 游戏直播客户端。支持哔哩哔哩、抖音、虎牙和斗鱼，仅展示游戏分类，不显示弹幕。使用 WinUI 3，栏位采用磨砂材质，内容保持清晰。
 
-**已发布版本：v1.1.4 · Windows x64 · MIT**
+**已发布版本：v1.1.5 · Windows x64 · MIT**
 
-v1.1.4 整理关注与历史分组、本地筛选和窄窗口搜索；浏览窗口支持调整大小与最大化，分类增加找游戏和直接固定入口，优化图片展示及加载阶段提示，并补齐更新失败后的恢复操作。详见 [更新说明](RELEASE_NOTES.md) 和 [发布检查](docs/validation/release-1.1.4.md)。
+v1.1.5 更新为蓝青双色风翼图标，大标题保留圆体，导航、正文、按钮和数字统一使用随包提供的更纱黑体 UI SC；保留当前字号、布局及播放策略。详见 [更新说明](RELEASE_NOTES.md) 和 [发布检查](docs/validation/release-1.1.5.md)。
 
 ## 下载
 
-- [安装版 YolanLive-1.1.4-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/YolanLive-1.1.4-x64-Setup.exe)
-- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/YolanLive-x64.zip)
-- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/SHA256SUMS.txt)
+- [安装版 YolanLive-1.1.5-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.5/YolanLive-1.1.5-x64-Setup.exe)
+- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.5/YolanLive-x64.zip)
+- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.5/SHA256SUMS.txt)
 - [所有发布版本](https://github.com/ShenShenSshen/YolanLive/releases)
 
-GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh-proxy.org/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/YolanLive-1.1.4-x64-Setup.exe) / [线路二](https://ghfast.top/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.4/YolanLive-1.1.4-x64-Setup.exe)。两者是第三方服务，请与正式发布的 SHA-256 核对。旧客户端先安装 v1.1.3 及以上版本，后续更新才会自动使用加速；公共源及 GitHub API 的可用性仍取决于网络。
+GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh-proxy.org/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.5/YolanLive-1.1.5-x64-Setup.exe) / [线路二](https://ghfast.top/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.5/YolanLive-1.1.5-x64-Setup.exe)。两者是第三方服务，请与正式发布的 SHA-256 核对。旧客户端先安装 v1.1.3 及以上版本，后续更新才会自动使用加速；公共源及 GitHub API 的可用性仍取决于网络。
 
 安装版默认安装到当前用户目录，创建开始菜单入口，默认创建桌面快捷方式，可取消。便携版解压后运行 `YolanLive.exe`，请保留整个目录。
 
@@ -37,7 +37,7 @@ GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh
 
 ![游岚播放器：分组操作栏、亮度与窗口操作](docs/screenshots/player.png)
 
-截图沿用 v1.0.4 的隔离访客环境，展示主要功能；v1.0.7 起的字体、卡片及顶栏布局已有调整。截图不含日常账号信息；直播内容与平台目录会随时间变化。
+截图为 v1.0.4 隔离访客环境的功能示意，当前字体、布局与图标已有调整。截图不含日常账号信息；直播内容与平台目录会随时间变化。
 
 ## 功能
 
@@ -50,7 +50,7 @@ GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh
 - **浏览与播放窗口**：浏览时自由调整大小或最大化，返回恢复原窗口状态；播放保留 16:9 区域尺寸预设，主窗口和独立窗口分别记住位置。
 - **关注与历史**：关注按直播中、未开播、状态待确认分组，历史按今天、昨天、更早分组，均支持本地筛选；刷新保留可见位置和键盘焦点。支持 JSON 导入导出。
 - **账号登录**：哔哩哔哩扫码登录，抖音、虎牙、斗鱼使用各自官方网页登录，浏览器与加密会话分别保存；区分登录失效、网络失败与平台接口异常。
-- **外观与更新**：浅色影音 / 深色主题、磨砂栏位，圆体标题与导航搭配微软雅黑 UI 正文；每次启动检测正式更新，设置支持后台下载、免费加速、失败换源及断点续传，校验后由用户启动安装器。
+- **外观与更新**：浅色影音 / 深色主题、磨砂栏位，圆体大标题搭配更纱 UI SC 正文与导航，蓝青双色风翼图标；每次启动检测正式更新，设置支持后台下载、免费加速、失败换源及断点续传，校验后由用户启动安装器。
 - **资源使用**：窗口位置及音量延迟 500 毫秒合并保存；日志按天或 10 MB 滚动、最多保留 7 份归档和 7 天；首页、分类详情和搜索每页最多保留 300 个直播条目。
 
 公共数据请求复用连接、全应用最多并发 4 个，游戏目录缓存 10 分钟并合并重复加载；离开页面取消请求，最小化暂停列表检查。后台签名浏览器空闲后暂停或回收，图片按显示像素解码。实测方法、收益及限制见 [性能报告](PERFORMANCE_REPORT.md)。
@@ -106,6 +106,6 @@ dotnet run --project tests/WinUIDataCheck/WinUIDataCheck.csproj -c Release
 
 采用 [MIT 许可证](LICENSE)，保留原作者版权声明。与直播平台无官方关联。
 
-虎牙播放令牌所需 Tars 编解码复用原项目中的平台无关代码，遵循 BSD 3-Clause；正文使用微软雅黑 UI，标题与导航使用资源圆体，字标使用寒蝉圆体；原 MiSans 资源保留用于对照，各字体许可随程序携带。
+虎牙播放令牌所需 Tars 编解码复用原项目中的平台无关代码，遵循 BSD 3-Clause。大标题与字标使用资源圆体，其他界面文字及数字使用 [更纱黑体 UI SC](https://github.com/be5invis/Sarasa-Gothic)，原字体及其他许可随程序携带；旧字体资源保留用于对照，不需要安装系统字体。
 
 本地构建缓存默认放在项目的 artifacts/cache 下：nuget-packages 为本项目依赖，nuget-http 为下载缓存，temp 为编译、打包和自检临时文件。build-winui.ps1、build-installer.ps1、run-smoke-test.ps1 和隔离安装检查只在运行期间使用这些路径，不修改系统全局设置。直接运行 dotnet 命令时，项目依赖遵循 NuGet.Config；其他临时文件仍遵循当前终端的 TEMP/TMP 设置。

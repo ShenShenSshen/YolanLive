@@ -68,7 +68,7 @@
     </Style>
     <Style x:Key="BrowseSearchStyle" TargetType="AutoSuggestBox" BasedOn="{StaticResource DefaultAutoSuggestBoxStyle}">
         <Setter Property="TextBoxStyle" Value="{StaticResource BrowseSearchTextBoxStyle}"/>
-        <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
+        <Setter Property="FontFamily" Value="{StaticResource ContentControlThemeFontFamily}"/>
         <Setter Property="FontSize" Value="14"/><Setter Property="Height" Value="38"/>
         <Setter Property="CornerRadius" Value="19"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -115,7 +115,7 @@
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-    <Setter Property="FontFamily" Value="{StaticResource NavigationFontFamily}"/><Setter Property="Foreground" Value="{ThemeResource AppTextBrush}"/></Style>
+    <Setter Property="FontFamily" Value="{StaticResource HeadingFontFamily}"/><Setter Property="Foreground" Value="{ThemeResource AppTextBrush}"/></Style>
     <Style x:Key="ToolbarIconStyle" TargetType="Button">
         <Setter Property="Width" Value="36"/>
         <Setter Property="Height" Value="36"/>

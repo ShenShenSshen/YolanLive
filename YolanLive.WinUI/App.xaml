@@ -6,10 +6,11 @@
                 <ResourceDictionary Source="ms-appx:///ValueDictionary.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <x:String x:Key="AppDisplayName">游岚</x:String>
-            <FontFamily x:Key="ContentControlThemeFontFamily">Microsoft YaHei UI</FontFamily>
-            <FontFamily x:Key="NavigationFontFamily">ms-appx:///Assets/Fonts/ResourceHanRoundedCN-Regular.ttf#Resource Han Rounded CN</FontFamily>
-            <FontFamily x:Key="LatinNumberFontFamily">ms-appx:///Assets/Fonts/Satoshi-Regular.ttf#Satoshi, Microsoft YaHei UI</FontFamily>
-            <FontFamily x:Key="BrandFontFamily">ms-appx:///Assets/Fonts/ChillRound.ttf#寒蝉全圆体</FontFamily>
+            <FontFamily x:Key="ContentControlThemeFontFamily">ms-appx:///Assets/Fonts/SarasaUiSC-Regular.ttf#Sarasa UI SC</FontFamily>
+            <FontFamily x:Key="HeadingFontFamily">ms-appx:///Assets/Fonts/ResourceHanRoundedCN-Regular.ttf#Resource Han Rounded CN</FontFamily>
+            <StaticResource x:Key="NavigationFontFamily" ResourceKey="ContentControlThemeFontFamily"/>
+            <StaticResource x:Key="LatinNumberFontFamily" ResourceKey="ContentControlThemeFontFamily"/>
+            <StaticResource x:Key="BrandFontFamily" ResourceKey="HeadingFontFamily"/>
 
             <x:Double x:Key="BodyTextSize">14</x:Double>
             <x:Double x:Key="BodyLineHeight">22</x:Double>

@@ -1,0 +1,14 @@
+{
+  "font": "Sarasa UI SC Regular",
+  "upstreamVersion": "1.0.43",
+  "bytes": 24049996,
+  "sha256": "a50953ae631ba84ca5902b1c46463ce83068a37ea721131c025136e59174b68f",
+  "hintingTables": [
+    "cvt ",
+    "fpgm",
+    "prep"
+  ],
+  "license": "SIL OFL 1.1",
+  "licenseFile": "Assets/Fonts/Sarasa-OFL.txt",
+  "systemInstallRequired": false
+}

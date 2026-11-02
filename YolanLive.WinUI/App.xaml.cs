@@ -29,9 +29,15 @@ public partial class App : Application
         {
             var window = new MainWindow();
             RegisterWindow(window);
+            if (Environment.GetCommandLineArgs().Contains("--font-preview"))
+            {
+                TypographyPreview.Show(window);
+                return;
+            }
             try
             {
-                if (Environment.GetCommandLineArgs().Contains("--player-controls-check")) await WatchingChecks.RunControlsAsync();
+                if (Environment.GetCommandLineArgs().Contains("--font-preview-capture")) await TypographyPreview.CaptureAsync(window);
+                else if (Environment.GetCommandLineArgs().Contains("--player-controls-check")) await WatchingChecks.RunControlsAsync();
                 else if (Environment.GetCommandLineArgs().Contains("--random-browse-live")) await RandomBrowseChecks.LiveAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--random-browse-checks")) await RandomBrowseChecks.RunAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--visual-checks")) await VisualDesignChecks.RunAsync(window);
