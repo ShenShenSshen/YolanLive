@@ -101,8 +101,19 @@ internal static class BrowsingPolishChecks
                 {
                     window.AppWindow.Resize(new SizeInt32(width, 850)); await Task.Delay(100); page.UpdateLayout();
                     var tools = (Grid)page.FindName("CategoryTools");
+                    var compact = (Button)page.FindName("CompactGameFilter");
+                    Check((compact.Visibility == Visibility.Visible) == (tools.ActualWidth < 640), "Local search did not compact without adding a navigation row.");
+                    if (compact.Visibility == Visibility.Visible)
+                    {
+                        compact.Flyout.ShowAt(compact); await Task.Delay(80);
+                        Check(filter.Focus(FocusState.Keyboard), "Compact game search cannot receive keyboard focus.");
+                    }
                     Check(filter.ActualWidth > 100 && filter.ActualWidth <= tools.ActualWidth, "Local game search was clipped.");
-                    Check(Grid.GetRow(filter) == (tools.ActualWidth < 760 ? 1 : 0), "Local search failed to move below narrow navigation.");
+                    Check(Grid.GetRow(compact) == 0, "Local search added an unnecessary row.");
+                    filter.Text = "Alpha"; await Task.Delay(30);
+                    Check(games.Items.Count == 1 && ((LiveGameCategory)games.Items[0]).Name == "Alpha", "Compact search lost its existing live filter binding.");
+                    Check(((FrameworkElement)page.FindName("FilterMarker")).Visibility == Visibility.Visible, "Active compact filter is not indicated: width=" + width + "; input=" + filter.Text + "; name=" + Microsoft.UI.Xaml.Automation.AutomationProperties.GetName((Button)page.FindName("CompactGameFilter")));
+                    compact.Flyout.Hide();
                 }
                 filter.Text = "no-match"; await Task.Delay(50);
                 Check(games.Items.Count == 0, "Native text binding did not filter the view.");
@@ -111,6 +122,36 @@ internal static class BrowsingPolishChecks
                 window.Root.Content = page; await Task.Delay(80);
                 Check(filter.Text == "no-match" && games.Items.Count == 0 && calls == catalog.Calls, "Returning to an empty local filter reloaded/reset categories.");
                 filter.Text = ""; await Until(() => games.Items.Count > 0, "Clearing search did not restore cards.");
+            });
+            await Case("Game groups size to their names, wrap, retain single selection and show themed feedback", async () =>
+            {
+                filter.Text = "";
+                var picker = (ListView)page.FindName("GroupPicker");
+                foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
+                {
+                    page.RequestedTheme = theme;
+                    window.AppWindow.Resize(new SizeInt32(960, 650)); await Task.Delay(100); page.UpdateLayout();
+                    var first = (ListViewItem)picker.ContainerFromIndex(0);
+                    var second = (ListViewItem)picker.ContainerFromIndex(1);
+                    Check(second.ActualWidth >= first.ActualWidth + 20, "Short and long group labels still occupy equal-width slots.");
+                    var calls = catalog.Calls;
+                    var peer = FrameworkElementAutomationPeer.CreatePeerForElement(picker);
+                    var itemPeer = peer.GetChildren().FirstOrDefault(p => p.GetName() == "赛车竞速");
+                    var selection = itemPeer?.GetPattern(PatternInterface.SelectionItem) as ISelectionItemProvider;
+                    Check(selection != null, "Game group has no SelectionItem automation pattern through its owner: " + string.Join(",", peer.GetChildren().Select(p => p.GetType().Name + ":" + p.GetName())));
+                    selection.Select();
+                    await Task.Delay(180);
+                    Check(second.IsSelected && !first.IsSelected && second.Focus(FocusState.Keyboard), "Native single selection or keyboard focus was lost.");
+                    Check(games.Items.Count == 1 && ((LiveGameCategory)games.Items[0]).Name == "赛车" && catalog.Calls == calls, "Group selection lost its directory or generated a request.");
+                    var background = (Border)Children(second).First(e => e is Border b && b.Name == "GroupRoot");
+                    Check(((SolidColorBrush)background.Background).Color.A > 0 && background.CornerRadius.TopLeft == 8, "Selected group has no rounded visible feedback.");
+                    picker.Width = first.ActualWidth + 12;
+                    await Task.Delay(80); page.UpdateLayout();
+                    Check(second.TransformToVisual(picker).TransformPoint(new Windows.Foundation.Point()).Y > first.TransformToVisual(picker).TransformPoint(new Windows.Foundation.Point()).Y, "Group labels did not wrap when space ran out.");
+                    picker.ClearValue(FrameworkElement.WidthProperty);
+                }
+                page.RequestedTheme = ElementTheme.Default;
+                picker.SelectedIndex = 0;
             });
             await Case("Pin action supports card keyboard focus, invoke, persistent marker and recycling", async () =>
             {
@@ -197,7 +238,7 @@ internal static class BrowsingPolishChecks
             return Task.FromResult(new List<LiveCategory>
             {
                 new() { ID = "2", Name = "网游", Children = new() { new() { ID = "a", ParentID = "2", Name = "Alpha", Pic = "ms-appx:///Assets/YolanLive.png" } } },
-                new() { ID = "3", Name = "手游", Children = new() { new() { ID = "b", ParentID = "3", Name = "赛车", Pic = "ms-appx:///Assets/YolanLive.png" } } }
+                new() { ID = "3", Name = "赛车竞速", Children = new() { new() { ID = "b", ParentID = "3", Name = "赛车", Pic = "ms-appx:///Assets/YolanLive.png" } } }
             });
         }
     }

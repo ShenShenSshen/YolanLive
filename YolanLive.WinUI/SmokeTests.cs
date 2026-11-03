@@ -570,15 +570,20 @@ internal static class SmokeTests
         await CheckWindow("Category selected surface alignment and centered labels", () => window.Root.Content = categoryPreview, () =>
         {
             var groupContainer = (ListViewItem)groupsPreview.ContainerFromIndex(0);
-            var presenter = FindVisual<Microsoft.UI.Xaml.Controls.Primitives.ListViewItemPresenter>(groupContainer);
+            var groupSurface = FindVisual<Border>(groupContainer) ?? throw new Exception("Category selected surface is missing.");
+            var groupLabel = FindVisual<TextBlock>(groupContainer);
             var gameContainer = (GridViewItem)gamesPreview.ContainerFromIndex(0);
             var label = Descendants(gameContainer).OfType<TextBlock>().Single(t => t.Text == "策略卡牌");
             var card = (Border)gameContainer.ContentTemplateRoot;
-            var left = presenter.TransformToVisual(categoryPreview).TransformPoint(new Windows.Foundation.Point()).X;
+            var left = groupSurface.TransformToVisual(categoryPreview).TransformPoint(new Windows.Foundation.Point()).X;
             var cardLeft = card.TransformToVisual(categoryPreview).TransformPoint(new Windows.Foundation.Point()).X;
-            if (Math.Abs(left - cardLeft) > 1 || presenter.CornerRadius.TopLeft != 8 || card.CornerRadius.TopLeft != 10 ||
+            var textBounds = groupLabel.TransformToVisual(groupSurface).TransformBounds(new Windows.Foundation.Rect(0, 0, groupLabel.ActualWidth, groupLabel.ActualHeight));
+            if (Math.Abs(left - cardLeft) > 1 || groupSurface.CornerRadius.TopLeft != 8 || card.CornerRadius.TopLeft != 10 ||
+                !groupContainer.IsSelected || ((Microsoft.UI.Xaml.Media.SolidColorBrush)groupSurface.Background).Color.A == 0 ||
+                groupLabel.TextAlignment != TextAlignment.Center || Math.Abs(textBounds.X + textBounds.Width / 2 - groupSurface.ActualWidth / 2) > 1 ||
+                Math.Abs(textBounds.Y + textBounds.Height / 2 - groupSurface.ActualHeight / 2) > 1 ||
                 label.TextAlignment != TextAlignment.Center || label.VerticalAlignment != VerticalAlignment.Center)
-                throw new Exception($"Category surface mismatch: group left={left}, card left={cardLeft}, group radius={presenter.CornerRadius.TopLeft}, card radius={card.CornerRadius.TopLeft}, text={label.TextAlignment}/{label.VerticalAlignment}.");
+                throw new Exception($"Category surface mismatch: group left={left}, card left={cardLeft}, group radius={groupSurface.CornerRadius.TopLeft}, card radius={card.CornerRadius.TopLeft}, group text bounds={textBounds}, text={label.TextAlignment}/{label.VerticalAlignment}.");
         });
         foreach (var groupWidth in new[] { 520d, 280d })
             await CheckWindow("Full game-group labels at width " + groupWidth, () =>

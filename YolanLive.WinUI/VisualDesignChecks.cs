@@ -123,17 +123,8 @@ internal static class VisualDesignChecks
                 var root = (Grid)category.Content;
                 var search = (AutoSuggestBox)category.FindName("HeaderSearch");
                 var visibleSearch = search.Visibility == Visibility.Visible;
-                if (visibleSearch)
-                {
-                    var input = Children(search).OfType<TextBox>().FirstOrDefault();
-                    Check(navigation.AutoSuggestBox == null && input != null, "Top search duplicated the sidebar input");
-                    Check(search.ActualHeight == 38 && input.CornerRadius.TopLeft == 19 && input.TextAlignment == TextAlignment.Left,
-                        "Top search must retain its native rounded input and left alignment");
-                    var searchRight = search.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(search.ActualWidth, 0)).X;
-                    var refreshLeft = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).X;
-                    Check(searchRight + 11 <= refreshLeft, "Search and refresh overlap or lose their group spacing");
-                }
-                else Check(navigation.AutoSuggestBox == null && ((Button)category.FindName("CompactSearch")).Visibility == Visibility.Visible, "Narrow layout lost the fixed top search entry");
+                Check(!visibleSearch, "Category page shows both a global search input and a local game input.");
+                Check(navigation.AutoSuggestBox == null && ((Button)category.FindName("CompactSearch")).Visibility == Visibility.Visible, "Category layout lost the fixed global search entry");
                 var nativeHeader = Children(bar).OfType<Grid>().FirstOrDefault(g => g.Name == "PART_LayoutRoot");
                 Check(nativeHeader != null && nativeHeader.ActualHeight >= header.ActualHeight,
                     "Native titlebar clips the taller browser header");
@@ -170,17 +161,26 @@ internal static class VisualDesignChecks
                 }
                 var center = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(refresh.ActualWidth / 2, refresh.ActualHeight / 2));
                 Check(IsInteractive(center), "Native drag region intercepts refresh clicks: caption=" + string.Join(";", caption.Select(r => $"{r.X},{r.Y},{r.Width},{r.Height}")) + "; center=" + center);
-                if (visibleSearch)
-                {
-                    var searchCenter = search.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(search.ActualWidth / 2, search.ActualHeight / 2));
-                    Check(IsInteractive(searchCenter) && search.Focus(FocusState.Keyboard), "Top search is intercepted by window dragging or cannot receive keyboard focus");
-                }
                 if (((Border)category.FindName("PlatformSurface")).Parent == header)
                 {
                     var firstTab = (ListViewItem)platform.ContainerFromIndex(0);
                     var tabCenter = firstTab.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(firstTab.ActualWidth / 2, firstTab.ActualHeight / 2));
                     Check(IsInteractive(tabCenter), "Native drag region intercepts platform selection");
                 }
+                if (preset == "960×540")
+                    Check(((Border)category.FindName("PlatformSurface")).Parent == header, "Four platform labels unnecessarily overflow at 960x540.");
+                var globalSearch = (Button)category.FindName("CompactSearch");
+                var globalCenter = globalSearch.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(globalSearch.ActualWidth / 2, globalSearch.ActualHeight / 2));
+                Check(IsInteractive(globalCenter) && globalSearch.Focus(FocusState.Keyboard), "Global search icon is intercepted or inaccessible.");
+                var searchRight = globalSearch.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(globalSearch.ActualWidth, 0)).X;
+                var refreshLeft = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).X;
+                Check(searchRight + 11 <= refreshLeft, "Global search icon overlaps refresh.");
+                PageDesign.OpenSearch(globalSearch); await Task.Delay(60);
+                var globalInput = (AutoSuggestBox)((Flyout)globalSearch.Flyout).Content;
+                var input = Children(globalInput).OfType<TextBox>().FirstOrDefault();
+                Check(input != null && globalInput.ActualHeight == 38 && input.CornerRadius.TopLeft == 19 && input.TextAlignment == TextAlignment.Left && globalInput.Focus(FocusState.Keyboard),
+                    "Global search flyout lost its rounded usable input.");
+                globalSearch.Flyout.Hide();
                 await Capture(chrome, "merged-browser-" + theme + "-" + preset.Replace("×", "x") + (expanded ? "-expanded" : "") + ".png");
             }
             window.Root.Content = null; await Task.Delay(150);

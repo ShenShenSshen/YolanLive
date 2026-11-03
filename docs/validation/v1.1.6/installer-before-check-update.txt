@@ -1,0 +1,4 @@
+PASS user may decline the desktop shortcut
+PASS current-user install, version and default desktop shortcut with YolanLive D4 blue/cyan wing icon
+PASS upgrade replaces legacy shortcut icon paths with the current version icon
+PASS reinstall restores program files without duplicate installation

@@ -148,12 +148,17 @@ public static class PageDesign
         var available = Math.Max(0, bar.ActualWidth - captionInset - dragWidth - refresh.Width - 3 * header.ColumnSpacing - 8);
         var search = root.FindName("HeaderSearch") as AutoSuggestBox;
         var shell = GetShell(root);
-        var showSearch = search != null && available >= 80 + 180 && shell?.IsTopNavigation != true;
-        var compact = available < (showSearch ? 392 + 180 : 392 + 36);
+        var hasGameFilter = root.FindName("GameFilter") is AutoSuggestBox;
+        var picker = (ListView)root.FindName("PlatformPicker");
+        var tabWidth = (picker.ItemsPanelRoot as ItemsWrapGrid)?.ItemWidth ?? (hasGameFilter ? 88 : 96);
+        var platformWidth = picker.Items.Count * tabWidth + surface.Padding.Left + surface.Padding.Right;
+        // The category page keeps one visible input for its local game directory.
+        var showSearch = !hasGameFilter && search != null && available >= 80 + 180 && shell?.IsTopNavigation != true;
+        var compact = available < platformWidth + (showSearch ? 180 : 36);
         if (search != null)
         {
             search.Visibility = showSearch ? Visibility.Visible : Visibility.Collapsed;
-            search.Width = Math.Clamp(available - (compact ? 80 : 392), 180, 320);
+            search.Width = Math.Clamp(available - (compact ? 80 : platformWidth), 180, 320);
             var compactSearch = root.FindName("CompactSearch") as Button;
             if (compactSearch != null) compactSearch.Visibility = showSearch ? Visibility.Collapsed : Visibility.Visible;
             if (root.IsLoaded && shell != null && shell.ActivePage == GetPage(root)) shell.SetHeaderSearch(search, compactSearch);

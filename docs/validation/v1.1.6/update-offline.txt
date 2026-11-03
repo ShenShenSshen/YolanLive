@@ -1,0 +1,10 @@
+PASS Release validation
+PASS Download verification and cache
+PASS Version and network states
+PASS Background download and manual install
+PASS GitHub unavailable with free acceleration
+PASS Cancel and resume partial installer
+PASS Range ignored or malformed
+PASS Corrupt accelerator and direct fallback
+PASS Connect and stalled-body timeouts
+Profile=D:\Program Files (x86)\PlayWin\PlayWin\artifacts\cache\temp\YolanLive-smoke-test\update-15aeffb978114dc2abd7a3846be08944
