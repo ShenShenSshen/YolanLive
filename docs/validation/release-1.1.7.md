@@ -34,3 +34,19 @@
 ## 交付
 
 提供 `YolanLive-1.1.7-x64-Setup.exe`、`YolanLive-x64.zip` 和 `SHA256SUMS.txt`。覆盖升级保留数据，卸载清空数据，安装器仍未签名。发布后核对远端大小与 SHA-256，并同步旧 PlayWin 最新更新入口，避免旧客户端逐版本中转。
+
+## GitHub 交付结果
+
+已发布为[最新正式版 v1.1.7](https://github.com/ShenShenSshen/YolanLive/releases/tag/v1.1.7)，源码标签对应提交 `c0264c9`。三个文件先上传草稿，远端大小与 SHA-256 校验一致后再公开发布，非预发布。
+
+| 文件 | 字节数 | SHA-256 |
+| --- | ---: | --- |
+| YolanLive-1.1.7-x64-Setup.exe | 102104868 | `71d8b99665f733a74b4195b3902cdb4cb8c56d997e523de2d20eb5abe5a92c3d` |
+| YolanLive-x64.zip | 142416133 | `6eecf893f9a1f7feae72ef071b978842823f514381592f0c39d07713b4550fb2` |
+
+- `github-draft.json`、`github-published.json`、`remote-verification.txt`、`assets.json`：保留上传、正式发布与三个文件的远端核对结果。
+- `github-readme.json`：远端 README 的版本和下载链接正确，160×160 图标居中；三个截图的 Git blob SHA 与本地 PNG 完全一致。
+- `legacy-sync.txt`、`legacy-sync-check.txt`：旧 PlayWin 最新入口同为 v1.1.7，兼容文件 `PlayWin-1.1.7-x64-Setup.exe` 的字节数与 SHA-256 和正式安装器一致。
+- 原 v1.1.6 正式安装器 SHA-256 保持不变，没有覆盖历史正式包。
+
+本次未对日常安装执行新安装包，也未重新实测软件内无代理完整外网下载；上述未验证项与历史限制仍然有效。

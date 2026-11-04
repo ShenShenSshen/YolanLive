@@ -1,0 +1,1 @@
+PASS old PlayWin clients can update directly to v1.1.7; installer SHA-256 matches YolanLive.

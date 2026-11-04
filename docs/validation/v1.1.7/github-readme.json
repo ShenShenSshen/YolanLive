@@ -1,0 +1,24 @@
+{
+  "version": "1.1.7",
+  "iconWidth": 160,
+  "iconHeight": 160,
+  "centered": true,
+  "downloadLinksVerified": true,
+  "screenshots": [
+    {
+      "name": "categories.png",
+      "size": 243189,
+      "gitBlobSHA": "60e984e1b5dcd031d872a3d7d7918f2a69f0d66e"
+    },
+    {
+      "name": "home.png",
+      "size": 445121,
+      "gitBlobSHA": "7f9fc237b57f689a7238c4050984787c52511264"
+    },
+    {
+      "name": "player.png",
+      "size": 1066593,
+      "gitBlobSHA": "6e597be3e749a3d94a5a31a7d416c89427a6b4bb"
+    }
+  ]
+}
