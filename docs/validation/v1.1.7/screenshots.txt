@@ -1,0 +1,4 @@
+PASS home: current UI, guest Huya rooms=120
+PASS categories: current UI, guest Huya games=91
+INFO guest candidate did not play within 30 seconds
+PASS player: current UI, real guest stream, platform=虎牙

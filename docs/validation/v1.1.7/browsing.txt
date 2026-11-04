@@ -1,0 +1,8 @@
+PASS Room cover density stays near target width, retains 16:9 and fills each row
+PASS Local game filter spans groups without requests and restores group on clear
+PASS Category local search reflows and empty filtered results survive cached return
+PASS Game groups size to their names, wrap, retain single selection and show themed feedback
+PASS Pin action supports card keyboard focus, invoke, persistent marker and recycling
+PASS Game art keeps full aspect, 12 DIP safe area and a theme-readable backing
+PASS Cached content returns without replaying its page entrance
+PASS Loading stages follow real requests, cancel clears and stale responses cannot relaunch

@@ -1,0 +1,5 @@
+PASS absent: HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{37BB6116-23DA-47D6-A658-3118D9587CA2}_is1
+PASS absent: C:\Users\yaosh\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\游岚-test.lnk
+PASS absent: E:\user\yaos\Desktop\游岚-test.lnk
+PASS absent: D:\Program Files (x86)\PlayWin\PlayWin\artifacts\installer-test\app\YolanLive.exe
+PASS absent: D:\Program Files (x86)\PlayWin\PlayWin\artifacts\installer-test\userdata

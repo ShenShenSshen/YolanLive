@@ -1,0 +1,2 @@
+PASS embedded YolanLive D4 blue/cyan wing icon: YolanLive.exe
+PASS embedded YolanLive D4 blue/cyan wing icon: YolanLive-1.1.7-x64-Setup.exe

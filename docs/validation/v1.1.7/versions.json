@@ -1,0 +1,15 @@
+{
+  "installer": {
+    "fileVersion": "1.1.7.0",
+    "productVersion": "1.1.7",
+    "signature": "NotSigned"
+  },
+  "YolanLive.dll": {
+    "fileVersion": "1.1.7.0",
+    "signature": "NotSigned"
+  },
+  "YolanLive.exe": {
+    "fileVersion": "1.1.7.0",
+    "signature": "NotSigned"
+  }
+}

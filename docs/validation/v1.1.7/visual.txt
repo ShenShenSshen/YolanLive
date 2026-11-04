@@ -1,0 +1,35 @@
+PASS shared typography roles and native font sizes
+PASS merged browser header, sidebar and native caption clearance Light
+PASS merged browser header, sidebar and native caption clearance Dark
+PASS consistent top search and action overflow FavoritePage Light
+PASS consistent top search and action overflow HistoryPage Light
+PASS consistent top search and action overflow FavoritePage Dark
+PASS consistent top search and action overflow HistoryPage Dark
+PASS category alignment, wrapped platform labels and 4:3 art Light width=280
+PASS category alignment, wrapped platform labels and 4:3 art Light width=480
+PASS category alignment, wrapped platform labels and 4:3 art Light width=640
+PASS category alignment, wrapped platform labels and 4:3 art Light width=960
+PASS category alignment, wrapped platform labels and 4:3 art Light width=1280
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=280
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=480
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=640
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=960
+PASS category alignment, wrapped platform labels and 4:3 art Dark width=1280
+PASS quiet room cards keep rounded video and title details Light
+PASS quiet room cards keep rounded video and title details Dark
+PASS settings centered panel and responsive actions width=480
+PASS settings centered panel and responsive actions width=640
+PASS settings centered panel and responsive actions width=960
+PASS settings centered panel and responsive actions width=1280
+PASS retained category loading and in-place retry Light
+PASS retained category loading and in-place retry Dark
+INFO Light 1280×720 QualityLabel label=754.552001953125 value=754.552001953125
+INFO Light 1280×720 LineLabel label=754.552001953125 value=754.552001953125
+INFO Light 960×540 QualityLabel label=574.552001953125 value=574.552001953125
+INFO Light 960×540 LineLabel label=574.552001953125 value=574.552001953125
+INFO Dark 1280×720 QualityLabel label=754.552001953125 value=754.552001953125
+INFO Dark 1280×720 LineLabel label=754.552001953125 value=754.552001953125
+INFO Dark 960×540 QualityLabel label=574.552001953125 value=574.552001953125
+INFO Dark 960×540 LineLabel label=574.552001953125 value=574.552001953125
+PASS player quality and line labels align with selected text
+INFO actual rasterization scale=1; 150/200 percent physical font rendering and OS high contrast remain manual checks.

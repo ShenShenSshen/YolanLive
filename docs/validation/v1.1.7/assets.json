@@ -1,0 +1,17 @@
+[
+  {
+    "name": "YolanLive-1.1.7-x64-Setup.exe",
+    "bytes": 102104868,
+    "sha256": "71d8b99665f733a74b4195b3902cdb4cb8c56d997e523de2d20eb5abe5a92c3d"
+  },
+  {
+    "name": "YolanLive-x64.zip",
+    "bytes": 142416133,
+    "sha256": "6eecf893f9a1f7feae72ef071b978842823f514381592f0c39d07713b4550fb2"
+  },
+  {
+    "name": "SHA256SUMS.txt",
+    "bytes": 182,
+    "sha256": "4da87c20b33f6a1c0a7670396f0f131ae361e2055127c851301fdac1a2070813"
+  }
+]

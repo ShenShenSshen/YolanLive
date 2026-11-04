@@ -36,7 +36,8 @@ public partial class App : Application
             }
             try
             {
-                if (Environment.GetCommandLineArgs().Contains("--font-preview-capture")) await TypographyPreview.CaptureAsync(window);
+                if (Environment.GetCommandLineArgs().Contains("--readme-screenshots")) await ReadmeScreenshots.RunAsync(window);
+                else if (Environment.GetCommandLineArgs().Contains("--font-preview-capture")) await TypographyPreview.CaptureAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--player-controls-check")) await WatchingChecks.RunControlsAsync();
                 else if (Environment.GetCommandLineArgs().Contains("--random-browse-live")) await RandomBrowseChecks.LiveAsync(window);
                 else if (Environment.GetCommandLineArgs().Contains("--random-browse-checks")) await RandomBrowseChecks.RunAsync(window);

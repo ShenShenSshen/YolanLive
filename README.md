@@ -1,23 +1,24 @@
-# YolanLive（游岚）
-
-<img src="docs/branding/yolanlive-d4.png" width="80" height="80" alt="游岚 YolanLive 蓝青双色风翼图标" />
+<p align="center">
+  <img src="docs/branding/yolanlive-d4.png" width="160" height="160" alt="游岚 YolanLive 蓝青双色风翼图标" />
+</p>
+<h1 align="center">YolanLive（游岚）</h1>
 
 A focused Windows game livestream viewer for Bilibili, Douyin, Huya and Douyu, built with WinUI 3.
 
 简洁的 Windows 游戏直播客户端。支持哔哩哔哩、抖音、虎牙和斗鱼，仅展示游戏分类，不显示弹幕。使用 WinUI 3，栏位采用磨砂材质，内容保持清晰。
 
-**已发布版本：v1.1.6 · Windows x64 · MIT**
+**已发布版本：v1.1.7 · Windows x64 · MIT**
 
-v1.1.6 整理分类页的两层导航：平台保留下划线，大类按文字宽度排列并自动换行；收敛搜索输入框，改善窄窗口避让，保留更纱字体、当前配色与蓝青风翼图标。详见 [更新说明](RELEASE_NOTES.md) 和 [发布检查](docs/validation/release-1.1.6.md)。
+v1.1.7 修正播放器画质、线路标签与选中值的文字对齐，统一字号并保持垂直居中；项目介绍更新当前版本截图，图标放大居中。详见 [更新说明](RELEASE_NOTES.md) 和 [发布检查](docs/validation/release-1.1.7.md)。
 
 ## 下载
 
-- [安装版 YolanLive-1.1.6-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.6/YolanLive-1.1.6-x64-Setup.exe)
-- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.6/YolanLive-x64.zip)
-- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.6/SHA256SUMS.txt)
+- [安装版 YolanLive-1.1.7-x64-Setup.exe](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.7/YolanLive-1.1.7-x64-Setup.exe)
+- [便携版 YolanLive-x64.zip](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.7/YolanLive-x64.zip)
+- [SHA-256 校验文件](https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.7/SHA256SUMS.txt)
 - [所有发布版本](https://github.com/ShenShenSshen/YolanLive/releases)
 
-GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh-proxy.org/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.6/YolanLive-1.1.6-x64-Setup.exe) / [线路二](https://ghfast.top/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.6/YolanLive-1.1.6-x64-Setup.exe)。两者是第三方服务，请与正式发布的 SHA-256 核对。旧客户端先安装 v1.1.3 及以上版本，后续更新才会自动使用加速；公共源及 GitHub API 的可用性仍取决于网络。
+GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh-proxy.org/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.7/YolanLive-1.1.7-x64-Setup.exe) / [线路二](https://ghfast.top/https://github.com/ShenShenSshen/YolanLive/releases/download/v1.1.7/YolanLive-1.1.7-x64-Setup.exe)。两者是第三方服务，请与正式发布的 SHA-256 核对。旧客户端先安装 v1.1.3 及以上版本，后续更新才会自动使用加速；公共源及 GitHub API 的可用性仍取决于网络。
 
 安装版默认安装到当前用户目录，创建开始菜单入口，默认创建桌面快捷方式，可取消。便携版解压后运行 `YolanLive.exe`，请保留整个目录。
 
@@ -27,17 +28,17 @@ GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh
 
 ### 首页
 
-![游岚首页：四平台切换与游戏直播卡片](docs/screenshots/home.png)
+![游岚 v1.1.7 首页：四平台切换与游戏直播卡片](docs/screenshots/v1.1.7/home.png)
 
 ### 游戏分类
 
-![游岚游戏分类：上图下名与游戏大类导航](docs/screenshots/categories.png)
+![游岚 v1.1.7 游戏分类：上图下名与两层导航](docs/screenshots/v1.1.7/categories.png)
 
 ### 播放器
 
-![游岚播放器：分组操作栏、亮度与窗口操作](docs/screenshots/player.png)
+![游岚 v1.1.7 播放器：分组操作栏与对齐后的画质、线路选项](docs/screenshots/v1.1.7/player.png)
 
-截图为 v1.0.4 隔离访客环境的功能示意，当前字体、布局与图标已有调整。截图不含日常账号信息；直播内容与平台目录会随时间变化。
+截图采集于 v1.1.7 隔离访客环境，展示当前字体、布局与真实平台内容，不含日常账号信息；直播内容与平台目录会随时间变化。
 
 ## 功能
 
@@ -98,7 +99,7 @@ dotnet run --project tests/WinUIDataCheck/WinUIDataCheck.csproj -c Release
 
 脚本从 YolanLive 的最新正式发布读取版本，将同一安装包以旧客户端识别的 PlayWin 文件名发布到旧仓库；发布前后核对大小与 SHA-256，不覆盖历史正式包。旧版可一次覆盖升级至最新版，之后使用 YolanLive 更新源。
 
-本次发布检查及限制见 [v1.1.6 发布检查](docs/validation/release-1.1.6.md)，更新下载的受控与实网结果见 [加速验证](docs/validation/update-acceleration.md)。测试使用 D 盘隔离访客目录，不读取日常账号。本轮不重复四平台全线路、150%/200% 实机缩放、系统高对比度切换及长期性能验收；既有窗口尺寸、虎牙线路等失败记录继续保留。程序和安装器仍未签名。
+本次发布检查及限制见 [v1.1.7 发布检查](docs/validation/release-1.1.7.md)，更新下载的受控与实网结果见 [加速验证](docs/validation/update-acceleration.md)。测试使用 D 盘隔离访客目录，不读取日常账号。本轮不重复四平台全线路、150%/200% 实机缩放、系统高对比度切换及长期性能验收；既有窗口尺寸、虎牙线路等失败记录继续保留。程序和安装器仍未签名。
 
 ## 来源与许可证
 

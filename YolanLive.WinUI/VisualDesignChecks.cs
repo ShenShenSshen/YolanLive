@@ -45,6 +45,7 @@ internal static class VisualDesignChecks
         var failed = false;
         async Task Case(string name, Func<Task> check)
         {
+            if (Environment.GetCommandLineArgs().Contains("--player-options-only") && !name.StartsWith("player quality")) return;
             try { await check(); report.Add("PASS " + name); }
             catch (Exception ex) { failed = true; report.Add("FAIL " + name + "\n" + ex); }
             File.WriteAllLines(Path.Combine(folder, "visual-checks.log"), report);
@@ -360,6 +361,51 @@ internal static class VisualDesignChecks
                     "The visible retry control did not recover its current page");
             }
             finally { window.Root.Content = null; MainVM.Sites = originalSites; MainVM.BrowseSite = originalSite; GameCatalog.Invalidate(api); }
+        });
+        await Case("player quality and line labels align with selected text", async () =>
+        {
+            var page = new Views.LiveRoomPage();
+            try
+            {
+                foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
+                foreach (var preset in new[] { "1280×720", "960×540" })
+                {
+                    page.RequestedTheme = theme;
+                    window.ApplyWindowSize(preset);
+                    await Show(page);
+                    foreach (var name in new[] { "PlayQuality", "PlayLine" })
+                    {
+                        var combo = (ComboBox)page.FindName(name);
+                        combo.ClearValue(ItemsControl.ItemsSourceProperty);
+                        combo.ClearValue(Selector.SelectedItemProperty);
+                        combo.ItemsSource = name == "PlayQuality"
+                            ? new object[] { new LivePlayQuality { Quality = "蓝光" } }
+                            : new object[] { new PlayurlLine { Name = "线路2" } };
+                        combo.SelectedIndex = 0;
+                    }
+                    await Task.Delay(80); page.UpdateLayout();
+                    await Capture((FrameworkElement)page.FindName("control"), "player-options-" + theme + "-" + preset.Replace('×', 'x') + ".png");
+                    foreach (var names in new[] { ("QualityLabel", "PlayQuality"), ("LineLabel", "PlayLine") })
+                    {
+                        var label = (TextBlock)page.FindName(names.Item1);
+                        var combo = (ComboBox)page.FindName(names.Item2);
+                        var selected = Children(combo).OfType<TextBlock>().First(t => t.Text == (names.Item2 == "PlayQuality" ? "蓝光" : "线路2"));
+                        var labelBaseline = label.TransformToVisual(page).TransformPoint(new Windows.Foundation.Point(0, label.BaselineOffset)).Y;
+                        var valueBaseline = selected.TransformToVisual(page).TransformPoint(new Windows.Foundation.Point(0, selected.BaselineOffset)).Y;
+                        var detail = theme + " " + preset + " " + names.Item1 + " label=" + labelBaseline + " value=" + valueBaseline;
+                        report.Add("INFO " + detail);
+                        if (label.Visibility == Visibility.Visible)
+                            Check(Math.Abs(labelBaseline - valueBaseline) <= .5, "Player option text baselines differ: " + detail);
+                        var frame = (FrameworkElement)VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(combo));
+                        var arrow = Children(combo).OfType<FrameworkElement>().First(e => e.Name == "DropDownGlyph");
+                        var valueRight = selected.TransformToVisual(frame).TransformPoint(new Windows.Foundation.Point(selected.ActualWidth, 0)).X;
+                        var arrowLeft = arrow.TransformToVisual(frame).TransformPoint(default).X;
+                        Check(valueRight <= arrowLeft + 1, "Selected option overlaps its arrow: " + detail);
+                    }
+                    await Capture((FrameworkElement)page.FindName("control"), "player-options-" + theme + "-" + preset.Replace('×', 'x') + ".png");
+                }
+            }
+            finally { window.Root.Content = null; }
         });
         report.Add("INFO actual rasterization scale=" + window.Root.XamlRoot.RasterizationScale + "; 150/200 percent physical font rendering and OS high contrast remain manual checks.");
         File.WriteAllLines(Path.Combine(folder, "visual-checks.log"), report);
