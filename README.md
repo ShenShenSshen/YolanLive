@@ -5,7 +5,7 @@
 
 A focused Windows game livestream viewer for Bilibili, Douyin, Huya and Douyu, built with WinUI 3.
 
-简洁的 Windows 游戏直播客户端。支持哔哩哔哩、抖音、虎牙和斗鱼，仅展示游戏分类，不显示弹幕。使用 WinUI 3，栏位采用磨砂材质，内容保持清晰。
+简洁的 Windows 游戏直播客户端。支持哔哩哔哩、抖音、虎牙和斗鱼，仅展示游戏分类，不显示弹幕。使用 WinUI 3，栏位采用磨砂材质，内容保持清晰。已经做过内存和磁盘频率的优化
 
 **已发布版本：v1.1.7 · Windows x64 · MIT**
 
