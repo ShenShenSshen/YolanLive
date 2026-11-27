@@ -28,17 +28,21 @@ GitHub 安装包无法下载时，可尝试公共加速：[线路一](https://gh
 
 ### 首页
 
-![游岚 v1.1.7 首页：四平台切换与游戏直播卡片](docs/screenshots/v1.1.7/home.png)
+![游岚 v1.1.8 首页，展示接着看、常看游戏和直播卡片](docs/screenshots/v1.1.8/home.png)
 
 ### 游戏分类
 
-![游岚 v1.1.7 游戏分类：上图下名与两层导航](docs/screenshots/v1.1.7/categories.png)
+![游岚 v1.1.8 游戏分类，展示跨平台游戏目录、大类和游戏搜索](docs/screenshots/v1.1.8/categories.png)
+
+### 游戏详情
+
+![游岚 v1.1.8 英雄联盟游戏详情，当前选择虎牙，右侧提供随便逛逛](docs/screenshots/v1.1.8/game-detail.png)
 
 ### 播放器
 
-![游岚 v1.1.7 播放器：分组操作栏与对齐后的画质、线路选项](docs/screenshots/v1.1.7/player.png)
+![游岚 v1.1.7 播放器，展示分组操作栏与对齐后的画质、线路选项](docs/screenshots/v1.1.7/player.png)
 
-上方为 v1.1.7 隔离访客环境中的实拍截图。v1.1.8 的首页和分类改动见更新说明。
+首页、游戏分类和游戏详情为 v1.1.8 隔离访客环境实拍，使用公开直播与游戏目录。首页的「接着看」和常看游戏使用演示记录。播放器截图来自 v1.1.7。
 
 ## 功能
 
