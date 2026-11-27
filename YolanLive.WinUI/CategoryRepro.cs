@@ -157,16 +157,8 @@ internal static class CategoryRepro
                 if (grid.Items.Count > 0)
                 {
                     File.AppendAllText(Report, "LOADED categories=" + grid.Items.Count + "\n");
-                    var picker = (ListView)page.FindName("PlatformPicker");
-                    picker.SelectedItem = picker.Items.Single(i => ((ViewModels.Site)i).LiveSite is YolanLive.Core.Douyin);
-                    for (var wait = 0; wait < 150 && !grid.Items.Cast<LiveGameCategory>().Any(c => c.Name == "射击游戏"); wait++) await Task.Delay(100);
-                    if (!grid.Items.Cast<LiveGameCategory>().Any(c => c.Name == "射击游戏") || grid.Items.Cast<LiveGameCategory>().Any(c => c.Sources.Any(s => s.Site is not YolanLive.Core.Douyin)))
-                        throw new InvalidOperationException("抖音游戏分类没有正确恢复");
-                    File.AppendAllText(Report, "PASS platform switch: Douyin categories=" + grid.Items.Count + "\n");
-                    picker.SelectedItem = picker.Items.Single(i => ((ViewModels.Site)i).LiveSite is YolanLive.Core.BiliBili);
-                    for (var wait = 0; wait < 150 && !grid.Items.Cast<LiveGameCategory>().Any(c => c.Name == "英雄联盟"); wait++) await Task.Delay(100);
-                    if (grid.Items.Count == 0 || grid.Items.Cast<LiveGameCategory>().Any(c => c.Sources.Any(s => s.Site is not YolanLive.Core.BiliBili))) throw new InvalidOperationException("平台切换后分类混入其他来源");
-                    var category = grid.Items.Cast<LiveGameCategory>().FirstOrDefault(c => c.Name == "英雄联盟") ?? (LiveGameCategory)grid.Items[0];
+                    var category = grid.Items.Cast<LiveGameCategory>().FirstOrDefault(game => game.Name == "英雄联盟") ?? (LiveGameCategory)grid.Items[0];
+                    File.AppendAllText(Report, "Directory game platform mappings=" + category.Sources.Select(source => source.Site.Name).Distinct().Count() + "\n");
                     File.AppendAllText(Report, "CLICK game " + category.Name + "\n");
                     Helper.MessageCenter.NavigatePage(typeof(Views.CategoryDetailPage), category);
                     await Task.Delay(4000);

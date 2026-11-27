@@ -9,7 +9,7 @@ using System.Linq;
 namespace YolanLive.WinUI.Views;
 public sealed partial class CategoryPage : Page
 {
-    readonly CategoryVM categoryVM = new();
+    readonly CategoryVM categoryVM = new(combined: true);
     long? filterTextToken;
     public CategoryPage()
     {
@@ -21,25 +21,12 @@ public sealed partial class CategoryPage : Page
             filterTextToken = null;
         };
         NavigationCacheMode = NavigationCacheMode.Enabled;
-        GroupPicker.SelectionChanged += (_, change) =>
-        {
-            PlatformTabAnimation.Play(GroupPicker, change);
-            if (!categoryVM.Loading && change.AddedItems.Count > 0) categoryVM.FilterText = "";
-        };
-        PlatformPicker.ItemsSource = MainVM.Sites;
-        PlatformPicker.SelectedItem = MainVM.BrowseSite;
         Loaded += (_, _) =>
         {
             filterTextToken ??= GameFilter.RegisterPropertyChangedCallback(AutoSuggestBox.TextProperty, (_, _) => UpdateGameFilter());
             UpdateGameFilter();
-            if (PlatformPicker.SelectedItem != MainVM.BrowseSite) PlatformPicker.SelectedItem = MainVM.BrowseSite;
-            else if (categoryVM.Groups.Count == 0) _ = LoadCategoriesAsync();
-            else _ = categoryVM.CompletePicturesAsync();
+            if (!categoryVM.HasDirectory) _ = categoryVM.LoadAsync();
         };
-    }
-    private async System.Threading.Tasks.Task LoadCategoriesAsync()
-    {
-        await categoryVM.LoadAsync();
     }
     private void CategoryTools_SizeChanged(object sender, SizeChangedEventArgs args)
     {
@@ -62,8 +49,8 @@ public sealed partial class CategoryPage : Page
     }
     private void UpdateGameFilter()
     {
-        var name = "在" + MainVM.BrowseSite.Label + "找游戏";
-        GameFilter.PlaceholderText = name;
+        var name = "找游戏";
+        GameFilter.PlaceholderText = "输入游戏名";
         AutomationProperties.SetName(GameFilter, name);
         if (!string.IsNullOrWhiteSpace(GameFilter.Text)) name += "：" + GameFilter.Text;
         ToolTipService.SetToolTip(CompactGameFilter, name);
@@ -71,31 +58,26 @@ public sealed partial class CategoryPage : Page
         FilterMarker.Visibility = string.IsNullOrWhiteSpace(GameFilter.Text) ? Visibility.Collapsed : Visibility.Visible;
     }
     private void GameFilterFlyout_Opened(object sender, object args) => GameFilter.Focus(FocusState.Programmatic);
-    private async void PlatformPicker_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (!IsLoaded) return;
-        if (PlatformPicker.SelectedItem is not Site site) return;
-        PlatformTabAnimation.Play(PlatformPicker, e);
-        MainVM.BrowseSite = site;
-        UpdateGameFilter();
-        await LoadCategoriesAsync();
-    }
     private void GamesGrid_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
     {
         args.ItemContainer.ContextFlyout = null;
         // Preserve the URL binding when recycling. DecodedImage releases pixels on Unloaded.
         if (args.InRecycleQueue) return;
         if (args.Item is not LiveGameCategory game || game.Sources == null || game.Sources.Count == 0) return;
-        var site = MainVM.Sites.Single(s => s.LiveSite == game.Sources[0].Site);
-        var action = new MenuFlyoutItem();
         var menu = new MenuFlyout();
-        menu.Items.Add(action);
-        menu.Opening += (_, _) => action.Text = BrowsePreferences.IsPinned(site, game) ? "取消固定" : "固定到首页";
-        action.Click += (_, _) =>
+        foreach (var site in MainVM.Sites.Where(site => game.Sources.Any(source => source.Site == site.LiveSite)))
         {
-            if (!BrowsePreferences.TogglePin(site, game)) Utils.ShowMessageToast("每个平台最多固定 6 个游戏，请先移除已有入口");
-            if (args.ItemContainer.ContentTemplateRoot is FrameworkElement root) GameCard.Refresh(root);
-        };
+            var platformGame = BrowsePreferences.ForSite(site, game);
+            var action = new MenuFlyoutItem();
+            menu.Items.Add(action);
+            menu.Opening += (_, _) =>
+                action.Text = site.Label + "：" + (BrowsePreferences.IsPinned(site, platformGame) ? "取消固定" : "固定到首页");
+            action.Click += (_, _) =>
+            {
+                if (!BrowsePreferences.TogglePin(site, platformGame)) Utils.ShowMessageToast("每个平台最多固定 6 个游戏，请先移除已有入口");
+                if (args.ItemContainer.ContentTemplateRoot is FrameworkElement root) GameCard.Refresh(root);
+            };
+        }
         args.ItemContainer.ContextFlyout = menu;
     }
     private void GridView_ItemClick(object sender, ItemClickEventArgs e)

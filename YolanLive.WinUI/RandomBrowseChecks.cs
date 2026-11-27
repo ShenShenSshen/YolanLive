@@ -31,6 +31,64 @@ internal static class RandomBrowseChecks
         try
         {
             await DatabaseHelper.InitializeDatabase();
+            await Test("Game scope bypasses the homepage pool and remains fixed across prefetch and history", async () =>
+            {
+                var site = new FixtureSite { SiteName = "Scoped platform", GameRooms = new[] { "game-1", "game-2", "game-3" } };
+                var other = new FixtureSite { SiteName = "Other platform", GameRooms = new[] { "other-1" } };
+                MainVM.Sites = new() { new() { LiveSite = site, Name = site.SiteName } };
+                var warm = await RandomLive.PickPreparedAsync(CancellationToken.None);
+                Check(warm.Room.RoomID == "next-room", "The ordinary homepage fixture did not warm its own pool.");
+                MainVM.Sites.Add(new() { LiveSite = other, Name = other.SiteName });
+                var scope = new List<LiveGameSource> { new() { Site = site, Category = new() { ID = "chosen-game", ParentID = "2" } } };
+                var first = await RandomLive.PickPreparedAsync(CancellationToken.None, gameScope: scope);
+                Check(first.Room.Source == site && site.GameRooms.Contains(first.Room.RoomID), "First scoped pick came from the homepage pool.");
+                var session = new RandomBrowseSession(first.Room, first, scope);
+                try
+                {
+                    scope[0] = new() { Site = other, Category = new() { ID = "different-game", ParentID = "2" } };
+                    await session.PrefetchNextAsync();
+                    var next = await session.FindAsync(true, CancellationToken.None);
+                    Check(next.Room.Source == site && next.Room.RoomID != first.Room.RoomID && next.Prepared != null,
+                        "Prefetch escaped the original filter or repeated the current room.");
+                    session.Commit(next);
+
+                    var back = await session.FindAsync(false, CancellationToken.None);
+                    Check(back.Room.RoomID == first.Room.RoomID && !back.IsNew, "Previous did not use the current session history.");
+                    session.Commit(back);
+                    var forward = await session.FindAsync(true, CancellationToken.None);
+                    Check(forward.Room.RoomID == next.Room.RoomID && !forward.IsNew, "Next did not follow history after going back.");
+                    session.Commit(forward);
+
+                    var last = await session.FindAsync(true, CancellationToken.None);
+                    Check(last.IsNew && last.Room.Source == site && last.Room.RoomID != next.Room.RoomID &&
+                          last.Room.RoomID != first.Room.RoomID, "A fresh next escaped the scope or repeated a room.");
+                    session.Commit(last);
+                    Check(await session.FindAsync(true, CancellationToken.None) == null, "An exhausted game fell back to other rooms.");
+                    Check(other.RequestedPartitions.Count == 0 && site.RequestedPartitions.Skip(1).All(id => id == "chosen-game"),
+                        "Scoped browsing queried an unrelated platform or partition.");
+                }
+                finally { session.End(); }
+                var home = await RandomLive.PickPreparedAsync(CancellationToken.None, excluded: new HashSet<string> { other.SiteName + ":next-room" });
+                Check(home?.Room.RoomID == "next-room", "Scoped candidates polluted the homepage pool.");
+            });
+            await Test("All-platform game scope includes only matching partitions and survives one platform failure", async () =>
+            {
+                var first = new FixtureSite { SiteName = "Failing game platform", FailGameRooms = true };
+                var second = new FixtureSite { SiteName = "Working game platform", GameRooms = new[] { "same-game" } };
+                var unrelated = new FixtureSite { SiteName = "Unmapped platform" };
+                MainVM.Sites = new[] { first, second, unrelated }.Select(site => new Site { LiveSite = site, Name = site.SiteName }).ToList();
+                var scope = new LiveGameSource[]
+                {
+                    new() { Site = first, Category = new() { ID = "first-id", ParentID = "2" } },
+                    new() { Site = second, Category = new() { ID = "second-id", ParentID = "2" } }
+                };
+                var picked = await RandomLive.PickPreparedAsync(CancellationToken.None, gameScope: scope);
+                Check(picked?.Room.Source == second && second.RequestedPartitions.SequenceEqual(new[] { "second-id" }) &&
+                    first.RequestedPartitions.All(id => id == "first-id") && unrelated.RequestedPartitions.Count == 0,
+                    "Selecting all platforms discarded the working game partition or queried an unmapped platform.");
+                Check(await RandomLive.PickPreparedAsync(CancellationToken.None, gameScope: Array.Empty<LiveGameSource>()) == null,
+                    "An empty game scope fell back to homepage results.");
+            });
             await Test("Prepared selection reaches the real player view model without a second detail request", async () =>
             {
                 var site = new FixtureSite();
@@ -296,6 +354,11 @@ internal static class RandomBrowseChecks
     internal sealed class FixtureSite : BiliBili, ILiveSite
     {
         internal int DetailCalls, QualityCalls, UrlCalls;
+        internal string SiteName = "哔哩哔哩直播";
+        string ILiveSite.Name => SiteName;
+        internal string[] GameRooms = Array.Empty<string>();
+        internal bool FailGameRooms;
+        internal readonly List<string> RequestedPartitions = new();
         internal string StreamUrl = "https://example.invalid/not-downloaded.flv";
         internal bool HoldNext, HoldNextQuality;
         internal Task<List<string>> PendingUrls;
@@ -308,7 +371,13 @@ internal static class RandomBrowseChecks
         public new Task<List<LiveCategory>> GetCategores(CancellationToken cancellationToken)
             => Task.FromResult(new List<LiveCategory> { new() { ID = "2", Children = new() { new() { ID = "0", ParentID = "2", Name = "Game" } } } });
         public new Task<LiveCategoryResult> GetCategoryRooms(LiveSubCategory category, int page, CancellationToken cancellationToken)
-            => Task.FromResult(new LiveCategoryResult { Rooms = new() { new() { RoomID = "next-room", IsLive = true } } });
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            RequestedPartitions.Add(category.ID);
+            if (category.ID != "0" && FailGameRooms) throw new InvalidOperationException("Isolated partition failure");
+            var ids = category.ID == "0" ? new[] { "next-room" } : GameRooms;
+            return Task.FromResult(new LiveCategoryResult { Rooms = ids.Select(id => new LiveRoomItem { RoomID = id, IsLive = true }).ToList() });
+        }
         public new async Task<LiveRoomDetail> GetRoomDetail(object roomId, CancellationToken cancellationToken)
         {
             DetailCalls++;

@@ -22,31 +22,62 @@
  </Border>
  </ControlTemplate></Setter.Value></Setter>
  <Setter Property="FontSize" Value="14"/><Setter Property="FontFamily" Value="{StaticResource NavigationFontFamily}"/></Style>
- <Style x:Key="CategoryPlatformTabStyle" TargetType="ListViewItem" BasedOn="{StaticResource PlatformTabStyle}"><Setter Property="Margin" Value="0"/></Style>
+
+ <DataTemplate x:Key="DirectoryGameTemplate">
+     <Border CornerRadius="8" Padding="8,9" Background="Transparent" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1"
+             design:GameCard.Pinning="True" ToolTipService.ToolTip="{Binding Name}">
+         <Grid ColumnSpacing="10">
+             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+             <Border Width="52" Height="52" CornerRadius="8" Background="{ThemeResource GameArtworkBrush}">
+                 <Grid>
+                     <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="22" Glyph="&#xE7FC;"
+                               Foreground="{ThemeResource GameArtworkForegroundBrush}"
+                               Visibility="{Binding ElementName=GameImage, Path=(perf:DecodedImage.HasPicture), Converter={StaticResource displayConvert}}"/>
+                     <Image x:Name="GameImage" Stretch="Uniform" perf:DecodedImage.Url="{Binding Pic}" AutomationProperties.AccessibilityView="Raw"/>
+                 </Grid>
+             </Border>
+             <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Center"
+                        TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+             <FontIcon Grid.Column="2" FontFamily="{StaticResource SegoeFluent}" FontSize="12" Glyph="&#xE76C;" Foreground="{ThemeResource AppSecondaryBrush}"/>
+             <Button x:Name="PinGame" Grid.Column="2" Width="28" Height="28" MinWidth="0" Padding="2" Opacity="0" IsHitTestVisible="False"
+                     Background="{ThemeResource AppHoverBrush}" Foreground="{ThemeResource AppAccentBrush}"><SymbolIcon Symbol="Pin"/></Button>
+         </Grid>
+     </Border>
+ </DataTemplate>
  </Page.Resources>
  <Grid x:Name="PageLayoutRoot" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" design:PageDesign.Insets="True"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
  <StackPanel Margin="0,0,0,16" Spacing="12">
- <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" MinHeight="72" ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="CompactPageTitle" Text="分类" Style="{StaticResource PageTitleStyle}" Visibility="Collapsed"/><Border x:Name="PlatformSurface" Padding="0" VerticalAlignment="Center" HorizontalAlignment="Left" CornerRadius="12" Background="Transparent" BorderBrush="{ThemeResource BrowsingOutlineBrush}" BorderThickness="0">
- <ListView design:PlatformTabAnimation.Underline="True" x:Name="PlatformPicker" Padding="0" ItemsSource="{x:Bind viewModels:MainVM.Sites}" SelectionChanged="PlatformPicker_SelectionChanged" SelectionMode="Single" IsMultiSelectCheckBoxEnabled="False" HorizontalAlignment="Left" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.VerticalScrollMode="Disabled" ItemContainerStyle="{StaticResource CategoryPlatformTabStyle}" AutomationProperties.Name="直播平台">
- <ListView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" ItemWidth="88" ItemHeight="44"/></ItemsPanelTemplate></ListView.ItemsPanel>
- <ListView.ItemTemplate><DataTemplate><Grid Height="32"><TextBlock Style="{StaticResource NavigationTextStyle}" Text="{Binding Label}" FontSize="{StaticResource BodyTextSize}" Margin="0" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" LineHeight="20" FontFamily="{StaticResource NavigationFontFamily}"/><Border x:Name="PlatformUnderline" Width="56" Height="2" CornerRadius="1" VerticalAlignment="Bottom" HorizontalAlignment="Center" Background="{ThemeResource AppAccentBrush}" Visibility="Collapsed" IsHitTestVisible="False"/></Grid></DataTemplate></ListView.ItemTemplate>
- </ListView>
- </Border><AutoSuggestBox x:Name="HeaderSearch" Grid.Column="2" design:PageDesign.Search="True" Style="{StaticResource BrowseSearchStyle}" Width="240" PlaceholderText="全平台搜索或粘贴链接" QueryIcon="Find" AutomationProperties.Name="全平台搜索或直播链接"/><Button x:Name="CompactSearch" Grid.Column="2" Style="{StaticResource ToolbarIconStyle}" Visibility="Collapsed" ToolTipService.ToolTip="全平台搜索" AutomationProperties.Name="全平台搜索" design:PageDesign.CompactSearch="True"><SymbolIcon Symbol="Find"/></Button><Button x:Name="HeaderRefresh" IsEnabled="{x:Bind categoryVM.CanRefresh, Mode=OneWay}" Grid.Column="3" Margin="0" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind categoryVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新"><Grid><FontIcon Visibility="{x:Bind categoryVM.CanRefresh, Mode=OneWay}" FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/><ProgressRing Width="16" Height="16" IsActive="{x:Bind categoryVM.Loading, Mode=OneWay}" Visibility="{x:Bind categoryVM.Loading, Mode=OneWay}"/></Grid></Button></Grid></TitleBar>
- <Border x:Name="PlatformOverflowHost" Visibility="Collapsed" HorizontalAlignment="Left"/>
+ <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}">
+     <Grid x:Name="BrowseHeader" MinHeight="64" ColumnSpacing="12">
+         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+         <TextBlock x:Name="PageTitle" Text="找游戏" Style="{StaticResource PageTitleStyle}" TextTrimming="CharacterEllipsis"/>
+         <AutoSuggestBox x:Name="HeaderSearch" Grid.Column="2" design:PageDesign.Search="True" Style="{StaticResource BrowseSearchStyle}"
+             Width="240" PlaceholderText="全平台搜索或粘贴链接" QueryIcon="Find" AutomationProperties.Name="全平台搜索或直播链接"/>
+         <Button x:Name="CompactSearch" Grid.Column="2" Style="{StaticResource ToolbarIconStyle}" Visibility="Collapsed"
+             ToolTipService.ToolTip="全平台搜索" AutomationProperties.Name="全平台搜索" design:PageDesign.CompactSearch="True"><SymbolIcon Symbol="Find"/></Button>
+         <StackPanel x:Name="HeaderActions" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+             <Button x:Name="HeaderRefresh" Width="36" IsEnabled="{x:Bind categoryVM.CanRefresh, Mode=OneWay}" Style="{StaticResource ToolbarIconStyle}"
+                 Command="{x:Bind categoryVM.RefreshCommand}" ToolTipService.ToolTip="刷新游戏目录" AutomationProperties.Name="刷新游戏目录">
+                 <Grid><FontIcon Visibility="{x:Bind categoryVM.CanRefresh, Mode=OneWay}" FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph="&#xE72C;"/>
+                 <ProgressRing Width="16" Height="16" IsActive="{x:Bind categoryVM.Loading, Mode=OneWay}" Visibility="{x:Bind categoryVM.Loading, Mode=OneWay}"/></Grid>
+             </Button>
+         </StackPanel>
+     </Grid>
+ </TitleBar>
  <Grid x:Name="CategoryTools" ColumnSpacing="16" SizeChanged="CategoryTools_SizeChanged">
  <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
  <ListView x:Name="GroupPicker" Padding="0" VerticalAlignment="Center" ItemsSource="{x:Bind categoryVM.Groups}" SelectedItem="{x:Bind categoryVM.SelectedGroup, Mode=TwoWay}" SelectionMode="Single" AutomationProperties.Name="游戏大类" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Disabled" ItemContainerStyle="{StaticResource GameGroupItemStyle}">
  <ListView.ItemsPanel><ItemsPanelTemplate><controls:NavigationWrapPanel/></ItemsPanelTemplate></ListView.ItemsPanel>
  <ListView.ItemTemplate><DataTemplate x:DataType="models:LiveCategory"><TextBlock Style="{StaticResource NavigationTextStyle}" Margin="0" VerticalAlignment="Center" Text="{x:Bind Name}" TextTrimming="None" TextWrapping="Wrap" TextAlignment="Center" ToolTipService.ToolTip="{x:Bind Name}" FontSize="{StaticResource BodyTextSize}" LineHeight="20"/></DataTemplate></ListView.ItemTemplate>
  </ListView>
- <Border x:Name="GameFilterHost" Grid.Column="1" VerticalAlignment="Center"><AutoSuggestBox x:Name="GameFilter" Text="{x:Bind categoryVM.FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="240" Style="{StaticResource BrowseSearchStyle}" PlaceholderText="在当前平台找游戏" QueryIcon="Find" AutomationProperties.Name="在当前平台找游戏"/></Border>
+ <Border x:Name="GameFilterHost" Grid.Column="1" VerticalAlignment="Center"><AutoSuggestBox x:Name="GameFilter" Text="{x:Bind categoryVM.FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="240" Style="{StaticResource BrowseSearchStyle}" PlaceholderText="输入游戏名" QueryIcon="Find" AutomationProperties.Name="筛选游戏"/></Border>
  <Button x:Name="CompactGameFilter" Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource ToolbarIconStyle}" Visibility="Collapsed" ToolTipService.ToolTip="在当前平台找游戏" AutomationProperties.Name="在当前平台找游戏">
  <Button.Flyout><Flyout x:Name="GameFilterFlyout" Placement="BottomEdgeAlignedRight" Opened="GameFilterFlyout_Opened"/></Button.Flyout>
  <Grid><SymbolIcon Symbol="Find"/><Ellipse x:Name="FilterMarker" Width="5" Height="5" Fill="{ThemeResource AppAccentBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-3,-3,0" Visibility="Collapsed"/></Grid>
  </Button>
  </Grid>
  </StackPanel>
- <controls:MyAdaptiveGridView DesiredWidth="160" ItemTemplate="{StaticResource GameItemTemplate}" x:Name="GamesGrid" Grid.Row="2" Padding="0" Margin="-8,0,-8,-8" ItemsSource="{x:Bind categoryVM.Items}" SelectionMode="None" IsItemClickEnabled="True" ItemClick="GridView_ItemClick" ContainerContentChanging="GamesGrid_ContainerContentChanging">
+ <controls:MyAdaptiveGridView DesiredWidth="226" ItemHeight="88" ItemTemplate="{StaticResource DirectoryGameTemplate}" x:Name="GamesGrid" Grid.Row="2" Padding="0" Margin="-8,0,-8,-8" ItemsSource="{x:Bind categoryVM.Items}" SelectionMode="None" IsItemClickEnabled="True" ItemClick="GridView_ItemClick" ContainerContentChanging="GamesGrid_ContainerContentChanging">
  <controls:MyAdaptiveGridView.Resources>
  <SolidColorBrush x:Key="GridViewItemBackgroundPointerOver" Color="{ThemeResource AppHoverColor}"/>
  <SolidColorBrush x:Key="GridViewItemBackgroundPressed" Color="{ThemeResource AppPressedColor}"/>

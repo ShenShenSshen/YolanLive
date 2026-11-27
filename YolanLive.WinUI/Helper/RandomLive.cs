@@ -61,10 +61,12 @@ internal static class RandomLive
     internal static async Task<LiveRoomItem> PickAsync(CancellationToken cancellation, IReadOnlySet<string> excluded = null)
         => (await PickPreparedAsync(cancellation, excluded))?.Room;
 
-    internal static async Task<RandomRoomSelection> PickPreparedAsync(CancellationToken cancellation, IReadOnlySet<string> excluded = null)
+    internal static async Task<RandomRoomSelection> PickPreparedAsync(CancellationToken cancellation,
+        IReadOnlySet<string> excluded = null, IReadOnlyList<LiveGameSource> gameScope = null)
     {
         // Shuffle platforms before consulting their pools: cache hits must not favor one platform.
-        var platforms = MainVM.Sites.ToArray();
+        var platforms = MainVM.Sites.Where(platform => gameScope == null ||
+            gameScope.Any(source => source.Site == platform.LiveSite)).ToArray();
         Random.Shared.Shuffle(platforms);
         Exception lastError = null;
         string lastPlatform = null;
@@ -87,7 +89,7 @@ internal static class RandomLive
                         room.Source = platform.LiveSite;
                         var prepared = await PrepareAsync(room, attempt.Token);
                         if (prepared != null) return prepared;
-                        RemoveCandidate(platform.LiveSite, room.RoomID);
+                        if (gameScope == null) RemoveCandidate(platform.LiveSite, room.RoomID);
                     }
                     catch (Exception ex) when (!cancellation.IsCancellationRequested)
                     {
@@ -99,11 +101,17 @@ internal static class RandomLive
             }
             try
             {
-                var cached = await ChooseAsync(ReadCandidates(platform.LiveSite));
-                if (cached != null) return cached;
-                if (tried.Count == 3) continue;
-                var catalog = await GameCatalog.LoadAsync(platform.LiveSite, attempt.Token);
-                var sources = GameBrowse.OverviewSources(catalog);
+                // The homepage pool contains other games, so scoped sessions only query their own partitions.
+                IEnumerable<LiveGameSource> sources;
+                if (gameScope == null)
+                {
+                    var cached = await ChooseAsync(ReadCandidates(platform.LiveSite));
+                    if (cached != null) return cached;
+                    if (tried.Count == 3) continue;
+                    var catalog = await GameCatalog.LoadAsync(platform.LiveSite, attempt.Token);
+                    sources = GameBrowse.OverviewSources(catalog);
+                }
+                else sources = gameScope.Where(source => source.Site == platform.LiveSite);
                 var batches = sources.Select(async source =>
                 {
                     try { return await source.Site.GetCategoryRooms(source.Category, 1, attempt.Token); }
@@ -117,7 +125,7 @@ internal static class RandomLive
                     attempt.Token.ThrowIfCancellationRequested();
                     if (batch.Error != null) { lastError = batch.Error; lastPlatform = platform.Name; }
                     if (batch.Rooms == null) continue;
-                    SaveCandidates(platform.LiveSite, batch.Rooms);
+                    if (gameScope == null) SaveCandidates(platform.LiveSite, batch.Rooms);
                     var chosen = await ChooseAsync(batch.Rooms);
                     if (chosen != null) return chosen;
                 }

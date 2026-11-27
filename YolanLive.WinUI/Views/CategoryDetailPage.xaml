@@ -1,6 +1,43 @@
 <?xml version="1.0" ?><Page xmlns:design="using:YolanLive.WinUI.Helper" x:Class="YolanLive.WinUI.Views.CategoryDetailPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="using:YolanLive.WinUI.Controls" FontFamily="{StaticResource ContentControlThemeFontFamily}" FontSize="{StaticResource BodyTextSize}" Foreground="{ThemeResource AppTextBrush}">
- <Grid x:Name="PageLayoutRoot" design:PageDesign.Insets="True"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
- <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" Margin="0" MinHeight="48"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="PageTitle" Margin="0,0,8,0" Style="{StaticResource PageTitleStyle}" Text="{x:Bind categoryDetailVM.Category.Name, Mode=OneWay}"/><Button x:Name="HeaderRefresh" IsEnabled="{x:Bind categoryDetailVM.CanRefresh, Mode=OneWay}" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind categoryDetailVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新"><Grid><FontIcon Visibility="{x:Bind categoryDetailVM.CanRefresh, Mode=OneWay}" FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/><ProgressRing Width="16" Height="16" IsActive="{x:Bind categoryDetailVM.Loading, Mode=OneWay}" Visibility="{x:Bind categoryDetailVM.Loading, Mode=OneWay}"/></Grid></Button></Grid></TitleBar>
+ <Grid x:Name="PageLayoutRoot" design:PageDesign.Insets="True" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+ <StackPanel Spacing="10" Margin="0,0,0,12">
+ <TitleBar x:Name="BrowserTitleBar" Style="{StaticResource BrowserTitleBarStyle}"><Grid x:Name="BrowseHeader" Margin="0" MinHeight="48"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="PageTitle" Margin="0,0,8,0" Style="{StaticResource PageTitleStyle}" Text="分类"/><Button x:Name="HeaderRefresh" IsEnabled="{x:Bind categoryDetailVM.CanRefresh, Mode=OneWay}" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ToolbarIconStyle}" Command="{x:Bind categoryDetailVM.RefreshCommand}" ToolTipService.ToolTip="刷新" AutomationProperties.Name="刷新"><Grid><FontIcon Visibility="{x:Bind categoryDetailVM.CanRefresh, Mode=OneWay}" FontFamily="{StaticResource SegoeFluent}" FontSize="16" Glyph=""/><ProgressRing Width="16" Height="16" IsActive="{x:Bind categoryDetailVM.Loading, Mode=OneWay}" Visibility="{x:Bind categoryDetailVM.Loading, Mode=OneWay}"/></Grid></Button></Grid></TitleBar>
+ <Grid ColumnSpacing="12" Margin="0,4,0,0">
+     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <Border Width="62" Height="62" CornerRadius="10" Background="{ThemeResource GameArtworkBrush}">
+         <Grid>
+             <FontIcon FontFamily="{StaticResource SegoeFluent}" FontSize="24" Glyph="&#xE7FC;"
+                       Visibility="{Binding ElementName=DetailGameImage, Path=(design:DecodedImage.HasPicture), Converter={StaticResource displayConvert}}"/>
+             <Image x:Name="DetailGameImage" Stretch="Uniform" AutomationProperties.AccessibilityView="Raw"
+                    design:DecodedImage.Url="{x:Bind categoryDetailVM.Category.Pic, Mode=OneWay}"/>
+         </Grid>
+     </Border>
+     <TextBlock Grid.Column="1" Style="{StaticResource PageTitleStyle}" VerticalAlignment="Center"
+                Text="{x:Bind categoryDetailVM.Category.Name, Mode=OneWay}" TextTrimming="CharacterEllipsis"/>
+ </Grid>
+ <Border BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1">
+     <ListView x:Name="GamePlatforms" design:PlatformTabAnimation.Underline="True" SelectionMode="Single"
+               SelectionChanged="GamePlatforms_SelectionChanged" Padding="0" ItemContainerStyle="{StaticResource PlatformTabStyle}"
+               AutomationProperties.Name="此游戏的直播平台" ScrollViewer.VerticalScrollMode="Disabled"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollMode="Disabled">
+         <ListView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" ItemWidth="88" ItemHeight="40"/></ItemsPanelTemplate></ListView.ItemsPanel>
+         <ListView.ItemTemplate><DataTemplate>
+             <Grid Height="32">
+                 <TextBlock Text="{Binding}" Style="{StaticResource NavigationTextStyle}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                 <Border x:Name="PlatformUnderline" Width="52" Height="2" CornerRadius="1" Background="{ThemeResource AppAccentBrush}"
+                         HorizontalAlignment="Center" VerticalAlignment="Bottom" Visibility="Collapsed" IsHitTestVisible="False"/>
+             </Grid>
+         </DataTemplate></ListView.ItemTemplate>
+     </ListView>
+ </Border>
+ <Grid ColumnSpacing="8">
+     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <TextBlock Text="正在直播" Style="{StaticResource BodyTextStyle}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+     <Button x:Name="GameRandomButton" Grid.Column="1" Content="随便逛逛" IsEnabled="False"
+             Click="GameRandomButton_Click" Style="{StaticResource PageActionButtonStyle}"
+             ToolTipService.ToolTip="在当前游戏和平台范围内随机选房"/>
+ </Grid>
+ </StackPanel>
  <controls:MyAdaptiveGridView Grid.Row="2" Padding="0" Margin="-8,0,-8,-8" CanLoadMore="{x:Bind categoryDetailVM.CanLoadMore, Mode=OneWay}" DataLoading="{x:Bind categoryDetailVM.Loading, Mode=OneWay}" DesiredWidth="{StaticResource GridViewDesiredWidth}" IsItemClickEnabled="True" ItemClick="MyAdaptiveGridView_ItemClick" ItemHeight="{StaticResource GridViewItemHeight}" ItemTemplate="{StaticResource RoomItemTemplate}" ItemsSource="{x:Bind categoryDetailVM.Items, Mode=OneWay}" LoadMoreCommand="{x:Bind categoryDetailVM.LoadMoreCommand}" SelectionMode="None">
  <controls:MyAdaptiveGridView.ItemContainerStyle><Style TargetType="GridViewItem" BasedOn="{StaticResource GridViewItemCornerRadiusStyle}">
  <Setter Property="Margin" Value="{StaticResource ContentItemMargin}"/><Setter Property="BorderThickness" Value="0"/>

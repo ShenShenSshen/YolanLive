@@ -60,10 +60,10 @@ internal static class BrowseChecks
             Check(BrowsePreferences.ReadPlatform() == originalSites[1], "Platform selection was not saved.");
             var home = new Views.RecomendPage();
             var page = new Views.CategoryPage();
-            foreach (var picker in new[] { (Microsoft.UI.Xaml.Controls.ListView)home.FindName("PlatformPicker"), (Microsoft.UI.Xaml.Controls.ListView)page.FindName("PlatformPicker") })
-                Check(picker.SelectedItem == picker.Items[1], "Saved platform was not selected before the page loaded.");
-            ((Microsoft.UI.Xaml.Controls.ListView)home.FindName("PlatformPicker")).SelectedItem = ((Microsoft.UI.Xaml.Controls.ListView)home.FindName("PlatformPicker")).Items[0];
-            ((Microsoft.UI.Xaml.Controls.ListView)page.FindName("PlatformPicker")).SelectedItem = ((Microsoft.UI.Xaml.Controls.ListView)page.FindName("PlatformPicker")).Items[0];
+            var picker = (Microsoft.UI.Xaml.Controls.ListView)home.FindName("PlatformPicker");
+            Check(picker.SelectedItem == picker.Items[1], "Saved homepage platform was not selected before the page loaded.");
+            Check(page.FindName("PlatformPicker") == null, "Game directory should start with games instead of a platform picker.");
+            picker.SelectedItem = picker.Items[0];
             Check(MainVM.BrowseSite == originalSites[1], "Initial XAML selection overwrote the saved platform.");
             MainVM.Sites = new() { site, originalSites[1] };
             MainVM.BrowseSite = site;
@@ -91,6 +91,123 @@ internal static class BrowseChecks
             Check(vm.SelectedGroup?.ID == "2" && SettingHelper.GetValue(BrowsePreferences.GroupKey(originalSites[1]), "") == "103,4", "Missing group fallback affected another platform.");
         }
         finally { MainVM.Sites = originalSites; MainVM.BrowseSite = originalSite; }
+    }
+
+    internal static async Task HomeCategoryAsync(MainWindow window)
+    {
+        var oldSites = MainVM.Sites;
+        var oldSite = MainVM.BrowseSite;
+        var primary = new CatalogSite { PreviewName = "测试平台甲" };
+        var secondary = new CatalogSite { PreviewName = "测试平台乙" };
+        secondary.Groups[0].Children[0].ID = "same-game-second-partition";
+        secondary.Groups[0].Children[0].Pic = "ms-appx:///Assets/YolanLive.png";
+        secondary.Groups.RemoveAt(1);
+        var first = new Site { SiteType = LiveSite.Bilibili, Name = primary.PreviewName, LiveSite = primary };
+        var second = new Site { SiteType = LiveSite.Douyin, Name = secondary.PreviewName, LiveSite = secondary };
+        var report = System.IO.Path.Combine(AppPaths.EnsureDirectory(), "home-category-check.log");
+        void Pass(string text) => File.AppendAllText(report, "PASS " + text + Environment.NewLine);
+        async Task Until(Func<bool> ready)
+        {
+            for (var attempt = 0; attempt < 100; attempt++)
+            {
+                if (ready()) return;
+                await Task.Delay(30);
+            }
+            throw new TimeoutException("Home/category fixture did not reach the expected UI state.");
+        }
+
+        try
+        {
+            MainVM.Sites = new() { first, second };
+            MainVM.BrowseSite = first;
+            await DatabaseHelper.InitializeDatabase();
+            DatabaseHelper.AddHistory(new HistoryItem { SiteName = first.Name, RoomID = "recent", UserName = "测试主播", Photo = "" });
+            var home = new Views.RecomendPage();
+            var button = (Microsoft.UI.Xaml.Controls.Button)home.FindName("ResumeButton");
+            window.Root.Content = home;
+            window.Activate();
+            await Until(() => button.Visibility == Microsoft.UI.Xaml.Visibility.Visible);
+            Check(((Microsoft.UI.Xaml.Controls.TextBlock)home.FindName("RecentTitle")).Text == "测试直播间", "Resume did not use real room metadata.");
+            var recent = (await DatabaseHelper.GetHistory(1)).Single();
+            Check(recent.RoomID == "recent" && primary.LastDetailId == "recent", "Resume did not look up the latest stored room.");
+            Pass("latest history and confirmed live room show the actual resume card");
+
+            window.Root.Content = new Microsoft.UI.Xaml.Controls.Page();
+            await Until(() => !home.IsLoaded);
+            primary.PreviewLive = false;
+            window.Root.Content = home;
+            await Until(() => home.IsLoaded && primary.DetailCalls >= 2);
+            Check(button.Visibility == Microsoft.UI.Xaml.Visibility.Collapsed, "Stopped history room remained visible.");
+            Pass("offline room hides the card");
+
+            var directory = new Views.CategoryPage();
+            var grid = (Microsoft.UI.Xaml.Controls.GridView)directory.FindName("GamesGrid");
+            window.Root.Content = directory;
+            await Until(() => grid.Items.Count == 2);
+            var localSearch = (Microsoft.UI.Xaml.Controls.AutoSuggestBox)directory.FindName("GameFilter");
+            localSearch.Text = "测试游戏";
+            await Until(() => grid.Items.Count == 1);
+            var game = (LiveGameCategory)grid.Items[0];
+            Check(game.Sources.Count == 2 && game.Pic == secondary.Groups[0].Children[0].Pic, "Merged game lost one platform or its available artwork.");
+            Pass("game-first directory merges exact matches, preserves both IDs and searches locally");
+
+            var frame = new Microsoft.UI.Xaml.Controls.Frame();
+            window.Root.Content = frame;
+            Check(frame.Navigate(typeof(Views.CategoryDetailPage), game), "Game detail navigation failed.");
+            var detail = (Views.CategoryDetailPage)frame.Content;
+            var platforms = (Microsoft.UI.Xaml.Controls.ListView)detail.FindName("GamePlatforms");
+            var list = ((Microsoft.UI.Xaml.Controls.Grid)detail.Content).Children.OfType<Microsoft.UI.Xaml.Controls.GridView>().Single();
+            await Until(() => list.Items.Count == 2);
+            platforms.SelectedIndex = 2;
+            await Until(() => list.Items.Count == 1 && ((LiveRoomItem)list.Items[0]).Source == secondary);
+            Check(primary.LastPartition == "game" && secondary.LastPartition == "same-game-second-partition" &&
+                ((SearchRoomItem)list.Items[0]).PlatformLabel == secondary.PreviewName, "Platform filtering changed its partition or lost the platform badge.");
+            Pass("actual native platform picker switches rooms and keeps platform badges and original IDs");
+
+
+            var random = (Microsoft.UI.Xaml.Controls.Button)detail.FindName("GameRandomButton");
+            var navigation = new TaskCompletionSource<PageArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
+            void Capture(Type type, object data) { if (type == typeof(Views.LiveRoomPage)) navigation.TrySetResult((PageArgs)data); }
+            void InvokeRandom() => ((Microsoft.UI.Xaml.Automation.Provider.IInvokeProvider)
+                new Microsoft.UI.Xaml.Automation.Peers.ButtonAutomationPeer(random)
+                    .GetPattern(Microsoft.UI.Xaml.Automation.Peers.PatternInterface.Invoke)).Invoke();
+            MessageCenter.NavigatePageEvent += Capture;
+            try
+            {
+                secondary.PendingRooms = new TaskCompletionSource<LiveCategoryResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+                InvokeRandom();
+                await Until(() => !random.IsEnabled);
+                platforms.SelectedIndex = 1;
+                await Until(() => list.Items.Count == 1 && ((LiveRoomItem)list.Items[0]).Source == primary && random.IsEnabled);
+                secondary.PendingRooms.SetResult(new LiveCategoryResult { Rooms = new() { new() { RoomID = "stale", IsLive = true } } });
+                secondary.PendingRooms = null;
+                await Task.Delay(75);
+                Check(!navigation.Task.IsCompleted, "A canceled platform pick opened a stale room.");
+
+                platforms.SelectedIndex = 2;
+                await Until(() => list.Items.Count == 1 && ((LiveRoomItem)list.Items[0]).Source == secondary);
+                InvokeRandom();
+                var opened = await navigation.Task.WaitAsync(TimeSpan.FromSeconds(3));
+                Check(opened.Site == secondary && opened.RandomSession != null &&
+                    ((LiveRoomItem)opened.Data).RoomID == "shared-id" && secondary.LastPartition == "same-game-second-partition",
+                    "Native game random button did not pass the selected game and platform to the player.");
+                opened.RandomSession.End();
+            }
+            finally { MessageCenter.NavigatePageEvent -= Capture; }
+            Pass("native game random button cancels stale picks and opens the selected platform with a random session");
+
+            window.Root.Content = directory;
+            await Until(() => directory.IsLoaded && grid.Items.Count == 1);
+            Check(localSearch.Text == "测试游戏" && ReferenceEquals(game, grid.Items[0]), "Reopening the directory lost the filter or reloaded its cards.");
+            Pass("returning preserves the game search and the card instance");
+            Environment.ExitCode = 0;
+        }
+        finally
+        {
+            window.Root.Content = null;
+            MainVM.Sites = oldSites;
+            MainVM.BrowseSite = oldSite;
+        }
     }
 
     internal static async Task RefreshFeedbackAsync()
@@ -200,6 +317,25 @@ internal static class BrowseChecks
         Rooms = new bool?[] { true, false, null }.Select((live, index) => new LiveRoomItem { RoomID = index.ToString(), Title = "测试标题", UserName = "测试主播", Cover = "test-cover", Online = 42, IsLive = live }).ToList() });
     internal sealed class CatalogSite : YolanLive.Core.BiliBili, ILiveSite
     {
+        internal string PreviewName { get; init; } = "哔哩哔哩直播";
+        string ILiveSite.Name => PreviewName;
+        internal bool PreviewLive = true;
+        internal string LastDetailId, LastPartition;
+        internal int DetailCalls;
+        internal TaskCompletionSource<LiveCategoryResult> PendingRooms;
+        public new Task<LiveRoomDetail> GetRoomDetail(object id, System.Threading.CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            LastDetailId = id.ToString();
+            DetailCalls++;
+            return Task.FromResult(new LiveRoomDetail { RoomID = id.ToString(), Status = PreviewLive, Title = "测试直播间", UserName = "测试主播" });
+        }
+        public new Task<LiveCategoryResult> GetCategoryRooms(LiveSubCategory category, int page, System.Threading.CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            LastPartition = category.ID;
+            return PendingRooms?.Task ?? Task.FromResult(new LiveCategoryResult { Rooms = new() { new LiveRoomItem { RoomID = "shared-id", IsLive = true } } });
+        }
         internal Task<List<LiveCategory>> Pending;
         internal int SearchCalls, StatusCalls;
         internal List<LiveCategory> Groups = new() { new() { ID = "2", Name = "网游", Children = new() { new() { ID = "game", ParentID = "2", Name = "测试游戏" } } }, new() { ID = "3", Name = "手游", Children = new() { new() { ID = "mobile", ParentID = "3", Name = "测试手游" } } } };

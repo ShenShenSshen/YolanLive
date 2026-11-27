@@ -5,8 +5,10 @@ namespace YolanLive.WinUI.Models;
 
 internal sealed class SearchRoomItem : LiveRoomItem
 {
-    internal SearchRoomItem(LiveRoomItem room, ILiveSite site)
+    private readonly bool showStatus;
+    internal SearchRoomItem(LiveRoomItem room, ILiveSite site, bool showStatus = true)
     {
+        this.showStatus = showStatus;
         Source = site;
         RoomID = room.RoomID;
         Title = room.Title;
@@ -16,5 +18,5 @@ internal sealed class SearchRoomItem : LiveRoomItem
         IsLive = room.IsLive;
     }
     internal string PlatformLabel => Source.Name.Replace("直播", "");
-    internal string StatusLabel => IsLive.HasValue ? IsLive.Value ? "直播中" : "未开播" : null;
+    internal string StatusLabel => showStatus && IsLive.HasValue ? IsLive.Value ? "直播中" : "未开播" : null;
 }

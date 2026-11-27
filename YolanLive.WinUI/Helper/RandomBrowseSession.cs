@@ -12,6 +12,7 @@ internal sealed record RandomRoomChoice(LiveRoomItem Room, int Index, bool IsNew
 internal sealed class RandomBrowseSession
 {
     private readonly List<LiveRoomItem> rooms;
+    private readonly IReadOnlyList<LiveGameSource> gameScope;
     private readonly object prefetchGate = new();
     private readonly CancellationTokenSource lifetime = new();
     private CancellationTokenSource prefetchOperation;
@@ -21,8 +22,12 @@ internal sealed class RandomBrowseSession
     internal bool Ended { get; private set; }
     internal bool CanGoPrevious => !Ended && position > 0;
 
-    internal RandomBrowseSession(LiveRoomItem first, RandomRoomSelection prepared = null)
-    { rooms = new() { first }; initialSelection = prepared; }
+    internal RandomBrowseSession(LiveRoomItem first, RandomRoomSelection prepared = null, IReadOnlyList<LiveGameSource> gameScope = null)
+    {
+        rooms = new() { first };
+        initialSelection = prepared;
+        this.gameScope = gameScope?.ToArray();
+    }
 
     internal RandomRoomSelection TakeInitialSelection()
     { var selected = initialSelection; initialSelection = null; return selected; }
@@ -43,7 +48,7 @@ internal sealed class RandomBrowseSession
     }
     private async Task<RandomRoomSelection> PrepareNextAsync(CancellationTokenSource operation, HashSet<string> excluded)
     {
-        try { return await RandomLive.PickPreparedAsync(operation.Token, excluded); }
+        try { return await RandomLive.PickPreparedAsync(operation.Token, excluded, gameScope); }
         catch (OperationCanceledException) when (operation.IsCancellationRequested) { return null; }
         catch (Exception ex)
         {
@@ -107,7 +112,7 @@ internal sealed class RandomBrowseSession
                 timeout.CancelAfter(TimeSpan.FromSeconds(10));
                 next = await RandomLive.PrepareAsync(next.Room, timeout.Token);
             }
-            next ??= await RandomLive.PickPreparedAsync(token, rooms.Select(r => r.Source.Name + ":" + r.RoomID).ToHashSet());
+            next ??= await RandomLive.PickPreparedAsync(token, rooms.Select(r => r.Source.Name + ":" + r.RoomID).ToHashSet(), gameScope);
             token.ThrowIfCancellationRequested();
             return next == null ? null : new RandomRoomChoice(next.Room, rooms.Count, true, next);
         }

@@ -132,17 +132,17 @@ internal static class BrowsingPolishChecks
                     page.RequestedTheme = theme;
                     window.AppWindow.Resize(new SizeInt32(960, 650)); await Task.Delay(100); page.UpdateLayout();
                     var first = (ListViewItem)picker.ContainerFromIndex(0);
-                    var second = (ListViewItem)picker.ContainerFromIndex(1);
+                    var second = (ListViewItem)picker.ContainerFromIndex(3);
                     Check(second.ActualWidth >= first.ActualWidth + 20, "Short and long group labels still occupy equal-width slots.");
                     var calls = catalog.Calls;
                     var peer = FrameworkElementAutomationPeer.CreatePeerForElement(picker);
-                    var itemPeer = peer.GetChildren().FirstOrDefault(p => p.GetName() == "赛车竞速");
+                    var itemPeer = peer.GetChildren().FirstOrDefault(p => p.GetName() == "游戏赛事");
                     var selection = itemPeer?.GetPattern(PatternInterface.SelectionItem) as ISelectionItemProvider;
                     Check(selection != null, "Game group has no SelectionItem automation pattern through its owner: " + string.Join(",", peer.GetChildren().Select(p => p.GetType().Name + ":" + p.GetName())));
                     selection.Select();
                     await Task.Delay(180);
                     Check(second.IsSelected && !first.IsSelected && second.Focus(FocusState.Keyboard), "Native single selection or keyboard focus was lost.");
-                    Check(games.Items.Count == 1 && ((LiveGameCategory)games.Items[0]).Name == "赛车" && catalog.Calls == calls, "Group selection lost its directory or generated a request.");
+                    Check(games.Items.Count == 1 && ((LiveGameCategory)games.Items[0]).Name == "比赛转播" && catalog.Calls == calls, "Group selection lost its directory or generated a request.");
                     var background = (Border)Children(second).First(e => e is Border b && b.Name == "GroupRoot");
                     Check(((SolidColorBrush)background.Background).Color.A > 0 && background.CornerRadius.TopLeft == 8, "Selected group has no rounded visible feedback.");
                     picker.Width = first.ActualWidth + 12;
@@ -178,7 +178,7 @@ internal static class BrowsingPolishChecks
                 ((IInvokeProvider)new ButtonAutomationPeer(pin).GetPattern(PatternInterface.Invoke)).Invoke(); await Task.Delay(30);
                 Check(!BrowsePreferences.IsPinned(site, game) && BrowsePreferences.ReadPins(site).Count == 0, "Unpin invocation failed or handlers ran twice.");
             });
-            await Case("Game art keeps full aspect, 12 DIP safe area and a theme-readable backing", async () =>
+            await Case("Square game art keeps the full image and a theme-readable backing", async () =>
             {
                 foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
                 {
@@ -186,7 +186,7 @@ internal static class BrowsingPolishChecks
                     var card = (GridViewItem)games.ContainerFromIndex(0);
                     var image = Children(card).OfType<Image>().Single(i => i.Name == "GameImage");
                     var art = (Border)VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(image));
-                    Check(image.Stretch == Stretch.Uniform && image.Margin == new Thickness(12), "Game art was cropped or lost consistent padding.");
+                    Check(image.Stretch == Stretch.Uniform && Math.Abs(art.ActualWidth - art.ActualHeight) < 1, "Game art was cropped or is no longer square.");
                     Check(art.CornerRadius.TopLeft == 8 && ((SolidColorBrush)art.Background).Color.A == 255, "Transparent artwork has no readable backing.");
                     Check(image.ActualWidth > 20 && image.ActualHeight > 20, "Artwork safe area consumed the image.");
                 }
@@ -238,7 +238,8 @@ internal static class BrowsingPolishChecks
             return Task.FromResult(new List<LiveCategory>
             {
                 new() { ID = "2", Name = "网游", Children = new() { new() { ID = "a", ParentID = "2", Name = "Alpha", Pic = "ms-appx:///Assets/YolanLive.png" } } },
-                new() { ID = "3", Name = "赛车竞速", Children = new() { new() { ID = "b", ParentID = "3", Name = "赛车", Pic = "ms-appx:///Assets/YolanLive.png" } } }
+                new() { ID = "3", Name = "手游", Children = new() { new() { ID = "b", ParentID = "3", Name = "赛车", Pic = "ms-appx:///Assets/YolanLive.png" } } },
+                new() { ID = "13", Name = "游戏赛事", Children = new() { new() { ID = "561", ParentID = "13", Name = "比赛转播", Pic = "ms-appx:///Assets/YolanLive.png" } } }
             });
         }
     }

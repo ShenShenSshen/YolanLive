@@ -61,12 +61,13 @@ public static class GameCard
         private void FocusChanged(object sender, RoutedEventArgs args)
         { root.DispatcherQueue.TryEnqueue(() => { if (root.IsLoaded) Update(); }); }
         private void DataChanged(FrameworkElement sender, DataContextChangedEventArgs args) => Update();
-        private Site Site(LiveGameCategory game) => MainVM.Sites.FirstOrDefault(s => game?.Sources?.FirstOrDefault()?.Site == s.LiveSite);
+        private Site Site(LiveGameCategory game) => MainVM.Sites.FirstOrDefault(s => s == MainVM.BrowseSite && game?.Sources?.Any(source => source.Site == s.LiveSite) == true)
+            ?? MainVM.Sites.FirstOrDefault(s => game?.Sources?.Any(source => source.Site == s.LiveSite) == true);
         internal void Update()
         {
             var game = root.DataContext as LiveGameCategory;
             var site = Site(game);
-            var pinned = site != null && BrowsePreferences.IsPinned(site, game);
+            var pinned = site != null && BrowsePreferences.IsPinned(site, BrowsePreferences.ForSite(site, game));
             var focus = root.XamlRoot == null ? null : FocusManager.GetFocusedElement(root.XamlRoot) as DependencyObject;
             while (focus != null && focus != host) focus = VisualTreeHelper.GetParent(focus);
             // Keep the button in the tab sequence even when hidden from the pointer.
@@ -74,6 +75,7 @@ public static class GameCard
             button.IsHitTestVisible = button.Opacity > 0;
             button.IsEnabled = site != null;
             var label = pinned ? "取消固定" : "固定到首页";
+            if (site != null && game.Sources.Select(source => source.Site).Distinct().Skip(1).Any()) label += "（" + site.Label + "）";
             ToolTipService.SetToolTip(button, label);
             AutomationProperties.SetName(button, label + "：" + game?.Name);
             if (button.Content is SymbolIcon icon) icon.Symbol = pinned ? Symbol.UnPin : Symbol.Pin;
@@ -81,7 +83,7 @@ public static class GameCard
         private void Click(object sender, RoutedEventArgs args)
         {
             if (root.DataContext is not LiveGameCategory game || Site(game) is not Site site) return;
-            if (!BrowsePreferences.TogglePin(site, game)) Utils.ShowMessageToast("每个平台最多固定 6 个游戏，请先移除已有入口");
+            if (!BrowsePreferences.TogglePin(site, BrowsePreferences.ForSite(site, game))) Utils.ShowMessageToast("每个平台最多固定 6 个游戏，请先移除已有入口");
             Update();
         }
         internal void Detach()

@@ -22,6 +22,8 @@ public abstract class LiveRoomListVM : BaseViewModel
     private string emptyMessage = "暂无已开播的直播";
     public string EmptyMessage { get => emptyMessage; private set { emptyMessage = value; DoPropertyChanged(nameof(EmptyMessage)); } }
     protected virtual bool LiveOnly => true;
+    protected virtual string NoRoomsMessage => LiveOnly ? "当前没有已开播的直播" : "没有找到相关直播";
+    protected virtual LiveRoomItem DisplayRoom(LiveRoomItem room) => room;
     protected virtual string PlatformName => "直播平台";
     protected abstract Task<List<LiveGameSource>> GetSourcesAsync(CancellationToken cancellationToken);
     protected virtual Task<LiveCategoryResult> FetchAsync(LiveGameSource source, int page, CancellationToken cancellationToken) => source.Site.GetCategoryRooms(source.Category, page, cancellationToken);
@@ -83,14 +85,14 @@ public abstract class LiveRoomListVM : BaseViewModel
                 {
                     if (LiveOnly && room.IsLive != true) continue;
                     room.Source = batch.source.Site;
-                    rooms.Add(room);
+                    rooms.Add(DisplayRoom(room));
                 }
             }
             var failedBatch = batches.FirstOrDefault(b => b.error != null || b.result?.Error != null);
             var error = failedBatch.error ?? failedBatch.result?.Error;
             var unknownOnly = LiveOnly && rooms.Count == 0 && batches.Any(b => b.result?.Rooms.Any(r => r.IsLive == null) == true);
             EmptyMessage = error != null ? RequestErrorMessage.Report(error, failedBatch.source.Site.Name) :
-                unknownOnly ? "部分开播状态查询失败，请稍后重试" : LiveOnly ? "当前没有已开播的直播" : "没有找到相关直播";
+                unknownOnly ? "部分开播状态查询失败，请稍后重试" : NoRoomsMessage;
             var failed = error != null || unknownOnly;
             CanRetry = failed;
             if (replace && failed)

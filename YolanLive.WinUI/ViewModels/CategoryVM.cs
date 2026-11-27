@@ -12,6 +12,12 @@ public class CategoryVM : BaseViewModel
 {
     public ObservableCollection<LiveGameCategory> Items { get; } = new();
     public ObservableCollection<LiveCategory> Groups { get; } = new();
+    private readonly bool combined;
+    private readonly Dictionary<Site, List<LiveCategory>> directories = new();
+    private List<LiveGameCategory> directoryGames = new();
+    private Dictionary<string, HashSet<string>> directoryGroups = new();
+    internal CategoryVM(bool combined = false) => this.combined = combined;
+    internal bool HasDirectory => Groups.Count > 0 && (directoryGames.Count > 0 || Items.Count > 0);
     private int generation;
     private CancellationTokenSource requests = new();
     private string emptyMessage = "暂无可用游戏分类";
@@ -45,13 +51,95 @@ public class CategoryVM : BaseViewModel
             DoPropertyChanged(nameof(SelectedGroup));
         }
     }
-    public Task LoadAsync() => LoadCoreAsync(false);
+    public Task LoadAsync() => combined ? LoadDirectoryAsync(false) : LoadCoreAsync(false);
     public Task RefreshAsync()
     {
         if (Loading) return Task.CompletedTask;
+        if (combined) return LoadDirectoryAsync(true);
         GameCatalog.Invalidate(MainVM.BrowseSite.LiveSite);
         return LoadCoreAsync(true);
     }
+
+    private async Task LoadDirectoryAsync(bool refresh)
+    {
+        if (Loading) return;
+        CancelPending();
+        var current = generation;
+        var cancellation = requests.Token;
+        var selectedId = SelectedGroup?.ID;
+        var sites = MainVM.Sites.ToArray();
+        CanRetry = false;
+        StatusMessage = refresh && Items.Count > 0 ? "正在刷新…" : "";
+        IsEmpty = Items.Count == 0;
+        Loading = true;
+        try
+        {
+            var batches = await Task.WhenAll(sites.Select(async site =>
+            {
+                try
+                {
+                    var categories = await GameCatalog.GetCategoriesAsync(site.LiveSite, cancellation, refresh);
+                    return (site, categories, error: (Exception)null);
+                }
+                catch (Exception error) when (!cancellation.IsCancellationRequested)
+                {
+                    return (site, categories: (List<LiveCategory>)null, error);
+                }
+            }));
+            if (current != generation) return;
+
+            foreach (var batch in batches)
+            {
+                if (batch.categories != null) directories[batch.site] = batch.categories;
+                else LogHelper.Log(batch.site.Label + "游戏目录读取失败", LogType.DEBUG, batch.error);
+            }
+            var entries = sites.Where(directories.ContainsKey).SelectMany(site =>
+                directories[site].SelectMany(group => group.Children
+                    .Where(game => game.ID != "0" && !string.IsNullOrWhiteSpace(game.Name))
+                    .Select(game => (group: DirectoryGroup(site.SiteType, group.ID),
+                        source: new LiveGameSource { Site = site.LiveSite, Category = game })))).ToArray();
+            directoryGames = GameBrowse.MergeCategories(entries.Select(e => e.source));
+            foreach (var game in directoryGames)
+                if (game.Pic?.StartsWith("//", StringComparison.Ordinal) == true) game.Pic = "https:" + game.Pic;
+            directoryGroups = entries.GroupBy(e => e.group).ToDictionary(
+                group => group.Key,
+                group => group.Select(entry => entry.source.Category.Name.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase));
+
+            Groups.Clear();
+            Groups.Add(new LiveCategory { ID = "all", Name = "全部" });
+            foreach (var name in new[] { "网游", "手游", "单机", "游戏赛事", "赛车", "其他" })
+                if (directoryGroups.ContainsKey(name)) Groups.Add(new LiveCategory { ID = name, Name = name });
+            SelectedGroup = Groups.FirstOrDefault(group => group.ID == selectedId) ?? Groups[0];
+            ShowGroup(SelectedGroup);
+
+            var failed = batches.Where(batch => batch.error != null).Select(batch => batch.site.Label).ToArray();
+            var hasFailures = failed.Length > 0;
+            CanRetry = hasFailures;
+            var message = "部分平台目录暂不可用，可刷新重试：" + string.Join("、", failed);
+            if (hasFailures && directoryGames.Count == 0) EmptyMessage = "游戏目录暂不可用，请刷新重试";
+            StatusMessage = hasFailures && Items.Count > 0 ? message : "";
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+        finally
+        {
+            if (current == generation)
+            {
+                IsEmpty = Items.Count == 0;
+                Loading = false;
+            }
+        }
+    }
+
+    private static string DirectoryGroup(LiveSite site, string id) => (site, id) switch
+    {
+        (LiveSite.Bilibili, "2") or (LiveSite.Huya, "1") or (LiveSite.Douyu, "1") => "网游",
+        (LiveSite.Bilibili, "3") or (LiveSite.Huya, "3") or (LiveSite.Douyu, "9") => "手游",
+        (LiveSite.Bilibili, "6") or (LiveSite.Huya, "2") or (LiveSite.Douyu, "15") => "单机",
+        (LiveSite.Bilibili, "13") => "游戏赛事",
+        (LiveSite.Douyu, "22") => "赛车",
+        _ => "其他"
+    };
+
     private async Task LoadCoreAsync(bool preserve)
     {
         CancelPending();
@@ -99,6 +187,15 @@ public class CategoryVM : BaseViewModel
     }
     public void ShowGroup(LiveCategory group)
     {
+        if (combined)
+        {
+            directoryGroups.TryGetValue(group?.ID ?? "all", out var names);
+            var matches = directoryGames.Where(game => (names == null || names.Contains(game.Name)) && ListProjection.Matches(FilterText, game.Name));
+            ListProjection.Sync(Items, matches);
+            EmptyMessage = string.IsNullOrWhiteSpace(FilterText) ? "暂无可用游戏分类" : "没有找到匹配的游戏，试试其他名称";
+            IsEmpty = Items.Count == 0;
+            return;
+        }
         // Filter the loaded platform directory without another request. Clearing
         // the filter restores the selected group and its original navigation IDs.
         var filtering = !string.IsNullOrWhiteSpace(FilterText);

@@ -120,12 +120,11 @@ internal static class VisualDesignChecks
                 var bar = (TitleBar)category.FindName("BrowserTitleBar");
                 var header = (Grid)category.FindName("BrowseHeader");
                 var refresh = (Button)category.FindName("HeaderRefresh");
-                var platform = (ListView)category.FindName("PlatformPicker");
                 var root = (Grid)category.Content;
                 var search = (AutoSuggestBox)category.FindName("HeaderSearch");
                 var visibleSearch = search.Visibility == Visibility.Visible;
-                Check(!visibleSearch, "Category page shows both a global search input and a local game input.");
-                Check(navigation.AutoSuggestBox == null && ((Button)category.FindName("CompactSearch")).Visibility == Visibility.Visible, "Category layout lost the fixed global search entry");
+                var searchButton = (Button)category.FindName("CompactSearch");
+                Check(navigation.AutoSuggestBox == null && visibleSearch != (searchButton.Visibility == Visibility.Visible), "Category layout lost the single fixed global search entry");
                 var nativeHeader = Children(bar).OfType<Grid>().FirstOrDefault(g => g.Name == "PART_LayoutRoot");
                 Check(nativeHeader != null && nativeHeader.ActualHeight >= header.ActualHeight,
                     "Native titlebar clips the taller browser header");
@@ -149,7 +148,7 @@ internal static class VisualDesignChecks
                     .Where(item => item != null && Math.Abs(item.TransformToVisual(gameGrid).TransformPoint(new Windows.Foundation.Point()).Y - firstY) < 1).ToArray();
                 var rowRight = row.Max(item => item.TransformToVisual(gameGrid).TransformPoint(new Windows.Foundation.Point(item.ActualWidth, 0)).X);
                 Check(gameGrid.ActualWidth - rowRight <= 24, "Category grid leaves an unused column: width=" + gameGrid.ActualWidth + "; right=" + rowRight + "; panel=" + gameGrid.ItemsPanelRoot.ActualWidth);
-                for (var i = 0; i < 4; i++) Check(platform.ContainerFromIndex(i) != null, "A platform label is hidden");
+                Check(category.FindName("PlatformPicker") == null && ((ListView)category.FindName("GroupPicker")).Items.Count == 4, "The directory should show game groups before platform selection");
                 Check(refresh.Focus(FocusState.Keyboard), "Header actions lost keyboard access");
                 var pointer = Microsoft.UI.Input.InputNonClientPointerSource.GetForWindowId(window.AppWindow.Id);
                 var pass = pointer.GetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Passthrough);
@@ -162,26 +161,21 @@ internal static class VisualDesignChecks
                 }
                 var center = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(refresh.ActualWidth / 2, refresh.ActualHeight / 2));
                 Check(IsInteractive(center), "Native drag region intercepts refresh clicks: caption=" + string.Join(";", caption.Select(r => $"{r.X},{r.Y},{r.Width},{r.Height}")) + "; center=" + center);
-                if (((Border)category.FindName("PlatformSurface")).Parent == header)
-                {
-                    var firstTab = (ListViewItem)platform.ContainerFromIndex(0);
-                    var tabCenter = firstTab.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(firstTab.ActualWidth / 2, firstTab.ActualHeight / 2));
-                    Check(IsInteractive(tabCenter), "Native drag region intercepts platform selection");
-                }
-                if (preset == "960×540")
-                    Check(((Border)category.FindName("PlatformSurface")).Parent == header, "Four platform labels unnecessarily overflow at 960x540.");
-                var globalSearch = (Button)category.FindName("CompactSearch");
+                Control globalSearch = visibleSearch ? search : searchButton;
                 var globalCenter = globalSearch.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(globalSearch.ActualWidth / 2, globalSearch.ActualHeight / 2));
-                Check(IsInteractive(globalCenter) && globalSearch.Focus(FocusState.Keyboard), "Global search icon is intercepted or inaccessible.");
+                Check(IsInteractive(globalCenter) && globalSearch.Focus(FocusState.Keyboard), "Global search is intercepted or inaccessible.");
                 var searchRight = globalSearch.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point(globalSearch.ActualWidth, 0)).X;
                 var refreshLeft = refresh.TransformToVisual(chrome).TransformPoint(new Windows.Foundation.Point()).X;
-                Check(searchRight + 11 <= refreshLeft, "Global search icon overlaps refresh.");
-                PageDesign.OpenSearch(globalSearch); await Task.Delay(60);
-                var globalInput = (AutoSuggestBox)((Flyout)globalSearch.Flyout).Content;
-                var input = Children(globalInput).OfType<TextBox>().FirstOrDefault();
-                Check(input != null && globalInput.ActualHeight == 38 && input.CornerRadius.TopLeft == 19 && input.TextAlignment == TextAlignment.Left && globalInput.Focus(FocusState.Keyboard),
-                    "Global search flyout lost its rounded usable input.");
-                globalSearch.Flyout.Hide();
+                Check(searchRight + 11 <= refreshLeft, "Global search overlaps refresh.");
+                if (!visibleSearch)
+                {
+                    PageDesign.OpenSearch(searchButton); await Task.Delay(60);
+                    var globalInput = (AutoSuggestBox)((Flyout)searchButton.Flyout).Content;
+                    var input = Children(globalInput).OfType<TextBox>().FirstOrDefault();
+                    Check(input != null && globalInput.ActualHeight == 38 && input.CornerRadius.TopLeft == 19 && input.TextAlignment == TextAlignment.Left && globalInput.Focus(FocusState.Keyboard),
+                        "Global search flyout lost its rounded usable input.");
+                    searchButton.Flyout.Hide();
+                }
                 await Capture(chrome, "merged-browser-" + theme + "-" + preset.Replace("×", "x") + (expanded ? "-expanded" : "") + ".png");
             }
             window.Root.Content = null; await Task.Delay(150);
@@ -231,16 +225,19 @@ internal static class VisualDesignChecks
         });
         foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
         foreach (var width in new[] { 280d,480d,640d,960d,1280d })
-            await Case("category alignment, wrapped platform labels and 4:3 art " + theme + " width=" + width, async () =>
+            await Case("category alignment, native detail platforms and square art " + theme + " width=" + width, async () =>
             {
                 var page = new Views.CategoryPage(); var root = (Grid)page.Content;
                 root.Width = width; root.HorizontalAlignment = HorizontalAlignment.Left; root.RequestedTheme = theme;
                 var games = (GridView)page.FindName("GamesGrid");
-                var platform = (ListView)page.FindName("PlatformPicker");
+                var detail = new Views.CategoryDetailPage();
+                var platform = (ListView)detail.FindName("GamePlatforms");
                 var header = (Grid)page.FindName("BrowseHeader");
                 games.ItemsSource = new[] { BrowseChecks.Game(MainVM.Sites[0], "design-1", "三角洲行动"), BrowseChecks.Game(MainVM.Sites[0], "design-2", "暗区突围：无限与较长名称") };
-                page.Content = null; await Show(root);
-                platform.SelectedIndex = 1; await Task.Delay(40); root.UpdateLayout();
+                var detailRoot = (Grid)detail.Content;
+                detailRoot.Width = width; detailRoot.HorizontalAlignment = HorizontalAlignment.Left; detailRoot.RequestedTheme = theme;
+                detail.Content = null; await Show(detailRoot);
+                platform.SelectedIndex = 1; await Task.Delay(40); detailRoot.UpdateLayout();
                 var selectedTab = (ListViewItem)platform.ContainerFromIndex(1);
                 var otherTab = (ListViewItem)platform.ContainerFromIndex(0);
                 var selectedPresenter = Children(selectedTab).OfType<ListViewItemPresenter>().First();
@@ -251,12 +248,11 @@ internal static class VisualDesignChecks
                 if (!new Windows.UI.ViewManagement.AccessibilitySettings().HighContrast)
                     Check(((SolidColorBrush)selectedPresenter.SelectedBackground).Color.A == 0,
                         "Platform tabs still use a filled segment instead of an underline");
-                Check(root.Padding.Left == (width < 640 ? 16 : 24), "Wrong responsive inset");
-                for (var i = 0; i < 4; i++)
+                for (var i = 0; i < platform.Items.Count; i++)
                 {
                     var container = platform.ContainerFromIndex(i) as ListViewItem;
                     Check(container != null, "Missing platform label");
-                    var label = Children(container).OfType<TextBlock>().First(t => t.Text == MainVM.Sites[i].Label);
+                    var label = Children(container).OfType<TextBlock>().First(t => t.Text == (string)platform.Items[i]);
                     var bounds = label.TransformToVisual(platform).TransformBounds(new Windows.Foundation.Rect(0,0,label.ActualWidth,label.ActualHeight));
                     Check(bounds.Right <= platform.ActualWidth + 1 && bounds.Bottom <= platform.ActualHeight + 1, "Platform label clipped: " + label.Text + "; bounds=" + bounds + "; picker=" + platform.ActualWidth + "x" + platform.ActualHeight);
                     Check(label.LineHeight == 20 && label.Margin.Top >= 0, "Platform baseline uses ad hoc offset");
@@ -264,26 +260,27 @@ internal static class VisualDesignChecks
                     {
                         var presenter = Children(container).OfType<ListViewItemPresenter>().First();
                         var background = ((SolidColorBrush)presenter.SelectedBackground).Color;
-                        if (background.A == 0) background = ((SolidColorBrush)root.Background).Color;
+                        if (background.A == 0) background = ((SolidColorBrush)detailRoot.Background).Color;
                         Check(Contrast(((SolidColorBrush)label.Foreground).Color, background) >= 4.5, "Selected platform text contrast too low");
                     }
                 }
+                page.Content = null; await Show(root); root.UpdateLayout();
+                Check(root.Padding.Left == (width < 640 ? 16 : 24), "Wrong responsive inset");
                 var card = (GridViewItem)games.ContainerFromIndex(0);
                 var surface = (Border)card.ContentTemplateRoot;
                 var image = Children(card).OfType<Image>().Single();
                 var art = (Border)VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(image));
-                Check(Math.Abs(art.ActualWidth / art.ActualHeight - 4d / 3) < .02, "Game image slot lost 4:3 ratio");
-                Check(image.Stretch == Stretch.Uniform && surface.CornerRadius.TopLeft == 10 && art.CornerRadius.TopLeft == 8, "Game image crop or corner hierarchy incorrect");
+                Check(Math.Abs(art.ActualWidth / art.ActualHeight - 1) < .02, "Game image slot lost its square shape");
+                Check(image.Stretch == Stretch.Uniform && surface.CornerRadius.TopLeft == 8 && art.CornerRadius.TopLeft == 8, "Game image crop or corner hierarchy incorrect");
                 Check(((SolidColorBrush)surface.Background).Color.A == 0, "Category cards still have a permanent panel background");
                 var gamePresenter = Children(card).OfType<ListViewItemPresenter>().First();
                 Check(((SolidColorBrush)gamePresenter.PointerOverBackground).Color.A > 0 && card.UseSystemFocusVisuals && card.FocusVisualPrimaryThickness.Left == 2,
                     "Category pointer and keyboard feedback is missing");
-                Check(((SolidColorBrush)art.Background).Color.A > 0 && image.Margin == new Thickness(12), "Artwork lacks its readable backing and shared safe area");
-                var missing = Children(art).OfType<TextBlock>().Single(t => t.Text == "暂无图片");
+                Check(((SolidColorBrush)art.Background).Color.A > 0 && image.Margin == new Thickness(0), "Artwork lacks its readable backing or is unnecessarily inset");
+                var missing = Children(art).OfType<FontIcon>().Single();
                 Check(Contrast(((SolidColorBrush)missing.Foreground).Color, ((SolidColorBrush)art.Background).Color) >= 4.5, "Missing-art label contrast is too low.");
                 Check(card.Focus(FocusState.Keyboard) && card.FocusState == FocusState.Keyboard, "Keyboard focus feedback is missing");
-                if (!new Windows.UI.ViewManagement.AccessibilitySettings().HighContrast)
-                    Check(((SolidColorBrush)surface.BorderBrush).Color.A == 0, "Persistent category outline remains");
+                Check(surface.BorderThickness == new Thickness(0,0,0,1), "Game rows need only a subtle bottom divider");
                 Check(Math.Abs(surface.TransformToVisual(root).TransformPoint(new Windows.Foundation.Point()).X - header.TransformToVisual(root).TransformPoint(new Windows.Foundation.Point()).X) <= 1, "Header and first card are misaligned");
                 var text = Children(card).OfType<TextBlock>().First(t => t.Text == "三角洲行动");
                 Check(Contrast(((SolidColorBrush)text.Foreground).Color, ((SolidColorBrush)root.Background).Color) >= 4.5, "Body contrast too low");

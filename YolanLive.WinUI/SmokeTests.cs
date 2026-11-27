@@ -178,13 +178,10 @@ internal static class SmokeTests
         });
         Check("Compact platform selectors and category labels", () =>
         {
-            foreach (var page in new Page[] { new Views.RecomendPage(), new Views.CategoryPage() })
-            {
-                var picker = (ListView)page.FindName("PlatformPicker");
-                if (picker.Items.Count != 4 || picker.HorizontalAlignment != HorizontalAlignment.Left ||
-                    picker.ItemContainerStyle == null || picker.Items.Cast<ViewModels.Site>().Any(item => string.IsNullOrWhiteSpace(item.Label)))
-                    throw new Exception("Platform selector is not compact or platforms are missing.");
-            }
+            var picker = (ListView)new Views.RecomendPage().FindName("PlatformPicker");
+            var gamePlatforms = (ListView)new Views.CategoryDetailPage().FindName("GamePlatforms");
+            if (picker.Items.Count != 4 || picker.ItemContainerStyle == null || picker.Items.Cast<ViewModels.Site>().Any(item => string.IsNullOrWhiteSpace(item.Label)) || gamePlatforms.Items.Count != 5 || (string)gamePlatforms.Items[0] != "全部平台")
+                throw new Exception("Homepage or game-detail platform controls are incomplete.");
             var category = new Views.CategoryPage();
             var groups = (ListView)category.FindName("GroupPicker");
             if (groups.SelectionMode != ListViewSelectionMode.Single || !double.IsPositiveInfinity(groups.MaxHeight) || groups.ItemTemplate == null)
@@ -387,23 +384,31 @@ internal static class SmokeTests
                     if (Math.Abs(viewport.ActualWidth / viewport.ActualHeight - 16d / 9) > .006) throw new Exception("Normal playback ratio did not restore after mode changes.");
                 }
             });
-        foreach (var previewPage in new Page[] { new Views.RecomendPage(), new Views.CategoryPage() })
+        var homeTabPage = new Views.RecomendPage();
+        var detailTabPage = new Views.CategoryDetailPage();
+        foreach (var (page, pickerName) in new (Page, string)[] { (homeTabPage, "PlatformPicker"), (detailTabPage, "GamePlatforms") })
         {
-            var platformTabs = (ListView)previewPage.FindName("PlatformPicker");
-            ((Grid)previewPage.FindName("BrowseHeader")).Children.OfType<Border>().Single().Child = null;
+            var platformTabs = (ListView)page.FindName(pickerName);
+            var platformStrip = ((Grid)page.Content).Children.OfType<StackPanel>()
+                .SelectMany(header => header.Children.OfType<Border>()).Single(border => border.Child == platformTabs);
+            platformStrip.Child = null;
             foreach (var width in new[] { 480d, 320d, 280d })
             foreach (var theme in new[] { ElementTheme.Light, ElementTheme.Dark })
-                await CheckWindow("Four platform labels wrap at " + width + " in " + theme, () =>
+                await CheckWindow(platformTabs.Name + " platform labels wrap at " + width + " in " + theme, () =>
                 {
                     platformTabs.Width = width; platformTabs.RequestedTheme = theme;
                     window.Root.Content = platformTabs;
                 }, () =>
                 {
-                    for (int i = 0; i < 4; i++)
+                    var expected = platformTabs.Name == "GamePlatforms"
+                        ? new[] { "全部平台" }.Concat(ViewModels.MainVM.Sites.Select(site => site.Label)).ToArray()
+                        : ViewModels.MainVM.Sites.Select(site => site.Label).ToArray();
+                    if (platformTabs.Items.Count != expected.Length) throw new Exception("Wrong number of platform tabs.");
+                    for (var i = 0; i < expected.Length; i++)
                     {
                         var container = (ListViewItem)platformTabs.ContainerFromIndex(i);
                         if (container == null) throw new Exception("Platform tab was not visible.");
-                        var label = Descendants(container).OfType<TextBlock>().First(t => t.Text == ViewModels.MainVM.Sites[i].Label);
+                        var label = Descendants(container).OfType<TextBlock>().First(t => t.Text == expected[i]);
                         var origin = container.TransformToVisual(platformTabs).TransformPoint(new Windows.Foundation.Point());
                         if (origin.X < -1 || origin.X + container.ActualWidth > width + 1 || label.TextTrimming != TextTrimming.None)
                             throw new Exception("Platform label was clipped or ellipsized.");
@@ -462,7 +467,7 @@ internal static class SmokeTests
         var sourceGames = (GridView)categoryPage.FindName("GamesGrid");
         var groupItems = new[] { "网游", "手游", "单机游戏", "游戏赛事" }.Select(name => new YolanLive.Core.Models.LiveCategory { Name = name }).ToArray();
         var groupsPreview = new ListView { Padding = new Thickness(0), Margin = new Thickness(0, 0, 0, 8), ItemsPanel = sourceGroups.ItemsPanel, ItemTemplate = sourceGroups.ItemTemplate, ItemContainerStyle = sourceGroups.ItemContainerStyle, ItemsSource = groupItems, SelectedItem = groupItems[0] };
-        var gamesPreview = new Controls.MyAdaptiveGridView { DesiredWidth = 160, Padding = new Thickness(0), Margin = new Thickness(-8,0,-8,-8), ItemTemplate = sourceGames.ItemTemplate, ItemContainerStyle = sourceGames.ItemContainerStyle, ItemsSource = new[] { new YolanLive.Core.Models.LiveGameCategory { Name = "策略卡牌" }, new YolanLive.Core.Models.LiveGameCategory { Name = "单机游戏" } } };
+        var gamesPreview = new Controls.MyAdaptiveGridView { DesiredWidth = 226, ItemHeight = 88, Padding = new Thickness(0), Margin = new Thickness(-8,0,-8,-8), ItemTemplate = sourceGames.ItemTemplate, ItemContainerStyle = sourceGames.ItemContainerStyle, ItemsSource = new[] { new YolanLive.Core.Models.LiveGameCategory { Name = "策略卡牌" }, new YolanLive.Core.Models.LiveGameCategory { Name = "单机游戏" } } };
         var categoryPreview = new Grid { Padding = new Thickness(24) };
         categoryPreview.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         categoryPreview.RowDefinitions.Add(new RowDefinition());
@@ -524,7 +529,7 @@ internal static class SmokeTests
         var shortcutHome = new Views.RecomendPage();
         var pinSection = (StackPanel)shortcutHome.FindName("PinnedGamesSection");
         var pinsPreview = (ListView)shortcutHome.FindName("PinnedGamesList");
-        ((StackPanel)((Grid)shortcutHome.Content).Children[0]).Children.Remove(pinSection);
+        ((Grid)shortcutHome.FindName("QuickBrowse")).Children.Remove(pinSection);
         var pinSite = ViewModels.MainVM.BrowseSite;
         SettingHelper.SetValue(BrowsePreferences.PinsKey(pinSite), new List<PinnedGame>());
         Check("Empty shortcut row is hidden", () =>
@@ -547,13 +552,16 @@ internal static class SmokeTests
                 for (var i = 0; i < 6; i++)
                 {
                     var container = (ListViewItem)list.ContainerFromIndex(i);
-                    var text = FindVisual<TextBlock>(container);
-                    var border = (Border)Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(text);
+                    var border = (Border)container.ContentTemplateRoot;
+                    var text = Descendants(border).OfType<TextBlock>().Single(t => t.Text == "游戏 " + i);
                     var bottom = container.TransformToVisual(list).TransformPoint(new Windows.Foundation.Point(0, container.ActualHeight)).Y;
-                    if (container.ContextFlyout is not MenuFlyout menu || ((MenuFlyoutItem)menu.Items[0]).Text != "取消固定" ||
-                        border.CornerRadius.TopLeft != 8 || text.Text != "游戏 " + i || ToolTipService.GetToolTip(border)?.ToString() != text.Text ||
-                        text.TextAlignment != TextAlignment.Center || bottom > list.ActualHeight + 1)
-                        throw new Exception("Shortcut wrap, corner or keyboard context menu is incorrect.");
+                    var action = (container.ContextFlyout as MenuFlyout)?.Items.OfType<MenuFlyoutItem>().FirstOrDefault()?.Text;
+                    var toolTip = ToolTipService.GetToolTip(border);
+                    var hint = (toolTip is ToolTip tip ? tip.Content : toolTip)?.ToString();
+                    if (action != "取消固定" ||
+                        border.CornerRadius.TopLeft != 8 || text.Text != "游戏 " + i || hint != text.Text ||
+                        text.TextAlignment != TextAlignment.Left || bottom > list.ActualHeight + 1)
+                        throw new Exception($"Shortcut {i}: context={action}, radius={border.CornerRadius.TopLeft}, hint={hint}, alignment={text.TextAlignment}, bottom={bottom}, list height={list.ActualHeight}.");
                 }
             });
         SettingHelper.SetValue(BrowsePreferences.PinsKey(pinSite), new List<PinnedGame>());
@@ -567,7 +575,7 @@ internal static class SmokeTests
             if (((GridViewItem)sourceGames.ContainerFromIndex(0)).ContextFlyout is not MenuFlyout menu || menu.Items.Count != 1)
                 throw new Exception("Category card has no keyboard/right-click pin menu.");
         });
-        await CheckWindow("Category selected surface alignment and centered labels", () => window.Root.Content = categoryPreview, () =>
+        await CheckWindow("Category selected group and left-aligned directory rows", () => window.Root.Content = categoryPreview, () =>
         {
             var groupContainer = (ListViewItem)groupsPreview.ContainerFromIndex(0);
             var groupSurface = FindVisual<Border>(groupContainer) ?? throw new Exception("Category selected surface is missing.");
@@ -578,11 +586,11 @@ internal static class SmokeTests
             var left = groupSurface.TransformToVisual(categoryPreview).TransformPoint(new Windows.Foundation.Point()).X;
             var cardLeft = card.TransformToVisual(categoryPreview).TransformPoint(new Windows.Foundation.Point()).X;
             var textBounds = groupLabel.TransformToVisual(groupSurface).TransformBounds(new Windows.Foundation.Rect(0, 0, groupLabel.ActualWidth, groupLabel.ActualHeight));
-            if (Math.Abs(left - cardLeft) > 1 || groupSurface.CornerRadius.TopLeft != 8 || card.CornerRadius.TopLeft != 10 ||
+            if (Math.Abs(left - cardLeft) > 1 || groupSurface.CornerRadius.TopLeft != 8 || card.CornerRadius.TopLeft != 8 ||
                 !groupContainer.IsSelected || ((Microsoft.UI.Xaml.Media.SolidColorBrush)groupSurface.Background).Color.A == 0 ||
                 groupLabel.TextAlignment != TextAlignment.Center || Math.Abs(textBounds.X + textBounds.Width / 2 - groupSurface.ActualWidth / 2) > 1 ||
                 Math.Abs(textBounds.Y + textBounds.Height / 2 - groupSurface.ActualHeight / 2) > 1 ||
-                label.TextAlignment != TextAlignment.Center || label.VerticalAlignment != VerticalAlignment.Center)
+                label.TextAlignment != TextAlignment.Left || label.VerticalAlignment != VerticalAlignment.Center)
                 throw new Exception($"Category surface mismatch: group left={left}, card left={cardLeft}, group radius={groupSurface.CornerRadius.TopLeft}, card radius={card.CornerRadius.TopLeft}, group text bounds={textBounds}, text={label.TextAlignment}/{label.VerticalAlignment}.");
         });
         foreach (var groupWidth in new[] { 520d, 280d })

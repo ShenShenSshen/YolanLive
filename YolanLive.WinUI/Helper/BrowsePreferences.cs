@@ -11,6 +11,7 @@ internal sealed class PinnedGame
 {
     public string Name { get; set; }
     public List<LiveSubCategory> Sources { get; set; } = new();
+    [JsonIgnore] public string Picture { get; set; }
 }
 
 internal static class BrowsePreferences
@@ -36,6 +37,13 @@ internal static class BrowsePreferences
         .Where(p => p != null && !string.IsNullOrWhiteSpace(p.Name) && p.Sources?.Count > 0 &&
             p.Sources.All(s => s != null && !string.IsNullOrWhiteSpace(s.ID) && !string.IsNullOrWhiteSpace(s.ParentID)))
         .DistinctBy(p => GameKey(p.Sources)).Take(6).ToList();
+
+    internal static LiveGameCategory ForSite(Site site, LiveGameCategory game) => new()
+    {
+        Name = game.Name,
+        Pic = game.Pic,
+        Sources = game.Sources.Where(source => source.Site == site.LiveSite).ToList()
+    };
 
     internal static bool IsPinned(Site site, LiveGameCategory game) => ReadPins(site).Any(p => GameKey(p.Sources) == GameKey(game.Sources.Select(s => s.Category)));
     internal static bool TogglePin(Site site, LiveGameCategory game)

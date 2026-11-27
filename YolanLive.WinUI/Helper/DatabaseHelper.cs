@@ -168,10 +168,11 @@ watch_time DATETIME);
             command.ExecuteNonQuery();
 
         }
-        public async static Task<List<HistoryItem>> GetHistory()
+        public async static Task<List<HistoryItem>> GetHistory(int limit = -1)
         {
             List<HistoryItem> favoriteItems = new List<HistoryItem>();
-            using SqliteCommand command = new SqliteCommand("SELECT * FROM History ORDER BY watch_time DESC", db);
+            using SqliteCommand command = new SqliteCommand("SELECT * FROM History ORDER BY watch_time DESC, id DESC LIMIT @limit", db);
+            command.Parameters.AddWithValue("@limit", limit);
             using var reader =await command.ExecuteReaderAsync();
             while (reader.Read())
             {

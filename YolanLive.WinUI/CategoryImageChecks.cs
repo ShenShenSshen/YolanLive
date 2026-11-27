@@ -46,8 +46,9 @@ internal static class CategoryImageChecks
             window.AppWindow.Show(); window.Activate();
             var grid = (GridView)page.FindName("GamesGrid");
             await UntilAsync(() => grid.Items.OfType<LiveGameCategory>().Any(g => g.Pic == server.Url), "Same-name artwork did not reach the category card");
-            var game = grid.Items.OfType<LiveGameCategory>().Single();
-            Check(game.Sources.Single().Site == dy && game.Sources.Single().Category.ID == "1010014,1" && game.Sources.Single().Category.ParentID == "103,4", "Artwork changed the Douyin navigation source");
+            var game = grid.Items.OfType<LiveGameCategory>().Single(item => item.Name == "英雄联盟");
+            var partition = game.Sources.Single(source => source.Site == dy).Category;
+            Check(game.Sources.Count == 2 && partition.ID == "1010014,1" && partition.ParentID == "103,4", "Artwork changed or lost a platform navigation source");
             page.UpdateLayout(); grid.ScrollIntoView(game); page.UpdateLayout();
             Image image = null;
             await UntilAsync(() =>
@@ -110,8 +111,8 @@ internal static class CategoryImageChecks
         await UntilAsync(() => frame.Content is Views.CategoryPage current && current.IsLoaded, "Navigated category did not load");
         var page = (Views.CategoryPage)frame.Content;
         var grid = (GridView)page.FindName("GamesGrid");
-        await UntilAsync(() => grid.Items.Count == categoryCount, "Navigation fixture did not load its game names");
-        var first = grid.Items.OfType<LiveGameCategory>().First();
+        await UntilAsync(() => grid.Items.Count == categoryCount + 2, "Navigation fixture did not load its game names");
+        var first = grid.Items.OfType<LiveGameCategory>().First(game => game.Name.StartsWith("返回游戏"));
         async Task CheckFirstPictureAsync()
         {
             grid.ScrollIntoView(first);
@@ -143,7 +144,7 @@ internal static class CategoryImageChecks
                 await UntilAsync(() => !page.IsLoaded, "Category did not unload during navigation");
                 Check(frame.Navigate(typeof(Views.CategoryPage)), "Navigation back failed");
                 await UntilAsync(() => page.IsLoaded, "Cached category did not load on return");
-                Check(ReferenceEquals(frame.Content, page) && grid.Items.Count == categoryCount, "Cached category or game names changed on return");
+                Check(ReferenceEquals(frame.Content, page) && grid.Items.Count == categoryCount + 2, "Cached category or game names changed on return");
                 await CheckFirstPictureAsync();
                 report.Add(scrollAway ? "PASS recycled category navigation: game artwork restores after scrolling, leaving and returning" :
                     "PASS cached Frame navigation: game names and rendered artwork survive leaving and returning");

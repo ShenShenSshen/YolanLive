@@ -107,8 +107,7 @@ public static class PageDesign
     }
     private static void UpdatePlatformLayout(Grid root, TitleBar bar)
     {
-        if (root.FindName("PlatformSurface") == null &&
-            root.FindName("BrowseHeader") is Grid plainHeader &&
+        if (root.FindName("BrowseHeader") is Grid plainHeader &&
             root.FindName("HeaderSearch") is AutoSuggestBox plainSearch &&
             root.FindName("HeaderActions") is StackPanel actions)
         {
@@ -137,42 +136,6 @@ public static class PageDesign
             if (root.IsLoaded && plainShell?.ActivePage == GetPage(root)) plainShell.SetHeaderSearch(plainSearch, compactSearch);
             return;
         }
-        if (root.FindName("PlatformSurface") is not Border surface ||
-            root.FindName("PlatformOverflowHost") is not Border overflow ||
-            root.FindName("BrowseHeader") is not Grid header) return;
-        var window = App.GetWindowFor(root);
-        var captionInset = window?.AppWindow.TitleBar.RightInset / (root.XamlRoot?.RasterizationScale ?? 1) ?? 138;
-        // Budget every header column, including the native drag strip, before sizing search.
-        var refresh = (Button)root.FindName("HeaderRefresh");
-        var dragWidth = (double)App.Current.Resources["TitleBarMinDragRegionWidth"];
-        var available = Math.Max(0, bar.ActualWidth - captionInset - dragWidth - refresh.Width - 3 * header.ColumnSpacing - 8);
-        var search = root.FindName("HeaderSearch") as AutoSuggestBox;
-        var shell = GetShell(root);
-        var hasGameFilter = root.FindName("GameFilter") is AutoSuggestBox;
-        var picker = (ListView)root.FindName("PlatformPicker");
-        var tabWidth = (picker.ItemsPanelRoot as ItemsWrapGrid)?.ItemWidth ?? (hasGameFilter ? 88 : 96);
-        var platformWidth = picker.Items.Count * tabWidth + surface.Padding.Left + surface.Padding.Right;
-        // The category page keeps one visible input for its local game directory.
-        var showSearch = !hasGameFilter && search != null && available >= 80 + 180 && shell?.IsTopNavigation != true;
-        var compact = available < platformWidth + (showSearch ? 180 : 36);
-        if (search != null)
-        {
-            search.Visibility = showSearch ? Visibility.Visible : Visibility.Collapsed;
-            search.Width = Math.Clamp(available - (compact ? 80 : platformWidth), 180, 320);
-            var compactSearch = root.FindName("CompactSearch") as Button;
-            if (compactSearch != null) compactSearch.Visibility = showSearch ? Visibility.Collapsed : Visibility.Visible;
-            if (root.IsLoaded && shell != null && shell.ActivePage == GetPage(root)) shell.SetHeaderSearch(search, compactSearch);
-        }
-        if (compact && surface.Parent == header)
-        {
-            header.Children.Remove(surface); overflow.Child = surface;
-        }
-        else if (!compact && surface.Parent == overflow)
-        {
-            overflow.Child = null; header.Children.Insert(0, surface);
-        }
-        overflow.Visibility = compact ? Visibility.Visible : Visibility.Collapsed;
-        ((TextBlock)root.FindName("CompactPageTitle")).Visibility = compact ? Visibility.Visible : Visibility.Collapsed;
     }
     private static void HeaderSizeChanged(object sender, SizeChangedEventArgs args)
     {
